@@ -13,6 +13,7 @@ The functions and classes below are also available directly from ``pylamda``
    verify
    compare
    bib
+   fix
    issues
    formula
    references

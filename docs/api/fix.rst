@@ -1,0 +1,4 @@
+Fixing
+======
+
+.. automodule:: pylamda.fix

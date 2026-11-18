@@ -15,8 +15,9 @@ import pytest
 from conftest import corpus_files
 from helpers import same_data
 
-from pylamda import CODES, SEVERITIES, LamdaReadError, bibtex, compare, read, verify, write
+from pylamda import CODES, SEVERITIES, LamdaReadError, bibtex, compare, fix, patch, read, verify, write
 from pylamda.bib import split_entries
+from pylamda.reader import read_string
 
 pytestmark = pytest.mark.corpus
 
@@ -50,6 +51,18 @@ def test_corpus_bib(corpus_file):
     result = bibtex([corpus_file])
     assert len(split_entries(result.text())) == len(result.entries)
     assert len({e.key for e in result.entries}) == len(result.entries)
+
+
+def test_corpus_fix(corpus_file):
+    """fix() and patch() give the same data; the fixed structure, order and partner issues are gone."""
+    options = {"trust": "id", "inverted": "swap", "extra_blocks": "comment"}
+    data, log = fix(corpus_file, **options)
+    text, log2 = patch(corpus_file, **options)
+    back = read_string(text)
+    assert [r.code for r in log] == [r.code for r in log2]
+    assert not compare(data, back), compare(data, back).summary()
+    gone = {"S02", "S03", "S04", "S05", "L01", "C02", "C08", "C12"}
+    assert not [i for i in verify(back) if i.code in gone]
 
 
 def _counts(path: Path) -> dict[str, int]:

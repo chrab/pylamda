@@ -1,7 +1,7 @@
 Command line
 ============
 
-``pylamda`` (or ``python -m pylamda``) has three commands so far: ``check``, ``compare`` and ``bib``.
+``pylamda`` (or ``python -m pylamda``) has four commands: ``check``, ``compare``, ``bib`` and ``fix``.
 
 pylamda check
 -------------
@@ -115,3 +115,45 @@ Exit codes:
 - 0: done;
 - 1: online resolution failed (e.g. SciX rejected the token);
 - 2: a file cannot be read (the others are still exported).
+
+pylamda fix
+-----------
+
+.. code-block:: text
+
+   pylamda fix FILE (-o OUT | --in-place | --dry-run) [options]
+
+Fixes a LAMDA file (see :doc:`fixing`). The fixes made go to standard error, followed
+by the fixable issues that remain and the option each one needs.
+
+Output (one is required):
+
+``-o OUT``
+   Write the fixed file to OUT, in the normalised layout (``--patch``: patch mode).
+``--in-place``
+   Change FILE itself, in patch mode (``--normalise``: normalised layout).
+``--dry-run``
+   Show the changes of patch mode as a unified diff; write nothing.
+
+Fixes:
+
+``--trust id|name``
+   C02/C12: correct the partner name (``id``) or the ID (``name``).
+``--inverted swap|chianti|balance``
+   C08: rate rows with E(up) < E(low).
+``--extra-blocks include|comment``
+   S03: count extra blocks in, or comment them out.
+``--recompute``
+   R04/R05: also replace frequencies and E_up values that differ from the energies.
+``--ref TARGET=ID``
+   Append a DOI, bibcode or arXiv ID to a reference (TARGET: ``levels``, ``dataset`` or
+   a partner); repeatable.
+``--no-sort``
+   L01: do not sort the levels.
+``--no-missing-columns``
+   R04/R05: do not compute missing frequencies and E_up values.
+
+Exit codes:
+
+- 0: done;
+- 2: the file cannot be read, or a fix cannot be applied.

@@ -274,18 +274,39 @@ def _compare_column(
     *,
     upper_only: bool,
 ) -> None:
-    """R04/R05: compare the frequency or E_up column with the value from the level energies.
+    """R04/R05: report the frequency or E_up values that differ from the level energies."""
+    lines = _lines(data.source_map, "lines", data.n_lines)
+    given, what, unit = (data.line_freq, "frequency", "GHz") if code == "R04" else (data.line_eup, "E_up", "K")
+    bad, worst, worst_k = _mismatch_rows(data, code, computed, rows, rtol)
+    if bad:
+        source = "E(up)" if upper_only else "the level energies"
+        k = worst_k
+        add(
+            code,
+            f"{what} differs from {source} beyond rounding and rtol {rtol:g} in {len(bad)} lines; largest: "
+            f"{name(k)}: {given[k]:.10g} {unit}, computed {computed[k]:.10g} (relative {worst:.2g})",
+            _at(lines, bad[0]),
+            fixable=True,
+            count=len(bad),
+        )
+
+
+def _mismatch_rows(
+    data: LamdaData, code: str, computed: np.ndarray, rows: np.ndarray, rtol: float
+) -> tuple[list[int], float, int]:
+    """Rows (0-based) whose frequency (R04) or E_up (R05) differs from ``computed``.
 
     The tolerance is ``rtol`` (relative) plus the rounding of the numbers as written in
     the file: half a unit of the last digit of the column value and of the energies.
+    Returns the rows, the largest relative difference and its row.
     """
     smap = data.source_map
     lines = _lines(smap, "lines", data.n_lines)
     level_lines = _lines(smap, "levels", data.n_levels)
     if code == "R04":
-        given, column, factor, what, unit = data.line_freq, 4, C_GHZ_CM, "frequency", "GHz"
+        given, column, factor, upper_only = data.line_freq, 4, C_GHZ_CM, False
     else:
-        given, column, factor, what, unit = data.line_eup, 5, HC_K, "E_up", "K"
+        given, column, factor, upper_only = data.line_eup, 5, HC_K, True
     bad: list[int] = []
     worst, worst_k = -1.0, -1
     for k in (int(k) for k in rows):
@@ -302,17 +323,54 @@ def _compare_column(
             rel = diff / abs(computed[k]) if computed[k] else math.inf
             if rel > worst:
                 worst, worst_k = rel, k
-    if bad:
-        source = "E(up)" if upper_only else "the level energies"
-        k = worst_k
-        add(
-            code,
-            f"{what} differs from {source} beyond rounding and rtol {rtol:g} in {len(bad)} lines; largest: "
-            f"{name(k)}: {given[k]:.10g} {unit}, computed {computed[k]:.10g} (relative {worst:.2g})",
-            _at(lines, bad[0]),
-            fixable=True,
-            count=len(bad),
-        )
+    return bad, worst, worst_k
+
+
+def line_columns(data: LamdaData) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Frequency [GHz] and E_up [K] of each line computed from the level energies.
+
+    Parameters
+    ----------
+    data : LamdaData
+        The data.
+
+    Returns
+    -------
+    freq, eup : numpy.ndarray
+        Computed frequency and upper-level energy; NaN for lines with level numbers
+        outside 1..NLEV.
+    valid : numpy.ndarray
+        Indices of the lines with valid level numbers and E(up) > E(low).
+    """
+    up, low, n = data.line_up, data.line_low, data.n_levels
+    ok = np.flatnonzero((up >= 1) & (up <= n) & (low >= 1) & (low <= n) & (up != low))
+    eu = np.full(len(up), np.nan)
+    el = np.full(len(up), np.nan)
+    eu[ok], el[ok] = data.level_energy[up[ok] - 1], data.level_energy[low[ok] - 1]
+    valid = ok[eu[ok] > el[ok]]
+    return (eu - el) * C_GHZ_CM, eu * HC_K, valid
+
+
+def column_mismatches(data: LamdaData, rtol: float = 1e-4) -> dict[str, list[int]]:
+    """Lines whose frequency (R04) or E_up (R05) differs from the level energies.
+
+    Parameters
+    ----------
+    data : LamdaData
+        The data (rounding of the numbers from ``data.source_map``, if it fits).
+    rtol : float, optional
+        Relative tolerance on top of the rounding. Default: 1e-4.
+
+    Returns
+    -------
+    dict
+        ``{"R04": [line indices], "R05": [line indices]}`` (0-based).
+    """
+    freq, eup, valid = line_columns(data)
+    return {
+        "R04": _mismatch_rows(data, "R04", freq, valid, rtol)[0],
+        "R05": _mismatch_rows(data, "R05", eup, valid, rtol)[0],
+    }
 
 
 # ------------------------------------------------------------------- C: collisions

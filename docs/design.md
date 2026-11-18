@@ -3,7 +3,8 @@
 Status (2026-11-18): design with decisions taken (section 13). Moved from astrolinedata
 (`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 3 of section 14 are
 implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`;
-`compare` and `pylamda compare`), and step 4 (`bibtex` and `pylamda bib`).
+`compare` and `pylamda compare`), step 4 (`bibtex` and `pylamda bib`) and step 5
+(`fix`, `patch` and `pylamda fix`; `--add-refs` follows with the catalogue, step 6).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
 the relation to astrolinedata, section 13 the decisions.
@@ -330,6 +331,7 @@ pylamda fix in.dat --in-place --trust name   # patch mode: only changed lines
 | L01 levels not ordered | sort by energy, renumber all transitions (pure relabelling) | default on |
 | C08 inverted rows | `swap`: exchange up/low and keep the rate (wrong order only); `chianti`: swap and multiply by g(new low)/g(new up) (Υ is symmetric, the rate was divided by the wrong g); `balance`: convert an excitation rate by detailed balance | `--inverted swap\|chianti\|balance`; no default |
 | R04/R05 missing columns | compute frequency and E_up from the energies | default on for missing values; differing values need `--recompute` |
+| S02 wrong running numbers of rows | correct the first column (no reader uses it); added 2026-11-18 | default on |
 | S03 extra blocks | count them in, or turn them into comments | `--extra-blocks include\|comment` |
 | S04 surplus values | drop them (what all readers do) | default on |
 | S05 comment without `!` | add `!` | default on |
@@ -339,6 +341,21 @@ pylamda fix in.dat --in-place --trust name   # patch mode: only changed lines
 - **Record**: each fix adds a note line, `! pylamda <version> fix: C02 partner 2: ID 1 -> 2 (trusted name)`,
   as astrolinedata's `add_partner` does. `log` holds the same as data.
 - **Never overwrite** the input without `--in-place`.
+
+Implementation notes (step 5):
+
+- Two stages: S05, S03 (then the file is read again), S04, S02 on the raw lines; then the
+  data fixes C02/C12, L01, C08, R04/R05 and references.
+- Patch mode edits tokens in place (`replace_tokens`): right-aligned columns stay
+  aligned, numbers keep their style (`format_like`; rates recomputed by `chianti` or
+  `balance` keep the file's digits, at least 3 significant), line endings (CRLF) stay.
+  Recomputed frequencies and E_up get their full precision.
+- `patch()` and `fix()` give the same data (tested on the corpus).
+- C12 is fixed by `--trust` like C02.
+- CLI: `-o` = normalised, `--in-place` = patch, `--dry-run` = diff of the patch;
+  `--patch`/`--normalise` switch. After fixing, the fixable issues that remain are
+  named with the option they need.
+- `--add-refs` (from the catalogue or a review file) follows with step 6.
 
 ## 8. Compare
 

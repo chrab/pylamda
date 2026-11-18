@@ -9,8 +9,8 @@ pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/mo
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
 
-**Status:** early development. Reading, writing, checking, comparing and the BibTeX export
-work. Combine, fix
+**Status:** early development. Reading, writing, checking, comparing, fixing and the BibTeX
+export work. The reference catalogue, combine functions
 and the BibTeX export follow (see `docs/design.md`, section 14).
 
 ```python
@@ -27,6 +27,7 @@ pylamda check data/*.dat            # exit code 1 if there are errors
 pylamda check --statistics data/*.dat
 pylamda compare old.dat new.dat     # exit code 1 if they differ
 pylamda bib data/*.dat -o refs.bib --online   # SciX needs SCIX_API_TOKEN
+pylamda fix in.dat --in-place --trust id      # only the changed lines
 ```
 
 ## Database papers

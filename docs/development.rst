@@ -64,11 +64,12 @@ Layout
      verify.py       verify(): the checks L, R, C, F, P (plus the reader's S issues)
      compare.py      compare(), match_levels(), critical_density()
      bib.py          bibtex(): BibTeX export, SciX and doi.org, token, cache
+     fix.py          fix(), patch(), add_reference(): normalised and patch mode
      data/           database_refs.bib: the LAMDA and EMAA papers
      issues.py       Issue, the check codes (CODES), LamdaReadError
      formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs, bibcodes, arXiv IDs)
-     cli.py          the command line (pylamda check, compare, bib)
+     cli.py          the command line (pylamda check, compare, bib, fix)
    tests/
      data/           real LAMDA and EMAA files used as fixtures
      helpers.py      make_lamda() for small synthetic files (no issue with the defaults)

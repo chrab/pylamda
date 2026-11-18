@@ -7,8 +7,7 @@ The `Leiden Atomic and Molecular Database (LAMDA)
 <https://home.strw.leidenuniv.nl/~moldata/>`_ defines a text format for energy levels,
 Einstein A coefficients and collision rates. LAMDA, `EMAA <https://emaa.osug.fr>`_, and
 codes such as RADEX and ProDiMo use it. ``pylamda`` reads, writes and checks these
-files, compares them, exports their references as BibTeX, and will combine and fix
-them.
+files, compares and fixes them, and exports their references as BibTeX.
 
 pylamda follows the `LAMDA standard
 <https://home.strw.leidenuniv.nl/~moldata/molformat.html>`_ strictly:
@@ -30,11 +29,12 @@ pylamda follows the `LAMDA standard
    pylamda check data/*.dat
    pylamda compare old.dat new.dat
    pylamda bib data/*.dat -o refs.bib --online
+   pylamda fix in.dat --in-place --trust id
 
 .. note::
 
-   pylamda is at an early stage. Reading, writing, checking, comparing and the
-   BibTeX export work; ``fix`` and the combine functions follow (see the :doc:`design`, section 14).
+   pylamda is at an early stage. Reading, writing, checking, comparing, fixing and
+   the BibTeX export work; the reference catalogue and the combine functions follow (see the :doc:`design`, section 14).
 
 .. toctree::
    :maxdepth: 2
@@ -45,6 +45,7 @@ pylamda follows the `LAMDA standard
    checks
    comparing
    references
+   fixing
    cli
 
 .. toctree::

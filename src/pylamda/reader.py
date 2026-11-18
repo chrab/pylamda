@@ -115,7 +115,7 @@ def _numbering(reader: _Reader, numbers: list[tuple[int, int]], what: str) -> No
     if bad:
         k, n, line = bad[0]
         more = f" ({len(bad) - 1} more rows)" if len(bad) > 1 else ""
-        reader.issue("S02", f"{what}: row {k} has the number {n}{more}", line)
+        reader.issue("S02", f"{what}: row {k} has the number {n}{more}", line, fixable=True)
 
 
 def read(path: str | os.PathLike, strict: bool = False) -> LamdaData:
@@ -146,9 +146,38 @@ def read(path: str | os.PathLike, strict: bool = False) -> LamdaData:
         If the file cannot be opened.
     """
     path = Path(path)
-    raw = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    reader = _Reader(str(path), raw)
-    smap = SourceMap(path=str(path), raw=raw)
+    return _parse(path.read_text(encoding="utf-8", errors="replace").splitlines(), str(path), strict)
+
+
+def read_string(text: str, name: str = "<string>", strict: bool = False) -> LamdaData:
+    """Read LAMDA data from a string (as :func:`read` reads a file).
+
+    Parameters
+    ----------
+    text : str
+        The contents of a LAMDA file.
+    name : str, optional
+        Name used as the path in messages and the source map. Default: ``"<string>"``.
+    strict : bool, optional
+        As in :func:`read`.
+
+    Returns
+    -------
+    LamdaData
+        The data, with a source map of the text.
+
+    Raises
+    ------
+    LamdaReadError
+        As :func:`read`.
+    """
+    return _parse(text.splitlines(), name, strict)
+
+
+def _parse(raw: list[str], path: str, strict: bool) -> LamdaData:
+    """Read the lines of a LAMDA file (see :func:`read`)."""
+    reader = _Reader(path, raw)
+    smap = SourceMap(path=path, raw=raw)
 
     smap.molecule, name_line = reader.line("the molecule name")
     m = _DATASET_DOI.search(name_line)

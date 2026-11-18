@@ -1,9 +1,10 @@
-"""Command line: ``pylamda check FILE ...``, ``pylamda compare A B`` and ``pylamda bib FILE ...``.
+"""Command line: ``pylamda check``, ``compare``, ``bib`` and ``fix``.
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
 ``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
 0 = no differences, 1 = differences, 2 = a file cannot be read. Of ``pylamda bib``: 0 = done,
-1 = online resolution failed, 2 = a file cannot be read.
+1 = online resolution failed, 2 = a file cannot be read. Of ``pylamda fix``: 0 = done,
+2 = the file cannot be read or a fix cannot be applied.
 """
 
 from __future__ import annotations
@@ -17,10 +18,12 @@ from collections.abc import Sequence
 from . import __version__
 from .bib import BibError, bibtex
 from .compare import compare
+from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
 from .model import LamdaData
-from .reader import read
+from .reader import read, read_string
 from .verify import verify
+from .writer import write
 
 
 def _codes(values: list[str] | None) -> list[str]:
@@ -105,6 +108,37 @@ def _parser() -> argparse.ArgumentParser:
     bib.add_argument("--no-database-refs", action="store_true", help="leave out the LAMDA and EMAA papers")
     bib.add_argument("--keys", metavar="FILE", help="JSON file identifier -> key; read and updated (stable keys)")
     bib.add_argument("--no-cache", action="store_true", help="do not use the cache of resolved references")
+
+    fx = sub.add_parser(
+        "fix",
+        help="fix a LAMDA file",
+        description="Fix a LAMDA file: unambiguous issues by default, the others only with an option. "
+        "-o writes the normalised layout; --in-place patches only the changed lines.",
+    )
+    fx.add_argument("file", metavar="FILE", help="the LAMDA file")
+    out = fx.add_mutually_exclusive_group(required=True)
+    out.add_argument("-o", "--output", metavar="OUT", help="write the fixed file to OUT (normalised layout)")
+    out.add_argument("--in-place", action="store_true", help="change FILE itself (patch mode)")
+    out.add_argument("--dry-run", action="store_true", help="show the changes (patch mode) as a diff; write nothing")
+    mode = fx.add_mutually_exclusive_group()
+    mode.add_argument("--patch", action="store_true", help="patch mode also with -o: only the changed lines")
+    mode.add_argument("--normalise", action="store_true", help="normalised layout also with --in-place")
+    fx.add_argument("--trust", choices=("id", "name"), help="C02/C12: correct the partner name (id) or the ID (name)")
+    fx.add_argument("--no-sort", action="store_true", help="L01: do not sort the levels by energy")
+    fx.add_argument(
+        "--inverted", choices=("swap", "chianti", "balance"), help="C08: how to fix rate rows with E(up) < E(low)"
+    )
+    fx.add_argument("--no-missing-columns", action="store_true", help="R04/R05: do not compute missing columns")
+    fx.add_argument("--recompute", action="store_true", help="R04/R05: also replace differing frequencies and E_up")
+    fx.add_argument(
+        "--extra-blocks", choices=("include", "comment"), help="S03: count extra blocks in or comment them out"
+    )
+    fx.add_argument(
+        "--ref",
+        action="append",
+        metavar="TARGET=ID",
+        help="append an identifier to a reference: TARGET levels, dataset or a partner; ID a DOI, bibcode or arXiv ID",
+    )
     return parser
 
 
@@ -273,6 +307,56 @@ def _bib(args: argparse.Namespace) -> int:
     return status
 
 
+def _fix(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    options = {
+        "trust": args.trust,
+        "sort_levels": not args.no_sort,
+        "inverted": args.inverted,
+        "missing_columns": not args.no_missing_columns,
+        "recompute": args.recompute,
+        "extra_blocks": args.extra_blocks,
+        "refs": args.ref,
+    }
+    keep_layout = args.dry_run or args.patch or (args.in_place and not args.normalise)
+    try:
+        if keep_layout:
+            text, log = patch(args.file, **options)
+        else:
+            data, log = fix(args.file, **options)
+    except (LamdaReadError, FixError) as exc:
+        print(f"pylamda fix: error: {exc}", file=sys.stderr)
+        return 2
+    except OSError as exc:
+        print(f"pylamda fix: {args.file}: cannot open: {exc.strerror or exc}", file=sys.stderr)
+        return 2
+    if args.dry_run:
+        import difflib
+
+        old = Path(args.file).read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+        sys.stdout.writelines(difflib.unified_diff(old, text.splitlines(keepends=True), args.file, "fixed"))
+    else:
+        target = args.file if args.in_place else args.output
+        if keep_layout:
+            Path(target).write_bytes(text.encode("utf-8"))
+        else:
+            write(data, target)
+    for r in log:
+        print(f"fixed: {r.code} {r.message}", file=sys.stderr)
+    if not log:
+        print("pylamda fix: nothing to fix with these options", file=sys.stderr)
+    # fixable issues that need an option
+    try:
+        remaining = verify(read_string(text) if keep_layout else data)
+    except LamdaReadError:  # pragma: no cover (the fixed data read back)
+        remaining = []
+    hints = sorted({i.code for i in remaining if i.code in OPTION_HINTS})
+    for code in hints:
+        print(f"pylamda fix: {code} remains; it needs {OPTION_HINTS[code]}", file=sys.stderr)
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command line.
 
@@ -293,6 +377,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _compare(args)
     if args.command == "bib":
         return _bib(args)
+    if args.command == "fix":
+        return _fix(args)
     return 2  # pragma: no cover (argparse requires a command)
 
 
