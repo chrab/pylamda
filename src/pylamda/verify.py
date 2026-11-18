@@ -55,6 +55,7 @@ _IDENTIFIER = re.compile(
 _REFERENCE_LIKE = re.compile(
     r"\bet\s+al\b|\b(?:19|20)\d\d\b|\b(?:CDMS|JPL|NIST|HITRAN|ExoMol|CHIANTI|BASECOL|LAMDA|EMAA)\b", re.I
 )
+_FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # a note line of pylamda fix (see pylamda.fix.FIX_NOTE)
 _SCALED = re.compile(r"\bscal(?:ed|ing)\b|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b", re.I)
 # C12: "scaled"/"scaling", or a scaling factor such as "*1.39", "x 1.4", "×1.37"
 _HE_SCALED = re.compile(r"\bscal(?:ed|ing)\b|(?:\*|×|\bx)\s*1\.\d+", re.I)
@@ -535,7 +536,7 @@ def _check_references(data: LamdaData, add: _Collector, cat: Catalogue | None = 
         texts += [
             line for i, line in enumerate(smap.raw, 1) if line.lstrip().startswith("!") and i not in partner_lines
         ]
-    texts = [t for t in texts if t and t.strip()]
+    texts = [t for t in texts if t and t.strip() and not _FIX_NOTE.match(t)]  # not pylamda's own fix notes
     if not any(_has_identifier(t) or _REFERENCE_LIKE.search(t) for t in texts):
         add(
             "F01",

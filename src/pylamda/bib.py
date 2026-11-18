@@ -150,7 +150,8 @@ def _comment_texts(data: LamdaData) -> list[str]:
     if smap is not None:
         notes_from = smap.notes or len(smap.raw) + 1
         texts += [line for i, line in enumerate(smap.raw, 1) if i < notes_from and line.lstrip().startswith("!")]
-    return [t for t in texts if t and t.strip()]
+    fix_note = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # pylamda's own fix notes are not references
+    return [t for t in texts if t and t.strip() and not fix_note.match(t)]
 
 
 def is_emaa(data: LamdaData) -> bool:
@@ -669,6 +670,18 @@ def bibtex(
             for ident in ref.identifiers:
                 w = works.setdefault(ident, _Work([ident], identifier_context(ref.text, ident)))
                 w.add_use(d.molecule, ref.use)
+
+    if cat is not None:  # identifiers whose paper the catalogue knows: its reviewed BibTeX, offline
+        known = {}
+        for key, e in cat.entries.items():
+            known[f"bibcode:{e['bibcode']}".lower()] = key
+            if e.get("doi"):
+                known[f"doi:{e['doi']}".lower()] = key
+        for w in works.values():
+            key = next((known[i.lower()] for i in w.identifiers if i.lower() in known), None)
+            if key is not None and w.bibtex is None and key in cat.bibtex:
+                w.bibcode, w.bibtex, w.source = cat.entries[key]["bibcode"], cat.bibtex[key], "catalogue"
+                w.catalogue_key = key
 
     if online and works:
         cache_path = default_cache() if cache is True else (Path(cache) if cache else None)

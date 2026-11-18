@@ -14,6 +14,7 @@ The functions and classes below are also available directly from ``pylamda``
    compare
    bib
    catalogue
+   refsearch
    fix
    issues
    formula

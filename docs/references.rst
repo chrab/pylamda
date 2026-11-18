@@ -55,9 +55,33 @@ Wernli et al. (2006)" gives two), and each part is looked up:
 3. the same text anywhere in the catalogue, if it names one paper there. This can be
    wrong for another molecule ("Green 1986"), so ``pylamda bib`` warns about such hits.
 
+The catalogue also provides the BibTeX of a DOI or bibcode that a file gives and the
+catalogue knows, offline.
+
 ``--no-catalogue`` (``catalogue=False``) switches the lookup off. ``pylamda check`` uses
 the catalogue for F03 as well. The catalogue is maintained with ``tools/catalogue.py``
 (see :doc:`development`).
+
+Searching for the rest
+----------------------
+
+``pylamda bib --search`` (needs the SciX token) searches SciX for the free-text
+references that the catalogue does not know, with the same method as the catalogue
+tool (:mod:`pylamda.refsearch`): hints from the file's comments and the LAMDA/EMAA
+molecule pages, SciX queries by author and year, species, volume and page, scored
+candidates and proposals.
+
+.. code-block:: bash
+
+   pylamda bib data/*.dat -o refs.bib --search --review review.json
+   python -m pylamda.refsearch review.json          # show the candidates
+
+The results are only **candidates**: they go into the review file, never into the
+BibTeX file or a data file. Set ``"decision"`` for each group in the review file
+(``"ok"`` for the proposal, a bibcode, ``"none"`` or ``"skip"``). Running ``--search``
+again keeps the decisions. Decided groups can then be written into the files
+(:doc:`fixing`, ``--add-refs review.json``) and sent to the pylamda maintainers as
+additions to the catalogue (a pull request with the review file).
 
 Offline and online
 ------------------

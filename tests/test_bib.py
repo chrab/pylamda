@@ -162,7 +162,7 @@ def test_offline_options(tmp_path):
     path.write_text(
         make_lamda(partner=f"2 X + p-H2 ! Yang 2010 https://scixplorer.org/abs/{YANG_BIBCODE} arXiv:1004.3923")
     )
-    entries = {e.identifiers[0]: e.bibtex for e in bibtex([path], database_refs=False).entries}
+    entries = {e.identifiers[0]: e.bibtex for e in bibtex([path], database_refs=False, catalogue=False).entries}
     assert (
         f"howpublished = {{\\url{{https://scixplorer.org/abs/{YANG_BIBCODE}}}}}" in entries[f"bibcode:{YANG_BIBCODE}"]
     )
@@ -251,7 +251,9 @@ def test_online_resolution(tmp_path):
         "unknown doi:10.9999/none",
     )
     client = FakeClient()
-    result = bibtex([path], online=True, database_refs=False, cache=tmp_path / "cache.json", client=client)
+    result = bibtex(
+        [path], online=True, database_refs=False, cache=tmp_path / "cache.json", client=client, catalogue=False
+    )
     by_key = {e.key: e for e in result.entries}
     assert set(by_key) == {"Yang2010", "Dagdigian2022", "doi_10.9999_none"}
     yang = by_key["Yang2010"]
@@ -272,7 +274,9 @@ def test_online_resolution(tmp_path):
     )
     assert cache["doi_bibcode"]["10.1093/mnras/stac1430"] == ""  # not in SciX
     again = FakeClient()
-    result2 = bibtex([path], online=True, database_refs=False, cache=tmp_path / "cache.json", client=again)
+    result2 = bibtex(
+        [path], online=True, database_refs=False, cache=tmp_path / "cache.json", client=again, catalogue=False
+    )
     assert [e.key for e in result2.entries] == [e.key for e in result.entries]
     assert [c[0] for c in again.calls] == ["doi.org"]  # only the DOI that nobody knows is asked again
 
@@ -280,7 +284,7 @@ def test_online_resolution(tmp_path):
 def test_online_without_token(tmp_path):
     path = _file(tmp_path, f"2 X + p-H2 ! Dagdigian 2022 doi:10.1093/mnras/stac1430, {YANG_BIBCODE}")
     client = FakeClient(has_token=False)
-    result = bibtex([path], online=True, database_refs=False, cache=False, client=client)
+    result = bibtex([path], online=True, database_refs=False, cache=False, client=client, catalogue=False)
     assert [e.source for e in result.entries] == ["doi.org", "unresolved"]
     assert result.warnings[0].startswith("1 bibcodes/arXiv IDs not resolved: SciX needs an API token")
     assert all(c[0] == "doi.org" for c in client.calls)
@@ -293,7 +297,7 @@ def test_online_error_is_raised(tmp_path):
 
     path = _file(tmp_path, f"2 X + p-H2 ! doi:{YANG_DOI}")
     with pytest.raises(BibError, match="HTTP 401"):
-        bibtex([path], online=True, cache=False, client=Rejecting())
+        bibtex([path], online=True, cache=False, client=Rejecting(), catalogue=False)
 
 
 # ------------------------------------------------------------------- command line

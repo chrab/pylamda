@@ -41,6 +41,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .catalogue import load_catalogue, normalise, split_segments
 from .issues import LamdaReadError
 from .model import PARTNER_IDS, LamdaData, SourceMap, partner_name
 from .reader import read_string
@@ -54,6 +55,10 @@ INVERTED_METHODS: tuple[str, ...] = ("swap", "chianti", "balance")
 EXTRA_BLOCK_METHODS: tuple[str, ...] = ("include", "comment")
 #: The options of ``trust`` (checks C02, C12).
 TRUST_OPTIONS: tuple[str, ...] = ("id", "name")
+
+
+#: A note line written by :func:`fix` (``! pylamda 0.1.0 fix: ...``); not a reference text.
+FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")
 
 
 class FixError(ValueError):
@@ -428,7 +433,8 @@ def _identifier_text(identifier: str) -> tuple[str, str]:
     if len(found) != 1:
         raise FixError(f"{identifier!r} is not one DOI, bibcode or arXiv ID")
     kind, value = found[0].split(":", 1)
-    text = {"doi": f"doi:{value}", "bibcode": f"https://scixplorer.org/abs/{value}", "arxiv": f"arXiv:{value}"}[kind]
+    link = f"https://scixplorer.org/abs/{value.replace('&', '%26')}"  # "&" encoded, as ADS does
+    text = {"doi": f"doi:{value}", "bibcode": link, "arxiv": f"arXiv:{value}"}[kind]
     return found[0], text
 
 
@@ -451,14 +457,7 @@ def _add_reference(data: LamdaData, doc: _Doc | None, target: str, identifier: s
         log.append(FixRecord("F01", f"dataset DOI {doi} added"))
         return
     if target == "levels":
-        if key in (i.lower() for i in find_identifiers(data.level_reference)):
-            return
-        data.level_reference = f"{data.level_reference} {text}".strip()
-        if doc is not None:
-            line = doc.smap.nlev
-            old = doc.lines[line - 1].rstrip()
-            doc.lines[line - 1] = f"{old} {text}" if "Ref:" in old else f"{old} - Ref: {text}"
-        log.append(FixRecord("F03", f"levels: {text} added to the reference"))
+        _append_to_levels(data, doc, key, text, log)
         return
     name = partner_name(target) or target
     blocks = [b for b, c in enumerate(data.collisions) if c.partner == name]
@@ -466,7 +465,27 @@ def _add_reference(data: LamdaData, doc: _Doc | None, target: str, identifier: s
         raise FixError(f"no collision partner {target!r} (targets: levels, dataset, or a partner name)")
     if len(blocks) > 1:
         raise FixError(f"several blocks have partner {name}; the reference target is ambiguous")
-    b = blocks[0]
+    _append_to_block(data, doc, blocks[0], key, text, log)
+
+
+def _append_to_levels(
+    data: LamdaData, doc: _Doc | None, key: str, text: str, log: list[FixRecord], how: str = ""
+) -> None:
+    """Append an identifier (as ``text``) to the level reference, unless it is there."""
+    if key in (i.lower() for i in find_identifiers(data.level_reference)):
+        return
+    data.level_reference = f"{data.level_reference} {text}".strip()
+    if doc is not None:
+        line = doc.smap.nlev
+        old = doc.lines[line - 1].rstrip()
+        doc.lines[line - 1] = f"{old} {text}" if "Ref:" in old else f"{old} - Ref: {text}"
+    log.append(FixRecord("F03", f"levels: {text} added to the reference{how}"))
+
+
+def _append_to_block(
+    data: LamdaData, doc: _Doc | None, b: int, key: str, text: str, log: list[FixRecord], how: str = ""
+) -> None:
+    """Append an identifier (as ``text``) to the reference of collision block ``b``, unless it is there."""
     c = data.collisions[b]
     if key in (i.lower() for i in find_identifiers(c.reference)):
         return
@@ -475,7 +494,50 @@ def _add_reference(data: LamdaData, doc: _Doc | None, target: str, identifier: s
     if doc is not None:
         line = doc.smap.blocks[b].partner
         doc.lines[line - 1] = doc.lines[line - 1].rstrip() + f" {text}"
-    log.append(FixRecord("F03" if c.reference.strip() else "F02", f"collision block {b + 1} ({name}): {text} added"))
+    code = "F03" if c.reference.strip() else "F02"
+    log.append(FixRecord(code, f"collision block {b + 1} ({c.label}): {text} added{how}"))
+
+
+# ------------------------------------------------------------------- identifiers from the catalogue
+def _free_text_references(data: LamdaData) -> list[tuple[int | None, str, str | None, str]]:
+    """(block or None for the levels, role, partner, text) of references without any identifier."""
+    out: list[tuple[int | None, str, str | None, str]] = []
+    if data.level_reference.strip() and not find_identifiers(data.level_reference):
+        out.append((None, "levels", None, data.level_reference))
+    for b, c in enumerate(data.collisions):
+        if c.reference.strip() and not find_identifiers(c.reference):
+            out.append((b, "collisions", c.label, c.reference))
+    return out
+
+
+def _catalogue_refs(data: LamdaData, fname: str | None) -> list[tuple[int | None, str]]:
+    """(block or None, bibcode) of the papers the shipped catalogue knows (by place or molecule)."""
+    cat = load_catalogue()
+    out = []
+    for b, role, partner, text in _free_text_references(data):
+        for _, hit in cat.find_all(text, molecule=data.molecule, file=fname, role=role, partner=partner):
+            if hit is not None and hit.key is not None and hit.match in ("place", "molecule"):
+                out.append((b, hit.bibcode))
+    return out
+
+
+def _review_refs(data: LamdaData, fname: str | None, review: Path) -> list[tuple[int | None, str]]:
+    """(block or None, bibcode) of the papers decided in a review file for this file."""
+    from .refsearch import load
+
+    decided = {}
+    for g in load(review):
+        if g.bibcode and g.molecule == data.molecule:
+            for u in g.uses:
+                if u.file == fname:
+                    decided[(u.role, u.partner, g.normalised)] = g.bibcode
+    out = []
+    for b, role, partner, text in _free_text_references(data):
+        for seg in split_segments(text):
+            bib = decided.get((role, partner, normalise(seg)))
+            if bib:
+                out.append((b, bib))
+    return out
 
 
 def add_reference(
@@ -549,6 +611,7 @@ def _run(
     recompute: bool,
     extra_blocks: str | None,
     refs,
+    add_refs: bool | str | os.PathLike = False,
 ) -> tuple[LamdaData, _Doc | None, list[FixRecord]]:
     if trust not in (None, *TRUST_OPTIONS):
         raise FixError(f"trust must be 'id' or 'name', not {trust!r}")
@@ -582,6 +645,17 @@ def _run(
     _fix_columns(data, doc, missing_columns, recompute, log)
     for target, identifier in ref_list:
         _add_reference(data, doc, target, identifier, log)
+    if add_refs:
+        fname = Path(name).name if name != "<data>" else None
+        review = None if add_refs is True else Path(add_refs)
+        found = _review_refs(data, fname, review) if review else _catalogue_refs(data, fname)
+        how = " (review file)" if review else " (reference catalogue)"
+        for b, bibcode in found:
+            ident, text = _identifier_text(bibcode)
+            if b is None:
+                _append_to_levels(data, doc, ident.lower(), text, log, how)
+            else:
+                _append_to_block(data, doc, b, ident.lower(), text, log, how)
     notes = [r.note() for r in log]
     data.notes = [*data.notes, *notes]
     if doc is not None:
@@ -601,6 +675,7 @@ def fix(
     recompute: bool = False,
     extra_blocks: str | None = None,
     refs: dict[str, str] | Iterable[tuple[str, str]] | Iterable[str] | None = None,
+    add_refs: bool | str | os.PathLike = False,
 ) -> tuple[LamdaData, list[FixRecord]]:
     """Fix a LAMDA data set: the unambiguous issues by default, the others with an option.
 
@@ -630,6 +705,12 @@ def fix(
     refs : dict, iterable of (target, id) or of "TARGET=ID", optional
         Identifiers to append to reference texts (:func:`add_reference`): target
         ``"levels"``, ``"dataset"`` or a partner name; id a DOI, bibcode or arXiv ID.
+    add_refs : bool, str or os.PathLike, optional
+        Append the SciX links of free-text references (references without any
+        identifier): True takes them from the shipped reference catalogue (only papers
+        found at the same place or for the same molecule); a path takes them from the
+        decisions in a review file (``pylamda bib --search``, ``tools/catalogue.py``).
+        Default: False.
 
     Returns
     -------
@@ -655,6 +736,7 @@ def fix(
         recompute=recompute,
         extra_blocks=extra_blocks,
         refs=refs,
+        add_refs=add_refs,
     )
     return data, log
 
@@ -669,6 +751,7 @@ def patch(
     recompute: bool = False,
     extra_blocks: str | None = None,
     refs: dict[str, str] | Iterable[tuple[str, str]] | Iterable[str] | None = None,
+    add_refs: bool | str | os.PathLike = False,
 ) -> tuple[str, list[FixRecord]]:
     """Fix a LAMDA file and return its text with only the changed lines edited.
 
@@ -680,7 +763,7 @@ def patch(
     ----------
     source : LamdaData, str or os.PathLike
         The file, or data read from a file.
-    trust, sort_levels, inverted, missing_columns, recompute, extra_blocks, refs
+    trust, sort_levels, inverted, missing_columns, recompute, extra_blocks, refs, add_refs
         As in :func:`fix`.
 
     Returns
@@ -708,6 +791,7 @@ def patch(
         recompute=recompute,
         extra_blocks=extra_blocks,
         refs=refs,
+        add_refs=add_refs,
     )
     return doc.text(), log
 
@@ -750,5 +834,5 @@ OPTION_HINTS: dict[str, str] = {
     "R05": "--recompute",
     "F01": "--ref levels=ID",
     "F02": "--ref PARTNER=ID",
-    "F03": "--ref TARGET=ID",
+    "F03": "--ref TARGET=ID or --add-refs",
 }

@@ -110,6 +110,18 @@ def _parser() -> argparse.ArgumentParser:
     bib.add_argument("--keys", metavar="FILE", help="JSON file identifier -> key; read and updated (stable keys)")
     bib.add_argument("--no-cache", action="store_true", help="do not use the cache of resolved references")
     bib.add_argument("--no-catalogue", action="store_true", help="do not look up free-text references in the catalogue")
+    bib.add_argument(
+        "--search",
+        action="store_true",
+        help="search SciX for free-text references not in the catalogue; candidates go to the review file only",
+    )
+    bib.add_argument(
+        "--review",
+        metavar="FILE",
+        default="references_review.json",
+        help="review file of --search (default references_review.json; decisions in it are kept)",
+    )
+    bib.add_argument("--no-hints", action="store_true", help="--search: do not read the LAMDA/EMAA molecule pages")
 
     fx = sub.add_parser(
         "fix",
@@ -140,6 +152,15 @@ def _parser() -> argparse.ArgumentParser:
         action="append",
         metavar="TARGET=ID",
         help="append an identifier to a reference: TARGET levels, dataset or a partner; ID a DOI, bibcode or arXiv ID",
+    )
+    fx.add_argument(
+        "--add-refs",
+        nargs="?",
+        const=True,
+        default=False,
+        metavar="REVIEW",
+        help="append the SciX links of free-text references: from the reference catalogue, or from the decisions "
+        "in a review file (pylamda bib --search)",
     )
     return parser
 
@@ -248,6 +269,52 @@ def _compare(args: argparse.Namespace) -> int:
     return 1 if diff else 0
 
 
+def _bib_search(args: argparse.Namespace, datas: list, token: str | None) -> int:
+    """``pylamda bib --search``: SciX candidates into the review file; returns an exit status."""
+    import os
+    from pathlib import Path
+
+    from .bib import HttpClient, scix_token
+    from .catalogue import load_catalogue
+    from .refsearch import merge_review, search_references
+
+    token = scix_token(token)
+    if not token:
+        print("pylamda bib: --search needs a SciX API token (SCIX_API_TOKEN)", file=sys.stderr)
+        return 1
+    cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "pylamda" / "catalogue"
+    try:
+        groups = search_references(
+            datas,
+            client=HttpClient(token),
+            hints=not args.no_hints,
+            cache_dir=cache,
+            catalogue=None if args.no_catalogue else load_catalogue(),
+        )
+    except BibError as exc:
+        print(f"pylamda bib: error: {exc}", file=sys.stderr)
+        return 1
+    merged = merge_review(groups, Path(args.review))
+    print(
+        f"pylamda bib: --search: {len(groups)} free-text citations searched; candidates in {args.review} "
+        f"({len(merged)} groups); nothing is added before you decide there",
+        file=sys.stderr,
+    )
+    for g in groups:
+        if g.proposal:
+            what = f"proposal {g.proposal} ({g.proposal_reason})"
+        elif g.candidates:
+            c = g.candidates[0]
+            weak = " (weak)" if c["score"] < 0.3 else ""
+            what = f"best candidate {c['bibcode']}, score {c['score']:.2f}{weak}"
+        else:
+            what = "no candidate"
+        print(f"  {g.molecule}: {g.segment[:60]!r} -> {what}", file=sys.stderr)
+    if groups:
+        print(f"  show them: python -m pylamda.refsearch {args.review}", file=sys.stderr)
+    return 0
+
+
 def _bib(args: argparse.Namespace) -> int:
     datas: list[LamdaData] = []
     status = 0
@@ -302,6 +369,8 @@ def _bib(args: argparse.Namespace) -> int:
         )
         for r in result.free_text:
             print(f"  {r.path}: {r.use}: {r.text}", file=sys.stderr)
+    if args.search:
+        status = max(status, _bib_search(args, datas, token))
     counts = {}
     for e in result.entries:
         counts[e.source] = counts.get(e.source, 0) + 1
@@ -322,6 +391,7 @@ def _fix(args: argparse.Namespace) -> int:
         "recompute": args.recompute,
         "extra_blocks": args.extra_blocks,
         "refs": args.ref,
+        "add_refs": args.add_refs,
     }
     keep_layout = args.dry_run or args.patch or (args.in_place and not args.normalise)
     try:

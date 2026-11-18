@@ -10,7 +10,7 @@ _DOI = re.compile(r"(?:https?://(?:dx\.)?doi\.org/|\bdoi\s*[:=]?\s*|(?<![\w./]))
 # bibcodes in SciX or ADS links
 _BIBCODE_LINK = re.compile(
     r"(?:scixplorer\.org|ui\.adsabs\.harvard\.edu|adsabs\.harvard\.edu)/(?:#?abs/|cgi-bin/nph-bib_query\?bibcode=)"
-    r"([^/\s?#&\"'<>]+(?:%26[^/\s?#\"'<>]+)*)",
+    r"([^/\s?#\"'<>]+)",
     re.I,
 )
 # a bibcode on its own: YYYYJJJJJVVVVMPPPPA (19 characters)

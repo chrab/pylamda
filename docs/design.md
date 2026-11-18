@@ -546,7 +546,17 @@ package):
   from the shipped `references.bib` (source `catalogue`, offline); F03 does not report
   references that the catalogue knows. On the corpus: 70 catalogue entries in `bib`,
   F03 194 -> 61.
-- Still to do: `--search`, `fix --add-refs`.
+- `pylamda/refsearch.py`: the search part of the tool (hints, scoring, proposals,
+  review file) moved into the package; `pylamda bib --search` writes candidates for
+  references not in the catalogue to a review file (same format as the tool), never to
+  the BibTeX file; `python -m pylamda.refsearch FILE` shows it.
+- `pylamda fix --add-refs [REVIEW]`: SciX links of free-text references from the
+  catalogue (only matches by place or molecule) or from the decisions of a review file.
+  Links are written with `%26` for `&`; `find_bibcodes` also reads a raw `&`. Fix note
+  lines are not reference texts for `check` and `bib`.
+- `bibtex()` also takes the reviewed BibTeX of identifiers (DOI, bibcode) that the
+  catalogue knows, offline.
+- Step 6 is complete.
 
 **At run time**:
 

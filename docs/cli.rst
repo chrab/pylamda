@@ -113,6 +113,14 @@ Options:
    Do not use the cache of resolved references.
 ``--no-catalogue``
    Do not look up free-text references in the reference catalogue.
+``--search``
+   Search SciX for free-text references not in the catalogue (needs the token). The
+   candidates go into the review file only.
+``--review FILE``
+   The review file of ``--search`` (default ``references_review.json``); decisions in it
+   are kept.
+``--no-hints``
+   ``--search``: do not read the LAMDA/EMAA molecule pages.
 
 Exit codes:
 
@@ -152,6 +160,9 @@ Fixes:
 ``--ref TARGET=ID``
    Append a DOI, bibcode or arXiv ID to a reference (TARGET: ``levels``, ``dataset`` or
    a partner); repeatable.
+``--add-refs [REVIEW]``
+   Append the SciX links of all free-text references: from the reference catalogue, or
+   from the decisions in a review file.
 ``--no-sort``
    L01: do not sort the levels.
 ``--no-missing-columns``

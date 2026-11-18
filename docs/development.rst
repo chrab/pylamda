@@ -65,6 +65,7 @@ Layout
      compare.py      compare(), match_levels(), critical_density()
      bib.py          bibtex(): BibTeX export, SciX and doi.org, token, cache
      catalogue.py    the reference catalogue: text parsing, lookup
+     refsearch.py    SciX search for free-text references (bib --search, the tool)
      fix.py          fix(), patch(), add_reference(): normalised and patch mode
      data/           database_refs.bib (LAMDA and EMAA papers); references.json/.bib (catalogue)
    tools/

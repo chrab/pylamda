@@ -110,5 +110,17 @@ readers and :doc:`references` need no catalogue:
 - An identifier already in the text is not added again.
 - Only free text changes, which all readers ignore.
 
-Adding identifiers from the reference catalogue (``--add-refs``) follows with the
-catalogue (design, step 6).
+``--add-refs`` does this for all free-text references (references without any
+identifier) at once:
+
+.. code-block:: bash
+
+   pylamda fix co.dat --in-place --add-refs                 # from the reference catalogue
+   pylamda fix co.dat --in-place --add-refs review.json     # from the decisions in a review file
+
+- From the catalogue, only papers found at the same place or for the same molecule are
+  written; a match by the text alone is not.
+- From a review file (``pylamda bib --search``), only groups with a decision.
+- Each paper is appended as SciX link; ``&`` in a bibcode is written as ``%26``.
+- The note lines of a fix (``! pylamda ... fix: ...``) are not counted as references by
+  ``check`` and ``bib``.

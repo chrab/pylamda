@@ -12,6 +12,8 @@ from helpers import make_lamda
 sys.path.insert(0, str(Path(__file__).parents[1] / "tools"))
 import catalogue as cat  # noqa: E402
 
+from pylamda import refsearch  # noqa: E402
+
 PAGE = """<html><body>
 <p>The collisional rate coefficients are adopted from
 <a href="https://ui.adsabs.harvard.edu/abs/2010ApJ...718.1062Y/abstract">Yang et al. (2010)</a>
@@ -248,7 +250,7 @@ def test_main(tmp_path, monkeypatch, capsys):
     review = tmp_path / "review.json"
     monkeypatch.setenv("SCIX_API_TOKEN", "test")
     monkeypatch.setattr(cat, "HttpClient", lambda token: FakeClient())
-    monkeypatch.setattr(cat, "_get", lambda url, cache: PAGE if url.endswith("/CO.html") else None)
+    monkeypatch.setattr(refsearch, "_get", lambda url, cache: PAGE if url.endswith("/CO.html") else None)
     assert cat.main(["search", "--database", "prodimo", str(a), "-o", str(review), "--cache-dir", str(tmp_path)]) == 0
     data = json.loads(review.read_text())
     assert len(data) == 1 and data[0]["proposal"] == "2010ApJ...718.1062Y" and data[0]["decision"] is None
