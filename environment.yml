@@ -1,0 +1,33 @@
+# Development environment for pylamda: code, tests (including the gfortran test),
+# linting, packaging and documentation.
+#
+# Users do not need this file; they install pylamda with pip.
+#
+#   conda env create -f environment.yml
+#   conda activate PYLAMDA
+#   pip install --no-deps -e .
+#
+# Install pylamda itself with "--no-deps", so that conda keeps all dependencies.
+# Keep the versions in line with pyproject.toml (dependencies and the "dev" extra).
+name: PYLAMDA
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  # runtime
+  - numpy>=1.26
+  # extras "plot" and "bib"
+  - matplotlib>=3.8
+  - requests>=2.31
+  # tests and code style
+  - pytest>=8
+  - ruff>=0.6
+  - gfortran  # for the RADEX-style read test (pytest marker "fortran")
+  # packaging
+  - poetry
+  - pip
+  # documentation (docs/requirements.txt has the exact versions Read the Docs uses)
+  - sphinx>=8.2
+  - sphinx-rtd-theme>=3.0
+  - sphinx-copybutton>=0.5
+  - myst-parser>=4.0

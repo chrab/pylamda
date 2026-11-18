@@ -1,0 +1,6 @@
+# Packages needed to build the documentation (Read the Docs installs these and then
+# pylamda itself, see .readthedocs.yaml).
+sphinx==9.1.0
+sphinx-rtd-theme==3.1.0
+sphinx-copybutton==0.5.2
+myst-parser==5.2.0

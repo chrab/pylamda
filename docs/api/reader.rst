@@ -1,0 +1,4 @@
+Reading
+=======
+
+.. automodule:: pylamda.reader

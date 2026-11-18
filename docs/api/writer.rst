@@ -1,0 +1,4 @@
+Writing
+=======
+
+.. automodule:: pylamda.writer

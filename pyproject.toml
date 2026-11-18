@@ -1,0 +1,73 @@
+[project]
+name = "pylamda"
+version = "0.1.0"
+description = "Read, write, verify, compare, combine and fix files in the LAMDA format, and export their references as BibTeX"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Christian Rab" }]
+requires-python = ">=3.11"
+keywords = ["LAMDA", "RADEX", "EMAA", "NLTE", "collision rates", "Einstein A", "molecular data", "astrophysics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.8"]
+bib = ["requests>=2.31"]
+dev = [
+    # the other extras
+    "matplotlib>=3.8",
+    "requests>=2.31",
+    # tests and code style
+    "pytest>=8",
+    "ruff>=0.6",
+    # documentation (docs/requirements.txt has the exact versions Read the Docs uses)
+    "sphinx>=8.2",
+    "sphinx-rtd-theme>=3.0",
+    "sphinx-copybutton>=0.5",
+    "myst-parser>=4.0",
+]
+
+[project.urls]
+Repository = "https://github.com/chrab/pylamda"
+Issues = "https://github.com/chrab/pylamda/issues"
+
+[tool.poetry]
+packages = [{ include = "pylamda", from = "src" }]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["docs/_build"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # import order
+    "UP",  # newer Python syntax
+    "B",   # likely bugs
+    "NPY", # numpy
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "corpus: runs on the files given with --corpus (skipped without it)",
+    "fortran: needs gfortran on the PATH",
+]

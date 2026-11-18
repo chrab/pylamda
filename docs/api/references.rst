@@ -1,0 +1,4 @@
+References
+==========
+
+.. automodule:: pylamda.references
