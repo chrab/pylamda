@@ -58,11 +58,14 @@ Layout
      model.py        LamdaData, CollisionSet, SourceMap; partner IDs and names
      reader.py       read(): positional reader, collects issues, fills the SourceMap
      writer.py       write(): normalised layout
-     issues.py       Issue, the check codes, LamdaReadError
+     verify.py       verify(): the checks L, R, C, F, P (plus the reader's S issues)
+     issues.py       Issue, the check codes (CODES), LamdaReadError
+     formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs)
+     cli.py          the command line (pylamda check)
    tests/
      data/           real LAMDA and EMAA files used as fixtures
-     helpers.py      make_lamda() for small synthetic files
+     helpers.py      make_lamda() for small synthetic files (no issue with the defaults)
    docs/             Sphinx documentation; design.md is the design document
 
 Conventions
@@ -71,7 +74,8 @@ Conventions
 - Type annotations everywhere; NumPy-style docstrings for all public functions, with
   units in square brackets.
 - ruff for formatting and linting, line length 120.
-- Tests for every new function and every issue code.
+- Tests for every new function and every issue code. A new code goes into
+  ``issues.CODES`` and ``docs/checks.rst`` (a test checks this).
 - The documentation must build with ``sphinx-build -W``, as on Read the Docs.
 
 Continuous integration

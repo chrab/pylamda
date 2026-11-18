@@ -35,11 +35,13 @@ def same_data(a: LamdaData, b: LamdaData) -> bool:
 
 def make_lamda(
     *,
-    levels: str = "1 0.0 1.0 J=0\n2 3.8 3.0 J=1\n3 11.5 5.0 J=2",
-    nlev: str = "3",
-    lines: str = "1 2 1 7.2e-08 115.27 5.53\n2 3 2 6.9e-07 230.54 16.6",
+    molecule: str = "X",
+    mass: str = "28.0",
+    levels: str = "1 0.0 1.0 J=0\n2 3.845033 3.0 J=1\n3 11.534919 5.0 J=2",
+    nlev: str = "3 - ROTATION - Ref: CDMS https://cdms.astro.uni-koeln.de",
+    lines: str = "1 2 1 7.203e-08 115.2711894 5.532\n2 3 2 6.910e-07 230.5369826 16.596",
     nlin: str = "2",
-    partner: str = "2 X + p-H2 ! a reference",
+    partner: str = "2 X + p-H2 ! Yang et al. (2010) https://doi.org/10.1088/0004-637X/718/2/1062",
     ncol: str = "3",
     ntemp: str = "2",
     temps: str = "10.0 20.0",
@@ -48,11 +50,14 @@ def make_lamda(
     npart: str = "1",
     after: str = "",
 ) -> str:
-    """A small synthetic LAMDA file (3 levels, 2 lines, one partner); arguments replace parts."""
+    """A small synthetic LAMDA file (3 levels, 2 lines, one partner); arguments replace parts.
+
+    With the defaults, :func:`pylamda.verify` finds no issue.
+    """
     text = f"""!MOLECULE
-X
+{molecule}
 !MOLECULAR WEIGHT
-28.0
+{mass}
 !NUMBER OF ENERGY LEVELS
 {nlev}
 !LEVEL + ENERGIES(cm^-1) + WEIGHT + J
@@ -75,3 +80,14 @@ X
 {rates}
 """
     return text + after
+
+
+def collision_block(
+    partner: str, rates: str = "1 2 1 1.0e-11 2.0e-11", ntemp: str = "2", temps: str = "10.0 20.0"
+) -> str:
+    """One more collision block for ``make_lamda(after=...)`` (raise ``npart`` with it)."""
+    ncol = len(rates.splitlines())
+    return (
+        f"!COLLISIONS BETWEEN\n{partner}\n!NUMBER OF COLL TRANS\n{ncol}\n!NUMBER OF COLL TEMPS\n{ntemp}\n"
+        f"!COLL TEMPS\n{temps}\n!TRANS + UP + LOW + COLLRATES(cm^3 s^-1)\n{rates}\n"
+    )

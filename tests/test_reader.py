@@ -208,6 +208,7 @@ def test_issue_as_text_and_dict():
         "message": "too many values",
         "line": 12,
         "fixable": True,
+        "count": 1,
     }
     assert set(pylamda.CODES) >= {"S01", "S02", "S03", "S04", "S05", "S06", "S07"}
 
@@ -227,6 +228,6 @@ def test_source_map(tmp_path):
     assert m.notes == 30 and m.raw[m.notes - 1] == "!NOTES"
     assert d.notes == ["! a note"]
     # the map points at the lines of the items
-    assert m.raw[m.lines[1] - 1].split()[3] == "6.9e-07"
+    assert m.raw[m.lines[1] - 1].split()[3] == "6.910e-07"
     assert m.raw[b.partner - 1] == d.collisions[0].partner_text
     assert read(_write(tmp_path, make_lamda())).source_map.notes is None

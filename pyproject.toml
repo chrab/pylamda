@@ -38,6 +38,9 @@ dev = [
     "myst-parser>=4.0",
 ]
 
+[project.scripts]
+pylamda = "pylamda.cli:main"
+
 [project.urls]
 Repository = "https://github.com/chrab/pylamda"
 Issues = "https://github.com/chrab/pylamda/issues"

@@ -103,3 +103,15 @@ shortest text that reads back unchanged.
   disagree.
 - Notes and data after the last block are written as comment lines.
 - Read → write → read gives the same data.
+
+Checking
+--------
+
+:func:`pylamda.verify` runs all checks: the reader's structure issues and the checks of
+levels, lines, collisions, references and physics. See :doc:`checks` for the codes and
+:doc:`cli` for ``pylamda check``.
+
+.. code-block:: python
+
+   issues = pylamda.verify("co.dat")
+   issues = pylamda.verify(data, physics=False, ignore=["F03"])

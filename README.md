@@ -9,16 +9,21 @@ pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/mo
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
 
-**Status:** early development. Reading and writing work. Verify, compare, combine, fix
+**Status:** early development. Reading, writing and checking work. Compare, combine, fix
 and the BibTeX export follow (see `docs/design.md`, section 14).
 
 ```python
 import pylamda
 
 data = pylamda.read("co.dat")
-for issue in data.issues:  # structure issues found by the reader
+for issue in pylamda.verify(data):  # all checks (see docs/checks.rst)
     print(issue)
 pylamda.write(data, "co_normalised.dat")
+```
+
+```bash
+pylamda check data/*.dat            # exit code 1 if there are errors
+pylamda check --statistics data/*.dat
 ```
 
 ## Installation

@@ -19,6 +19,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="directory, file or quoted glob pattern of LAMDA files for the corpus tests (repeatable); "
         f"a directory gives all its {', '.join(_SUFFIXES)} files",
     )
+    parser.addoption(
+        "--corpus-snapshot",
+        metavar="FILE",
+        help="JSON file with the issue counts per corpus file and code; compared, or written if missing",
+    )
+    parser.addoption("--update-snapshot", action="store_true", help="write the --corpus-snapshot file anew")
 
 
 def corpus_files(config: pytest.Config) -> list[Path]:

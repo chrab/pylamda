@@ -1,13 +1,14 @@
 """Issues: deviations from the LAMDA standard found in a file or a data set.
 
 The reader (:func:`pylamda.read`) collects the structure issues (codes ``S..``) it finds
-while reading. Each issue has a code, a severity and a message, as in ruff. The codes
-and their default severities are in :data:`CODES`; the design document lists all
-planned checks (section 6.1).
+while reading; :func:`pylamda.verify` adds the checks of the data (``L``, ``R``, ``C``,
+``F``, ``P``). Each issue has a code, a severity and a message, as in ruff. The codes,
+their default severities and short descriptions are in :data:`CODES`.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 
 #: Severities, from the most to the least serious.
@@ -15,13 +16,49 @@ SEVERITIES: tuple[str, ...] = ("error", "warning", "info")
 
 #: Check code -> (default severity, short description).
 CODES: dict[str, tuple[str, str]] = {
+    # structure (found by the reader)
     "S01": ("error", "file shorter than its counts require"),
     "S02": ("error", "level or transition numbers not 1..N in order"),
     "S03": ("warning", "data after the last declared block (more blocks than NPART)"),
     "S04": ("warning", "more values on a line than declared (NTEMP)"),
     "S05": ("error", "text line without '!' between blocks (read as data by Fortran)"),
-    "S06": ("error", "number that Fortran cannot read"),
+    "S06": ("error", "number that Fortran cannot read, or a partner line without the ID"),
     "S07": ("error", "level or radiative-transition row with fewer values than required"),
+    # levels
+    "L01": ("warning", "energies not in increasing order"),
+    "L02": ("error", "weight g <= 0 or not finite (error), or not an integer (info)"),
+    "L03": ("warning", "two levels with the same E, g and quanta"),
+    "L04": ("info", "quanta empty or not unique"),
+    "L05": ("info", "lowest level energy is not 0"),
+    # radiative transitions
+    "R01": ("error", "upper or lower level outside 1..NLEV, or upper = lower"),
+    "R02": ("error", "E(up) <= E(low)"),
+    "R03": ("error", "Einstein A <= 0 or not finite"),
+    "R04": ("warning", "frequency missing or not (E_up - E_low) * c"),
+    "R05": ("warning", "E_up [K] missing or not E(up) * hc/k"),
+    "R06": ("error", "the same (up, low) twice"),
+    # collisions
+    "C01": ("error", "partner ID not in 1..7"),
+    "C02": ("warning", "the partner text names another standard partner than the ID"),
+    "C03": ("error", "the same partner ID twice"),
+    "C04": ("warning", "H2 together with p-H2 or o-H2 (counted twice by some codes)"),
+    "C05": ("error", "temperatures not strictly increasing, or <= 0"),
+    "C06": ("error", "rate < 0 or not finite"),
+    "C07": ("info", "rate row that is 0 at all temperatures"),
+    "C08": ("warning", "E(up) < E(low) in a rate row (wrong order or an excitation rate)"),
+    "C09": ("error", "the same (up, low) twice in one block"),
+    "C10": ("error", "upper or lower level outside 1..NLEV, or upper = lower"),
+    "C11": ("warning", "the partner text names a partner outside the standard (read by its ID)"),
+    "C12": ("warning", "the partner text names He, the ID is H2, and the text says scaled (He rates scaled to H2)"),
+    # references
+    "F01": ("warning", "no reference for the levels and lines"),
+    "F02": ("warning", "partner without a reference"),
+    "F03": ("info", "reference without a DOI, bibcode or link (free text only)"),
+    # physics heuristics
+    "P01": ("info", "rate row that behaves like an excitation rate"),
+    "P02": ("info", "partner text says the rates are scaled (codes that scale may scale twice)"),
+    "P03": ("info", "rate outside the plausible range"),
+    "P04": ("info", "mass differs from the formula mass of the molecule"),
 }
 
 
@@ -38,9 +75,13 @@ class Issue:
     message : str
         What was found, in one line.
     line : int or None
-        Line number in the file (1-based), or None if the issue has no single line.
+        Line number in the file (1-based), or None if the issue has no single line. For
+        an issue about several items, the line of the first one.
     fixable : bool
         Whether ``pylamda fix`` can remove the issue.
+    count : int
+        Number of items affected (rows, levels, ...): checks report one issue per
+        block or section, not one per row.
     """
 
     code: str
@@ -48,6 +89,7 @@ class Issue:
     message: str
     line: int | None = None
     fixable: bool = False
+    count: int = 1
 
     def __str__(self) -> str:
         where = f"line {self.line}: " if self.line is not None else ""
@@ -64,7 +106,14 @@ class Issue:
         return asdict(self)
 
 
-def make_issue(code: str, message: str, line: int | None = None, fixable: bool = False) -> Issue:
+def make_issue(
+    code: str,
+    message: str,
+    line: int | None = None,
+    fixable: bool = False,
+    count: int = 1,
+    severity: str | None = None,
+) -> Issue:
     """An :class:`Issue` with the default severity of ``code``.
 
     Parameters
@@ -77,6 +126,10 @@ def make_issue(code: str, message: str, line: int | None = None, fixable: bool =
         Line number in the file (1-based).
     fixable : bool, optional
         Whether a fix exists. Default: False.
+    count : int, optional
+        Number of items affected. Default: 1.
+    severity : str or None, optional
+        Severity if not the default of ``code``.
 
     Returns
     -------
@@ -88,7 +141,27 @@ def make_issue(code: str, message: str, line: int | None = None, fixable: bool =
     KeyError
         If ``code`` is not in :data:`CODES`.
     """
-    return Issue(code, CODES[code][0], message, line, fixable)
+    default = CODES[code][0]
+    return Issue(code, severity or default, message, None if line is None else int(line), fixable, int(count))
+
+
+def match_codes(code: str, selectors: Iterable[str]) -> bool:
+    """Whether ``code`` matches one of ``selectors`` (code prefixes, as in ruff).
+
+    Parameters
+    ----------
+    code : str
+        A check code, e.g. ``"C02"``.
+    selectors : iterable of str
+        Code prefixes: ``"C"`` (all C codes), ``"C0"`` (C01-C09) or ``"C02"``; case is
+        ignored.
+
+    Returns
+    -------
+    bool
+        True if a selector is a prefix of ``code``.
+    """
+    return any(code.upper().startswith(s.strip().upper()) for s in selectors if s.strip())
 
 
 class LamdaReadError(ValueError):

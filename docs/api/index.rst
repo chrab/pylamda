@@ -10,5 +10,8 @@ The functions and classes below are also available directly from ``pylamda``
    model
    reader
    writer
+   verify
    issues
+   formula
    references
+   cli

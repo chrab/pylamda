@@ -1,8 +1,8 @@
 # pylamda: design
 
 Status (2026-11-18): design with decisions taken (section 13). Moved from astrolinedata
-(`docs/design_lamda.md`, commit `e0c038f`). Step 1 of section 14 is implemented
-(package skeleton, data model, reader, writer).
+(`docs/design_lamda.md`, commit `e0c038f`). Steps 1 and 2 of section 14 are
+implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
 the relation to astrolinedata, section 13 the decisions.
@@ -271,6 +271,7 @@ Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-
 | C09 | the same (up, low) twice in one block | error |
 | C10 | up or low outside 1..NLEV, or up = low | error |
 | C11 | the partner text names a partner outside the standard (EMAA: p-H2O, o-H2O, CO); not supported, the block is read by its ID | warning |
+| C12 | the partner text names He, the ID is H2/p-H2/o-H2, and the text says the rates are scaled (`1 SO2 + He ! ... scaled *1.39`): He rates scaled to H2 with the name not changed; reported instead of C02 | warning |
 
 **P: physics heuristics**
 
@@ -295,6 +296,19 @@ Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-
 | F04 | a DOI or bibcode that does not resolve (only with `--online`) | warning |
 
 More checks can come later, without API changes.
+
+Implementation notes (step 2):
+
+- A check of many rows (rates, transitions, levels) gives one issue per block or
+  section, with the number of rows (`Issue.count`), the first example and its line.
+- R04/R05: the tolerance is `rtol` plus the rounding of the numbers as written (from the
+  SourceMap); an energy of exactly 0 is exact.
+- P01: the slope is fitted over the temperatures below ΔE/2k; a row is reported if the
+  slope is between 2/3 and 3/2 of −ΔE/k. Rows labelled with the wrong levels have
+  another ΔE and may be missed (the O+H rows in `Oatom_Lambda_extra_NIST.dat`, whose
+  grid starts at 50 K).
+- P03 limits: 1e-8 cm3 s-1 (neutral partners), 1e-7 (H+), 1e-4 (electrons).
+- F04 (`--online`) comes with step 4; the catalogue part of F03 with step 6.
 
 ## 7. Fix
 

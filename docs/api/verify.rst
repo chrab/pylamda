@@ -1,0 +1,4 @@
+Verifying
+=========
+
+.. automodule:: pylamda.verify
