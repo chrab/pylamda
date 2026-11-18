@@ -1,8 +1,9 @@
 # pylamda: design
 
 Status (2026-11-18): design with decisions taken (section 13). Moved from astrolinedata
-(`docs/design_lamda.md`, commit `e0c038f`). Steps 1 and 2 of section 14 are
-implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`).
+(`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 3 of section 14 are
+implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`;
+`compare` and `pylamda compare`).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
 the relation to astrolinedata, section 13 the decisions.
@@ -359,6 +360,23 @@ Merge `compare_lamda` (astrolinedata) and `compare_rates` (TEST_LAMDA_FILES):
     behind 1000 unchanged low levels.
 - **Output**: `bool(diff)`, a text summary, JSON, and plots with the `plot` extra
   (ratio vs E_up per temperature, as `report.py`).
+
+Implementation notes (step 3):
+
+- `match_levels` returns a `LevelMatch` (1-based map, method). `auto`: by quanta
+  (normalised as in TEST_LAMDA_FILES: lower case, blanks/`_`/`,`/`;` as one separator)
+  if unique in both and at least half match; the rest by energy and g
+  (`quanta+energy`); else by energy and g. Default tolerances as astrolinedata's
+  `compare_lamda` (1e-3 cm-1 + 1e-5 E).
+- `LamdaDiff`/`PartnerDiff` keep all fields of astrolinedata, so its code can switch.
+  New: `a_ratio`, and per partner `interp_temperatures`, `rates_interpolated`,
+  `critical_density`, `total_rate` (each a `RatioSummary` with per-T and per-E_up
+  statistics).
+- Only the exact comparison decides `bool(diff)`. The union-grid and per-level summaries
+  count a change above `limit` (default 0.1, TEST_LAMDA_FILES' `LIMIT`).
+- Partners are compared by ID; a repeated ID is `"<name> #2"`.
+- CLI: `pylamda compare A B`, exit code 0/1/2 as `diff`.
+- Plots follow with step 8.
 
 ## 9. Combine
 

@@ -11,6 +11,7 @@ The functions and classes below are also available directly from ``pylamda``
    reader
    writer
    verify
+   compare
    issues
    formula
    references

@@ -1,7 +1,7 @@
 Command line
 ============
 
-``pylamda`` (or ``python -m pylamda``) has one command so far, ``check``.
+``pylamda`` (or ``python -m pylamda``) has two commands so far, ``check`` and ``compare``.
 
 pylamda check
 -------------
@@ -51,3 +51,35 @@ Exit codes:
 - 0: no issue of severity ``error``;
 - 1: at least one error;
 - 2: at least one file cannot be read (or opened).
+
+pylamda compare
+---------------
+
+.. code-block:: text
+
+   pylamda compare [options] A B
+
+Compares two LAMDA files and prints what differs from A to B (see :doc:`comparing`), or
+``no differences``.
+
+Options:
+
+``--match auto|quanta|energy|index``
+   How levels are matched (default ``auto``).
+``--rtol X``
+   Relative change that counts in the exact comparison (default 1e-6).
+``--atol X``
+   Energy tolerance [cm⁻¹] for matching levels by energy (default 1e-3).
+``--limit X``
+   Relative change that counts on the union grid, per level and per E_up range
+   (default 0.1).
+``--format text|json``
+   Output format.
+``--max-items N``
+   How many items of a list are named before "..." (default 5).
+
+Exit codes, as ``diff``:
+
+- 0: no differences;
+- 1: differences;
+- 2: a file cannot be read (or opened).

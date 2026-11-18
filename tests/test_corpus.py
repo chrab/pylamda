@@ -15,7 +15,7 @@ import pytest
 from conftest import corpus_files
 from helpers import same_data
 
-from pylamda import CODES, SEVERITIES, LamdaReadError, read, verify, write
+from pylamda import CODES, SEVERITIES, LamdaReadError, compare, read, verify, write
 
 pytestmark = pytest.mark.corpus
 
@@ -32,6 +32,8 @@ def test_corpus_round_trip(corpus_file, tmp_path):
     assert d2.issues == []
     write(d2, tmp_path / "b.dat")
     assert (tmp_path / "a.dat").read_text() == (tmp_path / "b.dat").read_text()
+    diff = compare(d, d2)
+    assert not diff, diff.summary()
 
 
 def test_corpus_verify(corpus_file):

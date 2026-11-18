@@ -1,7 +1,8 @@
-"""Command line: ``pylamda check FILE ...``.
+"""Command line: ``pylamda check FILE ...`` and ``pylamda compare A B``.
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
-``error``, 2 = at least one file cannot be read.
+``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
+0 = no differences, 1 = differences, 2 = a file cannot be read.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from collections import Counter
 from collections.abc import Sequence
 
 from . import __version__
+from .compare import compare
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
 from .verify import verify
 
@@ -54,6 +56,33 @@ def _parser() -> argparse.ArgumentParser:
         "--statistics", action="store_true", help="show the number of issues per code instead of each issue"
     )
     check.add_argument("--list-codes", action="store_true", help="list all check codes and exit")
+
+    cmp = sub.add_parser(
+        "compare",
+        help="compare two LAMDA files",
+        description="Compare two LAMDA files: levels, lines, rates, critical densities. Exit code: "
+        "0 = no differences, 1 = differences, 2 = a file cannot be read.",
+    )
+    cmp.add_argument("a", metavar="A", help="the first (old) file")
+    cmp.add_argument("b", metavar="B", help="the second (new) file")
+    cmp.add_argument(
+        "--match",
+        choices=("auto", "quanta", "energy", "index"),
+        default="auto",
+        help="how levels are matched (default auto: quanta, the rest by energy and g)",
+    )
+    cmp.add_argument(
+        "--rtol", type=float, default=1e-6, help="relative change that counts in the exact comparison (default 1e-6)"
+    )
+    cmp.add_argument("--atol", type=float, default=1e-3, help="energy tolerance [cm-1] for matching (default 1e-3)")
+    cmp.add_argument(
+        "--limit",
+        type=float,
+        default=0.1,
+        help="relative change that counts on the union grid, per level and per E_up range (default 0.1)",
+    )
+    cmp.add_argument("--format", choices=("text", "json"), default="text", help="output format (default text)")
+    cmp.add_argument("--max-items", type=int, default=5, help="items named per list before '...' (default 5)")
     return parser
 
 
@@ -142,6 +171,24 @@ def _print_statistics(results: list) -> None:
     _print_summary(results)
 
 
+def _compare(args: argparse.Namespace) -> int:
+    try:
+        diff = compare(args.a, args.b, match=args.match, rtol=args.rtol, atol=args.atol, limit=args.limit)
+    except LamdaReadError as exc:
+        print(f"pylamda compare: error: {exc}", file=sys.stderr)
+        return 2
+    except (OSError, ValueError) as exc:
+        print(f"pylamda compare: error: {exc}", file=sys.stderr)
+        return 2
+    if args.format == "json":
+        print(json.dumps(diff.as_dict(), indent=2, ensure_ascii=False))
+    elif diff:
+        print("\n".join(diff.summary(max_items=args.max_items)))
+    else:
+        print("no differences")
+    return 1 if diff else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command line.
 
@@ -158,6 +205,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "check":
         return _check(args)
+    if args.command == "compare":
+        return _compare(args)
     return 2  # pragma: no cover (argparse requires a command)
 
 

@@ -59,10 +59,11 @@ Layout
      reader.py       read(): positional reader, collects issues, fills the SourceMap
      writer.py       write(): normalised layout
      verify.py       verify(): the checks L, R, C, F, P (plus the reader's S issues)
+     compare.py      compare(), match_levels(), critical_density()
      issues.py       Issue, the check codes (CODES), LamdaReadError
      formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs)
-     cli.py          the command line (pylamda check)
+     cli.py          the command line (pylamda check, pylamda compare)
    tests/
      data/           real LAMDA and EMAA files used as fixtures
      helpers.py      make_lamda() for small synthetic files (no issue with the defaults)

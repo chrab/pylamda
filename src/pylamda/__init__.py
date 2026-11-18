@@ -14,6 +14,7 @@ reported as issues, never silently interpreted.
 
 from importlib.metadata import PackageNotFoundError, version
 
+from .compare import LamdaDiff, LevelMatch, PartnerDiff, compare, critical_density, match_levels
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
 from .model import (
     PARTNER_IDS,
@@ -40,16 +41,22 @@ __all__ = [
     "CODES",
     "PARTNERS",
     "PARTNER_IDS",
+    "PartnerDiff",
     "SEVERITIES",
     "STANDARD_PARTNERS",
     "BlockSource",
     "CollisionSet",
     "Issue",
+    "LevelMatch",
     "LamdaData",
+    "LamdaDiff",
     "LamdaReadError",
     "SourceMap",
     "__version__",
+    "compare",
+    "critical_density",
     "find_dois",
+    "match_levels",
     "partner_name",
     "read",
     "split_partner_line",

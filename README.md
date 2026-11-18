@@ -9,7 +9,7 @@ pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/mo
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
 
-**Status:** early development. Reading, writing and checking work. Compare, combine, fix
+**Status:** early development. Reading, writing, checking and comparing work. Combine, fix
 and the BibTeX export follow (see `docs/design.md`, section 14).
 
 ```python
@@ -24,6 +24,7 @@ pylamda.write(data, "co_normalised.dat")
 ```bash
 pylamda check data/*.dat            # exit code 1 if there are errors
 pylamda check --statistics data/*.dat
+pylamda compare old.dat new.dat     # exit code 1 if they differ
 ```
 
 ## Installation

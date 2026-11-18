@@ -1,0 +1,4 @@
+Comparing
+=========
+
+.. automodule:: pylamda.compare
