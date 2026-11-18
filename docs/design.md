@@ -524,6 +524,25 @@ package):
 6. Rerun when LAMDA or EMAA add files (astrolinedata sees new versions in LAMDA's
    `database.history`).
 
+**State (2026-11-18):** `tools/catalogue.py` does steps 1-5 above and `build`:
+
+- `search`: grouping (one decision per molecule and normalised text); hints from the
+  file's comments, the LAMDA molecule page (reference links to ADS) and, for EMAA
+  files, the EMAA species page; SciX queries by first author and year, by species, by
+  volume/page/year, and by compound surname; scores (volume, page, journal, first
+  author, co-authors, species and partner in the title with charge states and parent
+  molecule, journal article, named by a hint); a pre-filled `proposal` if a hint names
+  the paper or volume and page match, a weaker "best candidate" proposal otherwise.
+- `confirm` (`--include-best`, `--include-first-pass`), `show` filters, `build`.
+- The review file `tools/catalogue_review.json` is kept in the repository.
+- First catalogue built from the existing corpus (75 ProDiMo files, the LAMDA and EMAA
+  test files, `cn.dat`, one CHIANTI file): 126 groups, 167 uses; 114 confirmed (76
+  tool proposals, 38 from a reviewed first pass by Claude), 9 skipped, 3 open (not in
+  SciX: Faure 2014 C2H+e, S. Green HNCO, Faure 2012 OH+e). Result: 72 entries, 154
+  lookup rows in `pylamda/data/references.json` and `.bib`.
+- Still to do: the lookup in `pylamda bib` and `pylamda check` (F03), `--search`,
+  `fix --add-refs`.
+
 **At run time**:
 
 - `pylamda bib` and `pylamda check` use the catalogue without asking.

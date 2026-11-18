@@ -85,6 +85,26 @@ Conventions
   ``issues.CODES`` and ``docs/checks.rst`` (a test checks this).
 - The documentation must build with ``sphinx-build -W``, as on Read the Docs.
 
+The reference catalogue (maintainers)
+-------------------------------------
+
+``tools/catalogue.py`` (not installed) builds the catalogue of free-text references
+(design, section 10.1). It needs the SciX token (``SCIX_API_TOKEN``).
+
+.. code-block:: bash
+
+   python tools/catalogue.py search --database prodimo data/*Lambda*.dat -o review.json
+   python tools/catalogue.py show review.json --open          # what still needs a decision
+   python tools/catalogue.py show review.json --proposals     # the pre-filled proposals
+   python tools/catalogue.py confirm review.json              # accept all proposals
+
+``search`` groups equal texts of the same molecule, collects hints (the file's comments,
+the LAMDA molecule page, the EMAA species page; pages cached in
+``~/.cache/pylamda/catalogue``), searches SciX by first author and year, and pre-fills a
+proposal where a hint names the paper or volume and page match. The reviewer sets
+``decision`` per group: ``"ok"`` (the proposal), a bibcode, ``"none"`` or ``"skip"``.
+Running ``search`` again keeps the decisions and adds new uses.
+
 Continuous integration
 ----------------------
 

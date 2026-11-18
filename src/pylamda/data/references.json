@@ -1,0 +1,1909 @@
+{
+ "description": "Reviewed free-text references of LAMDA files (pylamda design document, section 10.1). entries: key -> bibcode, DOI. lookup: one row per place a reference text occurs (text normalised: lower case, punctuation as blanks); key null = reviewed, not in SciX. Built by tools/catalogue.py.",
+ "version": 1,
+ "updated": "2026-11-18",
+ "entries": {
+  "Abrahamsson2007": {
+   "bibcode": "2007ApJ...654.1171A",
+   "doi": "10.1086/509631",
+   "reviewed": true
+  },
+  "Ajili2013": {
+   "bibcode": "2013A&A...556A..82A",
+   "doi": "10.1051/0004-6361/201220913",
+   "reviewed": true
+  },
+  "Allison1971": {
+   "bibcode": "1971A&A....13..331A",
+   "doi": null,
+   "reviewed": true
+  },
+  "Balakrishnan2002": {
+   "bibcode": "2002ApJ...568..443B",
+   "doi": "10.1086/321434",
+   "reviewed": true
+  },
+  "Barinovs2005": {
+   "bibcode": "2005ApJ...620..537B",
+   "doi": "10.1086/426860",
+   "reviewed": true
+  },
+  "Bell1998": {
+   "bibcode": "1998MNRAS.293L..83B",
+   "doi": "10.1046/j.1365-8711.1998.01364.x",
+   "reviewed": true
+  },
+  "CecchiPestellini2002": {
+   "bibcode": "2002ApJ...571.1015C",
+   "doi": "10.1086/340020",
+   "reviewed": true
+  },
+  "Chambaud1980": {
+   "bibcode": "1980JPhB...13.4205C",
+   "doi": "10.1088/0022-3700/13/21/014",
+   "reviewed": true
+  },
+  "Chandra2000": {
+   "bibcode": "2000A&AS..142..113C",
+   "doi": "10.1051/aas:2000142",
+   "reviewed": true
+  },
+  "Dagdigian2018": {
+   "bibcode": "2018MNRAS.473.4824D",
+   "doi": "10.1093/mnras/stx2697",
+   "reviewed": true
+  },
+  "Dagdigian2022": {
+   "bibcode": "2022JChPh.157j4305D",
+   "doi": "10.1063/5.0110724",
+   "reviewed": true
+  },
+  "Danby1988": {
+   "bibcode": "1988MNRAS.235..229D",
+   "doi": "10.1093/mnras/235.1.229",
+   "reviewed": true
+  },
+  "Daniel2011": {
+   "bibcode": "2011A&A...536A..76D",
+   "doi": "10.1051/0004-6361/201118049",
+   "reviewed": true
+  },
+  "Daniel2014": {
+   "bibcode": "2014MNRAS.444.2544D",
+   "doi": "10.1093/mnras/stu1670",
+   "reviewed": true
+  },
+  "Dayou2006": {
+   "bibcode": "2006A&A...459..297D",
+   "doi": "10.1051/0004-6361:20065718",
+   "reviewed": true
+  },
+  "Dere1997": {
+   "bibcode": "1997A&AS..125..149D",
+   "doi": "10.1051/aas:1997368",
+   "reviewed": true
+  },
+  "Dubernet2009": {
+   "bibcode": "2009A&A...497..911D",
+   "doi": "10.1051/0004-6361/200810680",
+   "reviewed": true
+  },
+  "Dumouchel2010": {
+   "bibcode": "2010MNRAS.406.2488D",
+   "doi": "10.1111/j.1365-2966.2010.16826.x",
+   "reviewed": true
+  },
+  "Faure2007": {
+   "bibcode": "2007MNRAS.382..840F",
+   "doi": "10.1111/j.1365-2966.2007.12416.x",
+   "reviewed": true
+  },
+  "Flower1977": {
+   "bibcode": "1977JPhB...10.3673F",
+   "doi": "10.1088/0022-3700/10/18/024",
+   "reviewed": true
+  },
+  "Flower1988": {
+   "bibcode": "1988JPhB...21L.451F",
+   "doi": "10.1088/0953-4075/21/15/006",
+   "reviewed": true
+  },
+  "Flower1999": {
+   "bibcode": "1999MNRAS.305..651F",
+   "doi": "10.1046/j.1365-8711.1999.02451.x",
+   "reviewed": true
+  },
+  "Flower2001": {
+   "bibcode": "2001JPhB...34.2731F",
+   "doi": "10.1088/0953-4075/34/13/315",
+   "reviewed": true
+  },
+  "FroeseFischer2004": {
+   "bibcode": "2004ADNDT..87....1F",
+   "doi": "10.1016/j.adt.2004.02.001",
+   "reviewed": true
+  },
+  "Green1974": {
+   "bibcode": "1974ApJ...191..653G",
+   "doi": "10.1086/153006",
+   "reviewed": true
+  },
+  "Green1978": {
+   "bibcode": "1978ApJS...37..169G",
+   "doi": "10.1086/190523",
+   "reviewed": true
+  },
+  "Green1986": {
+   "bibcode": "1986ApJ...309..331G",
+   "doi": "10.1086/164605",
+   "reviewed": true
+  },
+  "Green1989": {
+   "bibcode": "1989ApJS...70..813G",
+   "doi": "10.1086/191358",
+   "reviewed": true
+  },
+  "Green1994": {
+   "bibcode": "1994ApJ...434..188G",
+   "doi": "10.1086/174715",
+   "reviewed": true
+  },
+  "Green1995": {
+   "bibcode": "1995ApJS..100..213G",
+   "doi": "10.1086/192216",
+   "reviewed": true
+  },
+  "Hammami2009": {
+   "bibcode": "2009A&A...507.1083H",
+   "doi": "10.1051/0004-6361/200912663",
+   "reviewed": true
+  },
+  "HernandezVera2017": {
+   "bibcode": "2017MNRAS.468.1084H",
+   "doi": "10.1093/mnras/stx422",
+   "reviewed": true
+  },
+  "Hollenbach1989": {
+   "bibcode": "1989ApJ...342..306H",
+   "doi": "10.1086/167595",
+   "reviewed": true
+  },
+  "Jaquet1992": {
+   "bibcode": "1992JPhB...25..285J",
+   "doi": "10.1088/0953-4075/25/1/030",
+   "reviewed": true
+  },
+  "Johnson1987": {
+   "bibcode": "1987JPhB...20.2553J",
+   "doi": "10.1088/0022-3700/20/11/022",
+   "reviewed": true
+  },
+  "Keenan1986": {
+   "bibcode": "1986MNRAS.220..571K",
+   "doi": "10.1093/mnras/220.3.571",
+   "reviewed": true
+  },
+  "Klos2007": {
+   "bibcode": "2007CPL...445...12K",
+   "doi": "10.1016/j.cplett.2007.07.035",
+   "reviewed": true
+  },
+  "Krems2006": {
+   "bibcode": "2006ApJ...647.1531K",
+   "doi": "10.1086/504892",
+   "reviewed": true
+  },
+  "Launay1977": {
+   "bibcode": "1977A&A....56..289L",
+   "doi": null,
+   "reviewed": true
+  },
+  "Launay1977a": {
+   "bibcode": "1977JPhB...10..879L",
+   "doi": "10.1088/0022-3700/10/5/024",
+   "reviewed": true
+  },
+  "Lim1999": {
+   "bibcode": "1999MNRAS.306..473L",
+   "doi": "10.1046/j.1365-8711.1999.02533.x",
+   "reviewed": true
+  },
+  "Lique2006": {
+   "bibcode": "2006A&A...450..399L",
+   "doi": "10.1051/0004-6361:20054520",
+   "reviewed": true
+  },
+  "Lique2006a": {
+   "bibcode": "2006A&A...451.1125L",
+   "doi": "10.1051/0004-6361:20054363",
+   "reviewed": true
+  },
+  "Lique2009": {
+   "bibcode": "2009A&A...493..557L",
+   "doi": "10.1051/0004-6361:200810453",
+   "reviewed": true
+  },
+  "Lique2010": {
+   "bibcode": "2010JChPh.132b4303L",
+   "doi": "10.1063/1.3285811",
+   "reviewed": true
+  },
+  "Lique2010a": {
+   "bibcode": "2010JChPh.132d4311L",
+   "doi": "10.1063/1.3299283",
+   "reviewed": true
+  },
+  "Lique2013": {
+   "bibcode": "2013JChPh.138t4314L",
+   "doi": "10.1063/1.4807311",
+   "reviewed": true
+  },
+  "Lique2018": {
+   "bibcode": "2018MNRAS.474.2313L",
+   "doi": "10.1093/mnras/stx2907",
+   "reviewed": true
+  },
+  "Machin2005": {
+   "bibcode": "2005JPhB...38.1519M",
+   "doi": "10.1088/0953-4075/38/10/010",
+   "reviewed": true
+  },
+  "Marinakis2015": {
+   "bibcode": "2015PCCP...1721583M",
+   "doi": "10.1039/C5CP03696H",
+   "reviewed": true
+  },
+  "Millikan1963": {
+   "bibcode": "1963JChPh..39.3209M",
+   "doi": "10.1063/1.1734182",
+   "reviewed": true
+  },
+  "Neufeld1994": {
+   "bibcode": "1994ApJ...428..170N",
+   "doi": "10.1086/174230",
+   "reviewed": true
+  },
+  "Offer1994": {
+   "bibcode": "1994JChPh.100..362O",
+   "doi": "10.1063/1.466950",
+   "reviewed": true
+  },
+  "Pequignot1990": {
+   "bibcode": "1990A&A...231..499P",
+   "doi": null,
+   "reviewed": true
+  },
+  "Rabli2010": {
+   "bibcode": "2010MNRAS.406...95R",
+   "doi": "10.1111/j.1365-2966.2010.16671.x",
+   "reviewed": true
+  },
+  "Roueff1990": {
+   "bibcode": "1990A&A...236..515R",
+   "doi": null,
+   "reviewed": true
+  },
+  "Schroder1991": {
+   "bibcode": "1991JPhB...24.2487S",
+   "doi": "10.1088/0953-4075/24/10/007",
+   "reviewed": true
+  },
+  "Spielfiedel2012": {
+   "bibcode": "2012MNRAS.421.1891S",
+   "doi": "10.1111/j.1365-2966.2011.20225.x",
+   "reviewed": true
+  },
+  "Spirko2003": {
+   "bibcode": "2003JPhB...36.1645S",
+   "doi": "10.1088/0953-4075/36/8/316",
+   "reviewed": true
+  },
+  "Staemmler1991": {
+   "bibcode": "1991JPhB...24.2343S",
+   "doi": "10.1088/0953-4075/24/9/013",
+   "reviewed": true
+  },
+  "Storzer2000": {
+   "bibcode": "2000ApJ...539..751S",
+   "doi": "10.1086/309251",
+   "reviewed": true
+  },
+  "Turner1992": {
+   "bibcode": "1992ApJ...399..114T",
+   "doi": "10.1086/171908",
+   "reviewed": true
+  },
+  "Varambhia2009": {
+   "bibcode": "2009JPhB...42i5204V",
+   "doi": "10.1088/0953-4075/42/9/095204",
+   "reviewed": true
+  },
+  "Walker2015": {
+   "bibcode": "2015ApJ...811...27W",
+   "doi": "10.1088/0004-637X/811/1/27",
+   "reviewed": true
+  },
+  "Wernli2006": {
+   "bibcode": "2006A&A...446..367W",
+   "doi": "10.1051/0004-6361:20053919",
+   "reviewed": true
+  },
+  "Wiesenfeld2014": {
+   "bibcode": "2014ApJ...780..183W",
+   "doi": "10.1088/0004-637X/780/2/183",
+   "reviewed": true
+  },
+  "Wilson2002": {
+   "bibcode": "2002MNRAS.337.1027W",
+   "doi": "10.1046/j.1365-8711.2002.05982.x",
+   "reviewed": true
+  },
+  "Yan2023": {
+   "bibcode": "2023MNRAS.522.1265Y",
+   "doi": "10.1093/mnras/stad1050",
+   "reviewed": true
+  },
+  "Yang2010": {
+   "bibcode": "2010ApJ...718.1062Y",
+   "doi": "10.1088/0004-637X/718/2/1062",
+   "reviewed": true
+  },
+  "Zatsarinny2003": {
+   "bibcode": "2003ApJS..148..575Z",
+   "doi": "10.1086/377354",
+   "reviewed": true
+  },
+  "vandenHeuvel2026": {
+   "bibcode": "2026A&A...711A..61V",
+   "doi": "10.1051/0004-6361/202557561",
+   "reviewed": true
+  },
+  "vanderTak2013": {
+   "bibcode": "2013A&A...560A..95V",
+   "doi": "10.1051/0004-6361/201322164",
+   "reviewed": true
+  }
+ },
+ "lookup": [
+  {
+   "database": "chianti",
+   "molecule": "O",
+   "file": "16O__o_1.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "chianti 11 0 2 oscillator strengths froese fischer c & tachiev g 2004 adndt 87 1",
+   "key": "FroeseFischer2004",
+   "status": "found"
+  },
+  {
+   "database": "chianti",
+   "molecule": "O",
+   "file": "16O__o_1.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "effective collision strengths levels 1 3 bell k l berrington k a & thomas m r j 1998 mnras 293 l83",
+   "key": "Bell1998",
+   "status": "found"
+  },
+  {
+   "database": "chianti",
+   "molecule": "O",
+   "file": "16O__o_1.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "effective collision strengths zatsarinny o & tayal s s 2003 apjs 148 575",
+   "key": "Zatsarinny2003",
+   "status": "found"
+  },
+  {
+   "database": "chianti",
+   "molecule": "O",
+   "file": "16O__o_1.dat",
+   "role": "levels",
+   "partner": null,
+   "text": "a values froese fischer c & tachiev g 2004 adndt 87 1",
+   "key": "FroeseFischer2004",
+   "status": "found"
+  },
+  {
+   "database": "chianti",
+   "molecule": "O",
+   "file": "16O__o_1.dat",
+   "role": "levels",
+   "partner": null,
+   "text": "theoretical energies zatsarinny o & tayal s s 2003 apjs 148 575",
+   "key": "Zatsarinny2003",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C+",
+   "file": "c+.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "barinovs et al 2005 apj 620 537",
+   "key": "Barinovs2005",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C+",
+   "file": "c+.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "wilson & bell 2002 mnras 337 1027",
+   "key": "Wilson2002",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C+",
+   "file": "c+.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "lique et al 2013",
+   "key": "Lique2013",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C+",
+   "file": "c+.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "wiesenfeld & goldsmith 2014",
+   "key": "Wiesenfeld2014",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C+",
+   "file": "c+.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "thermal h2 j 0 and j 2 cf wiesenfeld & goldsmith 2014",
+   "key": "Wiesenfeld2014",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "launay & roueff 1977",
+   "key": "Launay1977",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "H+",
+   "text": "roueff & le bourlot 1990 a&a 236 515",
+   "key": "Roueff1990",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "staemmler v flower d r 1991 j phys b 24 2343",
+   "key": "Staemmler1991",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "from johnson burke & kingston 1987 jphysb 20 2553",
+   "key": "Johnson1987",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "k schroeder et al 1991 j phys b 24 2487",
+   "key": "Schroder1991",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "C",
+   "file": "catom.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "k schroeder et al 1991 j phys b 24 2487",
+   "key": "Schroder1991",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "CN",
+   "file": "cn.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "cn he rates from lique et al 2010 j chem phys 132 024303 scaled by 1 37",
+   "key": "Lique2010",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "CN",
+   "file": "cn.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "e + cn rates from allison & dalgarno 1971 a&a 13 331 for n 1 0 and n 2 0 born approximation for other transitions",
+   "key": "Allison1971",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "HCN",
+   "file": "hcn@hfs.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "h2 hcn ph2 collision data hernandez vera et al 2017",
+   "key": "HernandezVera2017",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "O",
+   "file": "oatom@lique.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "lique et al 2018 mnras 474 2313 corrected transmitted by m wolfire t points selected by e roueff",
+   "key": "Lique2018",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "O",
+   "file": "oatom@lique.dat",
+   "role": "collisions",
+   "partner": "H+",
+   "text": "computed from xsections of spirko et al j phys b 36 1645 2003 by e roueff oct 2019 at same temperatures",
+   "key": "Spirko2003",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "O",
+   "file": "oatom@lique.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "lique et al 2018 mnras 474 2313 corrected transmitted by m wolfire t points selected by e roueff",
+   "key": "Lique2018",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "O",
+   "file": "oatom@lique.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "lique et al 2018 mnras 474 2313 corrected transmitted by m wolfire t points selected by e roueff",
+   "key": "Lique2018",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "O",
+   "file": "oatom@lique.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "lique et al 2018 mnras 474 2313 corrected transmitted by m wolfire t points selected by e roueff",
+   "key": "Lique2018",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "OH",
+   "file": "oh.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "oh oh2 from offer et al 1994 + offer priv comm",
+   "key": "Offer1994",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "OH",
+   "file": "oh.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "oh ph2 from offer et al 1994 + offer priv comm",
+   "key": "Offer1994",
+   "status": "found"
+  },
+  {
+   "database": "lamda",
+   "molecule": "S",
+   "file": "s-h.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "s + h from yan & babb 2023",
+   "key": "Yan2023",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "13CO",
+   "file": "13CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from flower 2001",
+   "key": "Flower2001",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "13CO",
+   "file": "13CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "wernli et al 2006 + extrapolation",
+   "key": "Wernli2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "13CO",
+   "file": "13CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from flower 2001",
+   "key": "Flower2001",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "13CO",
+   "file": "13CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "wernli et al 2006 + extrapolation",
+   "key": "Wernli2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "launay & roueff 1977 jpb 10 879",
+   "key": "Launay1977a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "wilson & bell 2002 mnras 337 1027",
+   "key": "Wilson2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "no corr for flower 1988",
+   "key": "Flower1988",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "keenan et al 1986 mnras 220 571",
+   "key": "Keenan1986",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "launay & roueff 1977 jpb 10 879",
+   "key": "Launay1977a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "wilson & bell 2002 mnras 337 1027",
+   "key": "Wilson2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "no corr for flower 1988 + extrapolations",
+   "key": "Flower1988",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "keenan et al 1986 mnras 220 571",
+   "key": "Keenan1986",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "launay & roueff 1977 jpb 10 879",
+   "key": "Launay1977a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "wilson & bell 2002 mnras 337 1027",
+   "key": "Wilson2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "flower & launay 1977 jpb 10 3673",
+   "key": "Flower1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C+",
+   "file": "C+_Lambda_extra_NIST_CHIANTI.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "no corr for flower 1988 + extrapolations",
+   "key": "Flower1988",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C17O",
+   "file": "C17O_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C17O",
+   "file": "C17O_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C18O",
+   "file": "C18O_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C18O",
+   "file": "C18O_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C2H",
+   "file": "C2H_H2_e_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "rates based on c2h he rates spielfiedel et al 2012 basecol multiplied by 1 36",
+   "key": "Spielfiedel2012",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CF+",
+   "file": "CF+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled from he rates by ajili & hammami 2013 a&a 556 a82",
+   "key": "Ajili2013",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CH+",
+   "file": "CH+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "lim et al 1999 mnras 306 473 strictly valid for t between 800 and 2000k",
+   "key": "Lim1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CH+",
+   "file": "CH+_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "rates for he scaled by 1 39 hammami et al 2009 a&a 507 1083 & turpin et al a&a 511 a28",
+   "key": "Hammami2009",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CH3CN",
+   "file": "CH3CN_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "green 1986",
+   "key": "Green1986",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CH",
+   "file": "CH_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled from he ch rates by marinakis et al 2015 pccp 17 21583",
+   "key": "Marinakis2015",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CN",
+   "file": "CN_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "downward collision rates from lique et al 2010 j chem phys 132 024303",
+   "key": "Lique2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CN",
+   "file": "CN_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "rates from allison & dalgarno 1971 a&a 13 331 for n 1 0 and n 2 0 born approximation for other transitions",
+   "key": "Allison1971",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "from balakrishnan n yan m dalgarno a quantum mechanical study of rotational and vibrational transitions in co induced by h atoms ap j vol568 p443 447 2002",
+   "key": "Balakrishnan2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from cecchi pestellini c bodo e balakrishnan n dalgarno a rotational and vibrational excitation of co molecules by collisions with 4he atoms ap j vol571 p1015 1020 2002",
+   "key": "CecchiPestellini2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from yang et al 2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda2015.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from yang et al 2010 extrapolated by david neufeld 13dec2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda2015.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "from walker et al in prep 2015",
+   "key": "Walker2015",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda2015.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from cecchi pestellini c bodo e balakrishnan n dalgarno a rotational and vibrational excitation of co molecules by collisions with 4he atoms ap j vol571 p1015 1020 2002",
+   "key": "CecchiPestellini2002",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda2015.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from yang et al 2010 extrapolated by david neufeld 13dec2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda_Neufeld.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from yang et al 2010 extrapolated by david neufeld 13dec2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "CO_Lambda_Neufeld.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from yang et al 2010 extrapolated by david neufeld 13dec2010",
+   "key": "Yang2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "vib from milikan&white 1964",
+   "key": "Millikan1963",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from flower 2001",
+   "key": "Flower2001",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "wernli et al 2006 + extrapolation",
+   "key": "Wernli2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "vib from neufeld&hollenbach 1994",
+   "key": "Neufeld1994",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "vib from neufeld&hollenbach 1994",
+   "key": "Neufeld1994",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from flower 2001",
+   "key": "Flower2001",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CO",
+   "file": "COvibrot_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "wernli et al 2006 + extrapolation",
+   "key": "Wernli2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CS",
+   "file": "CS_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from turner et al 1992 + extrapolation",
+   "key": "Turner1992",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CS",
+   "file": "CS_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "lique f spielfiedel a cernicharo j astron astrophys vol451 p1125 1132 2006",
+   "key": "Lique2006a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "CS",
+   "file": "CS_Lambda_Lique.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled from cs he lique et al 2006",
+   "key": "Lique2006a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "launay & roueff 1977",
+   "key": "Launay1977",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "H+",
+   "text": "roueff & le bourlot 1990 a&a 236 515",
+   "key": "Roueff1990",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "staemmler v flower d r 1991 j phys b 24 2343",
+   "key": "Staemmler1991",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "from johnson burke & kingston 1987 jphysb 20 2553",
+   "key": "Johnson1987",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "k schroeder et al 1991 j phys b 24 2487",
+   "key": "Schroder1991",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "C",
+   "file": "Catom_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "k schroeder et al 1991 j phys b 24 2487",
+   "key": "Schroder1991",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "DCN",
+   "file": "DCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 37 hcn he from green & thaddeus 1974 + green unpublished rates + extrapolation use hcn rates",
+   "key": "Green1974",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "DCN",
+   "file": "DCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "dumouchel f faure a lique f m n r a s vol406 p2488 2492 2010 from hcn rates",
+   "key": "Dumouchel2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "DCN",
+   "file": "DCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "faure a varambhia h n stoecklin t tennyson j m n r a s vol382 p840 848 2007",
+   "key": "Faure2007",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "DCO+",
+   "file": "DCO+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from flower 1999 + extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "H13CN",
+   "file": "H13CN_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "hcn h2 scaled 1 37 hcn he from green & thaddeus 1974 + green unpublished rates + extrapolation",
+   "key": "Green1974",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "H13CO+",
+   "file": "H13CO+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from flower 1999 & extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HC3N",
+   "file": "HC3N_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 39 hc3n he from green & chapman 1978",
+   "key": "Green1978",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HCN",
+   "file": "HCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 37 hcn he from green & thaddeus 1974 + green unpublished rates + extrapolation",
+   "key": "Green1974",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HCN",
+   "file": "HCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "dumouchel f faure a lique f m n r a s vol406 p2488 2492 2010",
+   "key": "Dumouchel2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HCN",
+   "file": "HCN_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "faure a varambhia h n stoecklin t tennyson j m n r a s vol382 p840 848 2007",
+   "key": "Faure2007",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HCO+",
+   "file": "HCO+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from flower 1999 & extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HCS+",
+   "file": "HCS+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "adopting hco+ h2 from flower 1999 + extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HDO",
+   "file": "HDO_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 35 hdo he rate coefficients from green 1989",
+   "key": "Green1989",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HN13C",
+   "file": "HN13C_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 363 hnc he rates from dumouchel et al 2010 no hn13c rates",
+   "key": "Dumouchel2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "N2D+",
+   "file": "N2D+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "adopting hco+ h2 from flower 1999 + extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "N2H+",
+   "file": "N2H+_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "adopting hco+ h2 from flower 1999 + extrapolation",
+   "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "NO",
+   "file": "NO_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "he rates lique et al 2008 scaled 1 4",
+   "key": "Lique2009",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O2",
+   "file": "O2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "rates of lique 2010 j chem phys 132 044311 scaled by 1 37",
+   "key": "Lique2010a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "OCS",
+   "file": "OCS_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from green & chapman 1978 + extrapolation",
+   "key": "Green1978",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "OH",
+   "file": "OH_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from offer et al 1994 + offer priv comm",
+   "key": "Offer1994",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "OH",
+   "file": "OH_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from offer et al 1994 + offer priv comm",
+   "key": "Offer1994",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "'OH",
+   "file": "OH_zeno_Lambda.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "oh h dagdigian et al 2022",
+   "key": "Dagdigian2022",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "'OH",
+   "file": "OH_zeno_Lambda.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "he+oh klos lique alexander 2007",
+   "key": "Klos2007",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "'OH",
+   "file": "OH_zeno_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "oh oh2 van den heuvel et al 2025",
+   "key": "vandenHeuvel2026",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "'OH",
+   "file": "OH_zeno_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "oh ph2 van den heuvel et al 2025",
+   "key": "vandenHeuvel2026",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "OH+",
+   "file": "OHplus_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "van der tak et al 2013",
+   "key": "vanderTak2013",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "abrahamsson krems dalgarno 2007 apj 654 1171",
+   "key": "Abrahamsson2007",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda.dat",
+   "role": "collisions",
+   "partner": "H+",
+   "text": "inelastic chambaud et al 1980 + priv comm from e roueff",
+   "key": "Chambaud1980",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "bell et al 1998 mnras 293 l83",
+   "key": "Bell1998",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "r jaquet et al 1992 j phys b 25 285",
+   "key": "Jaquet1992",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "r jaquet et al 1992 j phys b 25 285",
+   "key": "Jaquet1992",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "bell et al 1998 mnras 293 l83 storzer hollenbach 20000",
+   "key": "Bell1998",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "krems et al 2006",
+   "key": "Krems2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "storzer hollenbach 2000",
+   "key": "Storzer2000",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST_extrapolation.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "abrahamsson krems dalgarno 2007 apj 654 1171",
+   "key": "Abrahamsson2007",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST_extrapolation.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "bell et al 1998 mnras 293 l83",
+   "key": "Bell1998",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST_extrapolation.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "krems et al 2006 p d rates",
+   "key": "Krems2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST_extrapolation.dat",
+   "role": "collisions",
+   "partner": "H",
+   "text": "storzer hollenbach 2000",
+   "key": "Storzer2000",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "O",
+   "file": "Oatom_Lambda_extra_NIST_extrapolation.dat",
+   "role": "collisions",
+   "partner": "e",
+   "text": "pequignot 1990",
+   "key": "Pequignot1990",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "SO2",
+   "file": "SO2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "rates green 1995 apjs scaled 1 39 and extrapolated to higher j",
+   "key": "Green1995",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "SO",
+   "file": "SO_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from green 1994",
+   "key": "Green1994",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "SO",
+   "file": "SO_Lambda_Lique.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled from so he lique et al 2006",
+   "key": "Lique2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "S",
+   "file": "S_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "collision rates hm89",
+   "key": "Hollenbach1989",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "S",
+   "file": "S_Lambda.dat",
+   "role": "collisions",
+   "partner": "ID 0",
+   "text": "+ e collision rates hm89",
+   "key": "Hollenbach1989",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "Si+",
+   "file": "SiII_CHIANTI_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "barinovs et al 2005",
+   "key": "Barinovs2005",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "Si+",
+   "file": "SiII_CHIANTI_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "chianti",
+   "key": "Dere1997",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "SiO",
+   "file": "SiO_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled by 1 38 sio he from dayou & balanca 2006 + extrapolation",
+   "key": "Dayou2006",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "SiO",
+   "file": "SiO_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "varambhia h n gupta m faure a baluja k l tennyson j j phys b at mol opt phys vol42 p095204 2009",
+   "key": "Varambhia2009",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "Si",
+   "file": "Si_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from hollenbach & mckee 1989",
+   "key": "Hollenbach1989",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "Si",
+   "file": "Si_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from hollenbach & mckee 1989",
+   "key": "Hollenbach1989",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "A-CH3OH",
+   "file": "a-CH3OH_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from rabli & flower 2010",
+   "key": "Rabli2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "E-CH3OH",
+   "file": "e-CH3OH_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from rabli & flower 2010",
+   "key": "Rabli2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "HNC",
+   "file": "hnc_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled 1 363 hnc he rates from dumouchel et al 2010",
+   "key": "Dumouchel2010",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-C3H2",
+   "file": "o-C3H2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from chandra & kegel 2000",
+   "key": "Chandra2000",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-CH2",
+   "file": "o-CH2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "obtained from o ch2 he rates scaled by 1 4 dagdigian and lique mnras 473 4824 4831 2018",
+   "key": "Dagdigian2018",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-H2S",
+   "file": "o-H2S_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from dubernet et al 2009 assuming thermal o p for h2 scaled to oh2s",
+   "key": "Dubernet2009",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-H2S",
+   "file": "o-H2S_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from daniel et al 2011 assuming thermal o p for h2 scaled to oh2s",
+   "key": "Daniel2011",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-NH2D",
+   "file": "o-nh2d_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "thermalized ph2 from daniel et al 2014",
+   "key": "Daniel2014",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-NH2D",
+   "file": "o-nh2d_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from daniel et al 2014 oh2 is assumed similar to ph2 j2 2",
+   "key": "Daniel2014",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-NH3",
+   "file": "o-nh3_Lambda.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "machin l roueff e rotational excitation and de excitation of interstellar ammonia in collisions with helium j phys b at mol opt phys vol38 p1519 1534 2005",
+   "key": "Machin2005",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-NH3",
+   "file": "o-nh3_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "danby et al 1988 mnra235 229",
+   "key": "Danby1988",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-C3H2",
+   "file": "p-C3H2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "from chandra & kegel 2000",
+   "key": "Chandra2000",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-CH2",
+   "file": "p-CH2_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "obtained from o ch2 he rates scaled by 1 4 dagdigian and lique mnras 473 4824 4831 2018",
+   "key": "Dagdigian2018",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-H2S",
+   "file": "p-H2S_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "scaled from h2o h2 daniel dubernet et al 2012",
+   "key": "Daniel2011",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-NH2D",
+   "file": "p-nh2d_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "thermalized ph2 from daniel et al 2014",
+   "key": "Daniel2014",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-NH2D",
+   "file": "p-nh2d_Lambda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from daniel et al 2014 oh2 is assumed similar to ph2 j2 2",
+   "key": "Daniel2014",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-NH3",
+   "file": "p-nh3_Lambda.dat",
+   "role": "collisions",
+   "partner": "H2",
+   "text": "danby et al 1988 mnras 235 229",
+   "key": "Danby1988",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "p-NH3",
+   "file": "p-nh3_Lambda.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "machin l roueff e rotational excitation and de excitation of interstellar ammonia in collisions with helium j phys b at mol opt phys vol38 p1519 1534 2005",
+   "key": "Machin2005",
+   "status": "found"
+  }
+ ]
+}
