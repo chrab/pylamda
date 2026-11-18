@@ -4,8 +4,9 @@ Status (2026-11-18): design with decisions taken (section 13). Moved from astrol
 (`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 6 of section 14 are implemented
 (package skeleton, data model, reader, writer; `verify` and `pylamda check`; `compare`
 and `pylamda compare`; `bibtex` and `pylamda bib`; `fix`, `patch` and `pylamda fix`;
-the reference catalogue with `bib --search` and `fix --add-refs`), and `add_partner` and
-`drop_partner` (section 9) as the first part of step 7. Step 7 is open otherwise.
+the reference catalogue with `bib --search` and `fix --add-refs`) and step 7
+(`add_partner`, `drop_partner`; astrolinedata and TEST_LAMDA_FILES use pylamda,
+section 11).
 Step 8 and check F04 are left for later (section 15).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
@@ -618,10 +619,27 @@ data, log = pylamda.add_reference(data, "p-H2", bibcode="2010ApJ...718.1062Y")
   problems.
 - ProDiMo reads partners by name first (3.3), so the ProDiMo files must have C02 at zero.
   The CI job can enforce this with `--select C02 --error-on C02` (raise C02 to an error).
-- In astrolinedata, EMAA files with extra partners (C11) keep the current handling: those
-  blocks are dropped at download. That is astrolinedata's job, not pylamda's.
+- Neither pylamda nor astrolinedata supports partners outside the standard (water, CO,
+  ...). pylamda reports them (C11, also C01 and C03); astrolinedata refuses such a file
+  as not supported (decided 2026-11-18; before, it dropped those blocks).
 - Git history: pylamda starts without the history of `formats/lamda.py` (decision 8).
   The commit that adds the code names the astrolinedata commit it comes from.
+
+Done (step 7, 2026-11-18):
+
+- astrolinedata (branch `use-pylamda`): `formats/lamda.py` and its tests are removed,
+  with no re-export module (astrolinedata was not released yet); all modules import
+  pylamda (dependency `pylamda @ git+https://github.com/chrab/pylamda.git`). The
+  backends read by ID; `backends/nlte.check_supported` refuses a file with partners
+  outside the format (checks C01, C03, C11) as not supported; `log_issues` logs pylamda's
+  structure issues; `api.add_partner` calls `pylamda.add_partner` and logs its warnings.
+  `ald.read_lamda`/`write_lamda`/`compare_lamda` are gone; users call pylamda.
+- TEST_LAMDA_FILES: `lamda.py` keeps its name and interface but reads with
+  `pylamda.read`, matches levels with `pylamda.match_levels` and interpolates with
+  `pylamda.compare.interpolate_rates`. ProDiMo-specific parts stay there: the collider
+  names as ProDiMo's MAP_COLLIDNAME reads them (name first), the second block of a name
+  wins, `prodimo_corrections`, and the containers for the report. pylamda's structure
+  issues appear in the report's messages.
 
 ## 12. Tests
 

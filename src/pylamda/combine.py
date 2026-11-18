@@ -194,13 +194,16 @@ def add_partner(
         or a transition would point from the lower to the higher energy in ``target``
         (the two data sets order these levels differently). A subclass of ValueError.
     """
+    # the target first (as in astrolinedata), then the source
+    existing = _blocks(target, partner)
+    if existing and not replace_existing:
+        key = partner_name(partner) or partner
+        raise CombineError(f"{target.molecule} already has collision partner {key} (use replace_existing)")
     cs = source.collisions[_one_block(source, partner, block, "the source")]
     key = cs.partner
     if key is None:
         raise CombineError(f"the source block has the ID {cs.partner_id}, which is not a standard partner")
     existing = _blocks(target, key)
-    if existing and not replace_existing:
-        raise CombineError(f"{target.molecule} already has collision partner {key} (use replace_existing)")
     if len(existing) > 1:
         raise CombineError(f"{target.molecule} has {len(existing)} blocks of {key}; replace one by hand")
     warnings = []
