@@ -540,8 +540,13 @@ package):
   tool proposals, 38 from a reviewed first pass by Claude), 9 skipped, 3 open (not in
   SciX: Faure 2014 C2H+e, S. Green HNCO, Faure 2012 OH+e). Result: 72 entries, 154
   lookup rows in `pylamda/data/references.json` and `.bib`.
-- Still to do: the lookup in `pylamda bib` and `pylamda check` (F03), `--search`,
-  `fix --add-refs`.
+- Run time: `pylamda/catalogue.py` (text splitting, normalisation and parsing moved
+  from the tool, which imports them); lookup by place, then molecule and text, then
+  text alone if unique (with a warning in `bib`); `pylamda bib` takes found papers
+  from the shipped `references.bib` (source `catalogue`, offline); F03 does not report
+  references that the catalogue knows. On the corpus: 70 catalogue entries in `bib`,
+  F03 194 -> 61.
+- Still to do: `--search`, `fix --add-refs`.
 
 **At run time**:
 

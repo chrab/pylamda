@@ -54,54 +54,13 @@ from pylamda.bib import (
     scix_token,
     split_entries,
 )
+from pylamda.catalogue import JOURNALS, normalise, parse, split_segments  # noqa: F401 (used by the tests)
+from pylamda.catalogue import YEAR as _YEAR
 from pylamda.references import find_bibcodes, find_dois
 
 LAMDA_URL = "https://home.strw.leidenuniv.nl/~moldata/"
 EMAA_URL = "https://emaa.osug.fr/"
 
-# journal names as written in LAMDA/ProDiMo files -> ADS bibstem
-JOURNALS = {
-    "mnras": "MNRAS",
-    "m.n.r.a.s.": "MNRAS",
-    "mon. not. r. astron. soc.": "MNRAS",
-    "apj": "ApJ",
-    "ap. j.": "ApJ",
-    "astrophys. j.": "ApJ",
-    "apjs": "ApJS",
-    "apjl": "ApJL",
-    "a&a": "A&A",
-    "astron. astrophys.": "A&A",
-    "j. chem. phys.": "JChPh",
-    "jchph": "JChPh",
-    "j. phys. b": "JPhB",
-    "j. phys b": "JPhB",
-    "j.phys.b": "JPhB",
-    "j phys b": "JPhB",
-    "jphysb": "JPhB",
-    "jpb": "JPhB",
-    "pccp": "PCCP",
-    "phys. chem. chem. phys.": "PCCP",
-    "phys. rev. a": "PhRvA",
-    "atoms": "Atoms",
-    "jqsrt": "JQSRT",
-    "chem. phys. lett.": "CPL",
-    "mol. phys.": "MolPh",
-}
-_JOURNAL = re.compile("|".join(re.escape(j) for j in sorted(JOURNALS, key=len, reverse=True)), re.I)
-_YEAR = re.compile(r"\b(19\d\d|20\d\d)[a-z]?\b")
-_SURNAME = re.compile(
-    r"\b(?:(?:[Vv]an [Dd]e[rn]?|[Vv]on [Dd]er|[Dd]e [Ll]a|[Vv]an|[Vv]on|[Dd]e|[Dd]el|[Dd]i|[Dd]u|[Ll]e|[Ll]a)\s+)?"
-    r"[A-Z][a-z]+(?:[-'][A-Z]?[a-z]+)*\b"
-)
-# capitalised words that are not surnames
-_NOT_NAMES = {
-    "from", "rates", "rate", "collision", "collisions", "coll", "downward", "data", "scaled", "using", "the",
-    "rotational", "vibrational", "excitation", "quantum", "mechanical", "study", "transitions", "induced", "atoms",
-    "molecules", "by", "of", "and", "with", "in", "astron", "astrophys", "phys", "chem", "rev", "lett", "mon",
-    "not", "soc", "astrophysical", "journal", "vol", "priv", "comm", "private", "communication", "see", "also",
-    "table", "extrapolation", "computed", "calculations", "ref", "note", "notes", "hyperfine", "levels",
-    "spectroscopy", "corrected", "transmitted", "selected", "points", "same", "temperatures", "strictly", "valid",
-}  # fmt: skip
 ELEMENTS = {
     "H": "hydrogen", "He": "helium", "C": "carbon", "N": "nitrogen", "O": "oxygen", "F": "fluorine",
     "Ne": "neon", "Na": "sodium", "Mg": "magnesium", "Al": "aluminium", "Si": "silicon", "P": "phosphorus",
@@ -179,11 +138,6 @@ class Group:
 
 
 # ------------------------------------------------------------------- parsing the texts
-def normalise(text: str) -> str:
-    """Lower case; punctuation and blanks as one blank (the lookup key of the catalogue)."""
-    return " ".join(re.sub(r"[^\w&+]+", " ", text.lower()).split())
-
-
 def ascii_fold(text: str) -> str:
     """Text without accents (``Schröder`` -> ``Schroder``), lower case."""
     return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
@@ -193,94 +147,6 @@ def name_forms(text: str) -> set[str]:
     """A text in lower case without accents, in both German spellings (``ö`` -> ``o`` and ``oe``)."""
     umlauts = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss"})
     return {ascii_fold(text), ascii_fold(text.translate(umlauts))}
-
-
-def split_segments(text: str) -> list[str]:
-    """Parts of a reference text that cite one paper each (one year per part).
-
-    A part without an author-like name (``"oct 2019 at same temperatures"``) is merged
-    into the part before it.
-    """
-    years = list(_YEAR.finditer(text))
-    if len(years) <= 1:
-        return [text]
-    out, start = [], 0
-    for i, m in enumerate(years):
-        end = m.end()
-        if i + 1 < len(years):  # extend over ")" "," journal/volume/page up to the next author
-            nxt = years[i + 1].start()
-            cut = _cut(text[end:nxt])
-            end = end + cut if cut is not None else nxt
-        else:
-            end = len(text)
-        out.append(text[start:end])
-        start = end
-    merged: list[str] = []
-    for part in out:
-        head = part[: (_YEAR.search(part) or re.search(r"$", part)).start()]
-        if merged and not _author_names(_JOURNAL.sub(" ", head)):
-            merged[-1] += part
-        else:
-            merged.append(part)
-    return [s.strip(" ,;&+") for s in merged if s.strip(" ,;&+")]
-
-
-def _cut(between: str) -> int | None:
-    """Where the text between two cited years splits: ``;`` or ``+``, else a comma before a
-    capitalised word that is not a journal, else ``&`` or "and"."""
-    for pattern in (r"[;+]", r",\s(?=[A-Z][a-z])", r"&|\band\b"):
-        for m in re.finditer(pattern, between):
-            if pattern.startswith(",") and _JOURNAL.match(between, m.end()):
-                continue
-            return m.start()
-    return None
-
-
-# what follows an author name: et al., &, and, a comma, an initial, the year
-_AFTER_AUTHOR = re.compile(r"\s*(?:et\s+al|&|and\b|,|[A-Z]\.|\(?(?:19|20)\d\d|$)")
-
-
-def _author_names(head: str) -> list[str]:
-    """Surnames in the text before the year; author-like ones (followed by et al., &, ...) first."""
-    j = _JOURNAL.search(head)
-    names_part = head[: j.start()] if j else head
-    found = [
-        m
-        for m in _SURNAME.finditer(names_part)
-        if not set(re.split(r"[-' ]", m.group().lower())) & _NOT_NAMES and len(m.group()) >= 3
-    ]
-    authorish = [m.group() for m in found if _AFTER_AUTHOR.match(names_part, m.end())]
-    if not authorish:
-        return [m.group() for m in found]
-    first = next(i for i, m in enumerate(found) if m.group() == authorish[0])
-    # "Storzer Hollenbach 2000": a name directly before the author-like one is the first author
-    while first > 0 and not names_part[found[first - 1].end() : found[first].start()].strip():
-        first -= 1
-    return [m.group() for m in found[first:]]
-
-
-def parse(segment: str) -> dict:
-    """First author, other authors, year, journal (bibstem), volume and page of one citation.
-
-    The first author is the first name followed by "et al.", "&", "and", a comma, an
-    initial or the year (so that "Coulomb-Born + recoupling (Faure 2014" gives Faure).
-    The journal is the first one after the year, else the last one before it (a title
-    can hold a journal word, "4He Atoms").
-    """
-    year_m = _YEAR.search(segment)
-    head = segment[: year_m.start()] if year_m else segment
-    names = _author_names(head)
-    out = {"first_author": names[0] if names else None, "authors": names[1:4]}
-    out["year"] = int(year_m.group(1)) if year_m else None
-    journals = list(_JOURNAL.finditer(segment))
-    after = [j for j in journals if year_m and j.start() >= year_m.end()]
-    jm = after[0] if after else (journals[-1] if journals else None)
-    out["bibstem"] = JOURNALS[jm.group().lower()] if jm else None
-    vp = None
-    if jm:
-        vp = re.search(r"(?:vol\.?\s*)?(\d{1,4})\s*[:,]?\s*(?:p\.?\s*)?([A-Z]?\d{1,6})", segment[jm.end() :])
-    out["volume"], out["page"] = (vp.group(1), vp.group(2).lstrip("0") or "0") if vp else (None, None)
-    return out
 
 
 # ------------------------------------------------------------------- titles

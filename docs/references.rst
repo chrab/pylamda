@@ -33,10 +33,31 @@ the bibcode alone) and arXiv IDs (``arXiv:2004.11230``). Every identifier gives 
 entry; entries of the same paper (same bibcode or DOI) are merged. A comment above each
 entry says what it is cited for (``% CO: collision rates with p-H2``).
 
-References given only as free text ("Flower (2001)") are not guessed. They are listed
-on standard error (``pylamda bib``) or in :attr:`BibResult.free_text
-<pylamda.bib.BibResult.free_text>`. A reviewed catalogue for them follows (design,
-step 6).
+References given only as free text ("Flower (2001)") are looked up in the reference
+catalogue (below). Those not in it are not guessed: they are listed on standard error
+(``pylamda bib``) or in :attr:`BibResult.free_text <pylamda.bib.BibResult.free_text>`.
+
+The reference catalogue
+-----------------------
+
+pylamda ships a catalogue of reviewed free-text references
+(``pylamda/data/references.json`` and ``references.bib``, :mod:`pylamda.catalogue`). It
+was built from the free-text references of LAMDA, EMAA and ProDiMo files: each match of
+a text to a SciX record was confirmed by a person. ``pylamda bib`` uses it without
+asking and without network or token; such entries are marked "(pylamda reference
+catalogue)" in the BibTeX file.
+
+A reference text is split into the parts that cite one paper each ("Flower (2001) &
+Wernli et al. (2006)" gives two), and each part is looked up:
+
+1. at the same place: file name, molecule, levels or partner;
+2. the same text for the same molecule in another file;
+3. the same text anywhere in the catalogue, if it names one paper there. This can be
+   wrong for another molecule ("Green 1986"), so ``pylamda bib`` warns about such hits.
+
+``--no-catalogue`` (``catalogue=False``) switches the lookup off. ``pylamda check`` uses
+the catalogue for F03 as well. The catalogue is maintained with ``tools/catalogue.py``
+(see :doc:`development`).
 
 Offline and online
 ------------------

@@ -64,8 +64,12 @@ Layout
      verify.py       verify(): the checks L, R, C, F, P (plus the reader's S issues)
      compare.py      compare(), match_levels(), critical_density()
      bib.py          bibtex(): BibTeX export, SciX and doi.org, token, cache
+     catalogue.py    the reference catalogue: text parsing, lookup
      fix.py          fix(), patch(), add_reference(): normalised and patch mode
-     data/           database_refs.bib: the LAMDA and EMAA papers
+     data/           database_refs.bib (LAMDA and EMAA papers); references.json/.bib (catalogue)
+   tools/
+     catalogue.py    maintainer tool: builds the reference catalogue
+     catalogue_review.json   the reviewed corpus
      issues.py       Issue, the check codes (CODES), LamdaReadError
      formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs, bibcodes, arXiv IDs)

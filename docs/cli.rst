@@ -45,6 +45,8 @@ Options:
    Show the number of issues and files per code instead of each issue.
 ``--list-codes``
    List all check codes with their severity and description.
+``--no-catalogue``
+   F03: do not use the reference catalogue.
 
 Exit codes:
 
@@ -109,6 +111,8 @@ Options:
    JSON file identifier → key; read and updated, so that keys stay the same.
 ``--no-cache``
    Do not use the cache of resolved references.
+``--no-catalogue``
+   Do not look up free-text references in the reference catalogue.
 
 Exit codes:
 

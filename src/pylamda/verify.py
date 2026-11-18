@@ -20,9 +20,11 @@ import math
 import os
 import re
 from collections.abc import Callable, Iterable
+from pathlib import Path
 
 import numpy as np
 
+from .catalogue import Catalogue, load_catalogue
 from .formula import formula_mass
 from .issues import Issue, make_issue, match_codes
 from .model import PARTNERS, BlockSource, CollisionSet, LamdaData, SourceMap, partner_name
@@ -512,7 +514,16 @@ def _has_identifier(text: str) -> bool:
     return bool(find_dois(text) or _IDENTIFIER.search(text))
 
 
-def _check_references(data: LamdaData, add: _Collector) -> None:
+def _in_catalogue(cat: Catalogue | None, data: LamdaData, role: str, partner: str | None, text: str) -> bool:
+    """Whether every paper of a free-text reference is in the reference catalogue."""
+    if cat is None or not text.strip():
+        return False
+    fname = Path(data.source_map.path).name if data.source_map else None
+    hits = cat.find_all(text, molecule=data.molecule, file=fname, role=role, partner=partner)
+    return all(hit is not None and hit.key is not None for _, hit in hits)
+
+
+def _check_references(data: LamdaData, add: _Collector, cat: Catalogue | None = None) -> None:
     smap = data.source_map
     nlev_line = smap.nlev if smap else None
     # texts that can hold the reference of the levels and lines
@@ -532,10 +543,13 @@ def _check_references(data: LamdaData, add: _Collector) -> None:
             nlev_line,
             fixable=True,
         )
-    elif not any(_has_identifier(t) for t in texts):
+    elif not any(_has_identifier(t) for t in texts) and not _in_catalogue(
+        cat, data, "levels", None, data.level_reference
+    ):
         add(
             "F03",
-            "the levels and lines have a reference only as free text (no DOI, bibcode or link)",
+            "the levels and lines have a reference only as free text (no DOI, bibcode or link, "
+            "not in the reference catalogue)",
             nlev_line,
             fixable=True,
         )
@@ -544,7 +558,7 @@ def _check_references(data: LamdaData, add: _Collector) -> None:
         line = src.partner if src else None
         if not c.reference.strip():
             add("F02", f"{_block_name(b, c)}: no reference on the partner line", line, fixable=True)
-        elif not _has_identifier(c.reference):
+        elif not _has_identifier(c.reference) and not _in_catalogue(cat, data, "collisions", c.label, c.reference):
             add("F03", f"{_block_name(b, c)}: reference only as free text: {c.reference.strip()!r}", line, fixable=True)
 
 
@@ -643,7 +657,7 @@ def _check_physics(data: LamdaData, add: _Collector) -> None:
 
 
 # ------------------------------------------------------------------- verify
-def check_data(data: LamdaData, rtol: float = 1e-4) -> list[Issue]:
+def check_data(data: LamdaData, rtol: float = 1e-4, catalogue: bool = True) -> list[Issue]:
     """The issues of the checks L, R, C, F and P of ``data`` (not the reader's S issues).
 
     Parameters
@@ -652,6 +666,9 @@ def check_data(data: LamdaData, rtol: float = 1e-4) -> list[Issue]:
         The data. Line numbers come from ``data.source_map`` where it still fits the data.
     rtol : float, optional
         Relative tolerance of the checks R04 and R05. Default: 1e-4.
+    catalogue : bool, optional
+        F03: a free-text reference found in the reference catalogue is not reported.
+        Default: True.
 
     Returns
     -------
@@ -662,7 +679,7 @@ def check_data(data: LamdaData, rtol: float = 1e-4) -> list[Issue]:
     _check_levels(data, add)
     _check_lines(data, add, rtol)
     _check_collisions(data, add)
-    _check_references(data, add)
+    _check_references(data, add, load_catalogue() if catalogue else None)
     _check_physics(data, add)
     return add.issues
 
@@ -675,6 +692,7 @@ def verify(
     ignore: Iterable[str] = (),
     error_on: Iterable[str] = (),
     rtol: float = 1e-4,
+    catalogue: bool = True,
 ) -> list[Issue]:
     """Check a LAMDA file or data set against the standard.
 
@@ -696,6 +714,8 @@ def verify(
     rtol : float, optional
         Relative tolerance of the checks R04 (frequency) and R05 (E_up), on top of the
         rounding of the numbers as written. Default: 1e-4.
+    catalogue : bool, optional
+        Use the reference catalogue for F03 (:mod:`pylamda.catalogue`). Default: True.
 
     Returns
     -------
@@ -710,7 +730,7 @@ def verify(
         If the file cannot be opened.
     """
     data = source if isinstance(source, LamdaData) else read(source)
-    issues = [*data.issues, *check_data(data, rtol=rtol)]
+    issues = [*data.issues, *check_data(data, rtol=rtol, catalogue=catalogue)]
     # a partner line without the ID (S06) is read as ID 0: do not report it again as C01
     s06_lines = {i.line for i in issues if i.code == "S06"}
     issues = [i for i in issues if not (i.code == "C01" and i.line in s06_lines and i.line is not None)]

@@ -124,10 +124,11 @@ code       severity  issue
 The reference of the levels and lines can be on the NLEV line (EMAA: ``Ref:``), on line
 2, in a comment line or in the notes. F01 reports a file where none of these holds a
 DOI, a link, a bibcode, an arXiv ID, "et al.", a year or a database name (CDMS, JPL,
-NIST, …). F03 reports references with none of DOI, link, bibcode or arXiv ID.
+NIST, …). F03 reports references with none of DOI, link, bibcode or arXiv ID that are
+not in the reference catalogue (:doc:`references`; ``--no-catalogue`` leaves the
+catalogue out).
 
-A check that DOIs and bibcodes resolve (F04, ``--online``) and the reference catalogue
-come with the BibTeX export (design, steps 4 and 6).
+A check that DOIs and bibcodes resolve (F04, ``--online``) follows.
 
 P: physics heuristics
 ---------------------

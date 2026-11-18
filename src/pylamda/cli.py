@@ -63,6 +63,7 @@ def _parser() -> argparse.ArgumentParser:
         "--statistics", action="store_true", help="show the number of issues per code instead of each issue"
     )
     check.add_argument("--list-codes", action="store_true", help="list all check codes and exit")
+    check.add_argument("--no-catalogue", action="store_true", help="F03: do not use the reference catalogue")
 
     cmp = sub.add_parser(
         "compare",
@@ -108,6 +109,7 @@ def _parser() -> argparse.ArgumentParser:
     bib.add_argument("--no-database-refs", action="store_true", help="leave out the LAMDA and EMAA papers")
     bib.add_argument("--keys", metavar="FILE", help="JSON file identifier -> key; read and updated (stable keys)")
     bib.add_argument("--no-cache", action="store_true", help="do not use the cache of resolved references")
+    bib.add_argument("--no-catalogue", action="store_true", help="do not look up free-text references in the catalogue")
 
     fx = sub.add_parser(
         "fix",
@@ -169,6 +171,7 @@ def _check(args: argparse.Namespace) -> int:
                 ignore=_codes(args.ignore),
                 error_on=_codes(args.error_on),
                 rtol=args.rtol,
+                catalogue=not args.no_catalogue,
             )
             results.append((path, True, None, issues))
         except LamdaReadError as exc:
@@ -278,6 +281,7 @@ def _bib(args: argparse.Namespace) -> int:
             database_refs=not args.no_database_refs,
             keys=keys,
             cache=not args.no_cache,
+            catalogue=not args.no_catalogue,
         )
     except BibError as exc:
         print(f"pylamda bib: error: {exc}", file=sys.stderr)

@@ -27,10 +27,11 @@ import stat
 import unicodedata
 import warnings
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib.resources import files
 from pathlib import Path
 
+from .catalogue import load_catalogue
 from .model import LamdaData
 from .reader import read
 from .references import find_identifiers
@@ -534,7 +535,8 @@ class BibResult:
             head.append(f"% EMAA asks for this acknowledgement: {EMAA_ACKNOWLEDGEMENT}")
         parts = ["\n".join(head)]
         for e in self.entries:
-            parts.append((f"% {e.note}\n" if e.note else "") + e.bibtex)
+            note = f"{e.note} (pylamda reference catalogue)" if e.source == "catalogue" else e.note
+            parts.append((f"% {note}\n" if note else "") + e.bibtex)
         return "\n\n".join(parts) + "\n"
 
     def write(self, path: str | os.PathLike) -> None:
@@ -553,6 +555,7 @@ class _Work:
     bibcode: str | None = None
     bibtex: str | None = None
     source: str = "unresolved"
+    catalogue_key: str | None = None
 
     def add_use(self, molecule: str, use: str) -> None:
         uses = self.uses.setdefault(molecule, [])
@@ -562,6 +565,31 @@ class _Work:
     @property
     def note(self) -> str:
         return "; ".join(f"{mol}: {', '.join(uses)}" for mol, uses in self.uses.items())
+
+
+def _from_catalogue(
+    cat, data: LamdaData, fname: str | None, ref: Reference, works: dict, result: BibResult
+) -> list[str]:
+    """Add the papers of a free-text reference that the catalogue knows; return the parts it does not know."""
+    unresolved = []
+    for seg, hit in cat.find_all(ref.text, molecule=data.molecule, file=fname, role=ref.role, partner=ref.partner):
+        if hit is None or hit.key is None:
+            unresolved.append(seg)
+            continue
+        ident = f"bibcode:{hit.bibcode}"
+        w = works.get(ident)
+        if w is None:
+            ids = [ident] + ([f"doi:{hit.doi}"] if hit.doi else [])
+            w = works[ident] = _Work(
+                ids, seg, bibcode=hit.bibcode, bibtex=cat.bibtex.get(hit.key), source="catalogue", catalogue_key=hit.key
+            )
+        w.add_use(data.molecule, ref.use)
+        if hit.match == "text":
+            result.warnings.append(
+                f"{fname or data.molecule}: {seg!r} found in the reference catalogue by its text only "
+                f"({hit.key}, cited there for another molecule): check it"
+            )
+    return unresolved
 
 
 def database_entries() -> dict[str, str]:
@@ -584,6 +612,7 @@ def bibtex(
     database_refs: bool = True,
     keys: dict[str, str] | None = None,
     cache: bool | str | os.PathLike = True,
+    catalogue: bool = True,
     client: object | None = None,
 ) -> BibResult:
     """The BibTeX entries of the references of LAMDA files.
@@ -605,6 +634,10 @@ def bibtex(
     cache : bool, str or os.PathLike, optional
         Cache of resolved references: True = :func:`default_cache`, False = none, or a
         file. Default: True.
+    catalogue : bool, optional
+        Look up free-text references in the shipped reference catalogue
+        (:mod:`pylamda.catalogue`); found ones become entries with source ``"catalogue"``,
+        without network. Default: True.
     client : object or None, optional
         The HTTP client (default :class:`HttpClient`); tests pass a fake one.
 
@@ -624,10 +657,15 @@ def bibtex(
     result = BibResult(n_files=len(datas), emaa=any(is_emaa(d) for d in datas))
 
     works: dict[str, _Work] = {}
+    cat = load_catalogue() if catalogue else None
     for d in datas:
+        fname = Path(d.source_map.path).name if d.source_map else None
         for ref in collect_references(d):
             if not ref.identifiers and ref.role in ("levels", "collisions"):
-                result.free_text.append(ref)
+                unresolved = _from_catalogue(cat, d, fname, ref, works, result) if cat else [ref.text]
+                if unresolved:
+                    text = "; ".join(unresolved)
+                    result.free_text.append(ref if text == ref.text else replace(ref, text=text))
             for ident in ref.identifiers:
                 w = works.setdefault(ident, _Work([ident], identifier_context(ref.text, ident)))
                 w.add_use(d.molecule, ref.use)
@@ -690,6 +728,8 @@ def bibtex(
     keys = dict(keys or {})
     for w in merged:
         key = next((keys[i] for i in w.identifiers if i in keys), None)
+        if key is None and w.catalogue_key and w.catalogue_key not in used_keys:
+            key = w.catalogue_key
         if key is None or key in used_keys:
             base = (key_from_entry(w.bibtex) if w.bibtex else None) or key_from_text(w.text)
             base = base or re.sub(r"[^A-Za-z0-9_.:-]", "_", w.identifiers[0].replace(":", "_", 1))
@@ -725,6 +765,7 @@ def _chunks(terms: list[str], field_name: str) -> list[str]:
 
 def _resolve(works: list[_Work], client, cache: _Cache, result: BibResult) -> None:
     """Resolve the works in place: SciX for bibcodes, DOIs, arXiv IDs; doi.org for other DOIs."""
+    works = [w for w in works if w.source != "catalogue"]  # these come with their BibTeX
     kind = {w.identifiers[0]: w.identifiers[0].split(":", 1) for w in works}
     has_token = getattr(client, "has_token", True)
 

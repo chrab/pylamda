@@ -134,7 +134,7 @@ def test_database_entries():
 
 # ------------------------------------------------------------------- offline
 def test_offline_export():
-    result = bibtex([EMAA_CO, LAMDA / "catom.dat"])
+    result = bibtex([EMAA_CO, LAMDA / "catom.dat"], catalogue=False)
     keys = [e.key for e in result.entries]
     # database papers first; Faure2025 and EMAA because of the EMAA file
     assert keys[:4] == ["Schoier2005", "vanderTak2020", "Faure2025", "EMAA"]
@@ -155,8 +155,8 @@ def test_offline_export():
 
 
 def test_offline_options(tmp_path):
-    assert [e.key for e in bibtex([LAMDA / "catom.dat"]).entries] == ["Schoier2005", "vanderTak2020"]
-    assert bibtex([LAMDA / "catom.dat"], database_refs=False).entries == []
+    assert [e.key for e in bibtex([LAMDA / "catom.dat"], catalogue=False).entries] == ["Schoier2005", "vanderTak2020"]
+    assert bibtex([LAMDA / "catom.dat"], database_refs=False, catalogue=False).entries == []
     # bibcode and arXiv IDs give @misc entries with a SciX link / eprint
     path = tmp_path / "x.dat"
     path.write_text(
@@ -306,7 +306,7 @@ def test_bib_command(tmp_path, capsys):
     text = out.read_text()
     assert "@article{Schoier2005," in text and "@misc{Faure2020," in text
     assert json.loads(keys.read_text())["doi:10.1093/mnras/staa242"] == "Faure2020"
-    assert main(["bib", str(LAMDA / "catom.dat"), "--no-database-refs"]) == 0
+    assert main(["bib", str(LAMDA / "catom.dat"), "--no-database-refs", "--no-catalogue"]) == 0
     captured = capsys.readouterr()
     assert captured.out.startswith("% References of 1 LAMDA file,") and "@" not in captured.out
     assert "6 references without DOI, bibcode or arXiv ID" in captured.err
