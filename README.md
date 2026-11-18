@@ -9,7 +9,8 @@ pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/mo
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
 
-**Status:** early development. Reading, writing, checking and comparing work. Combine, fix
+**Status:** early development. Reading, writing, checking, comparing and the BibTeX export
+work. Combine, fix
 and the BibTeX export follow (see `docs/design.md`, section 14).
 
 ```python
@@ -25,7 +26,15 @@ pylamda.write(data, "co_normalised.dat")
 pylamda check data/*.dat            # exit code 1 if there are errors
 pylamda check --statistics data/*.dat
 pylamda compare old.dat new.dat     # exit code 1 if they differ
+pylamda bib data/*.dat -o refs.bib --online   # SciX needs SCIX_API_TOKEN
 ```
+
+## Database papers
+
+`src/pylamda/data/database_refs.bib` holds the BibTeX entries of the main papers of the
+LAMDA and EMAA databases (Schöier et al. 2005; van der Tak et al. 2020; Faure et al.
+2025; the EMAA dataset DOI). `pylamda bib` adds them to every export, as the databases
+ask. The file is plain BibTeX and can be used on its own.
 
 ## Installation
 

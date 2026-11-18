@@ -1,0 +1,55 @@
+% The main publications of the LAMDA and EMAA databases.
+%
+% pylamda adds them to every BibTeX export (pylamda bib), as the databases ask users to cite
+% them (checked 2026-11-18 on https://home.strw.leidenuniv.nl/~moldata/ and
+% https://emaa.osug.fr/citation-policy):
+%   LAMDA: Schoier2005 and vanderTak2020 (the 2020 status review), always.
+%   EMAA:  Faure2025 and the dataset DOI 10.17178/EMAA, if a file comes from EMAA.
+% The entries come from astrolinedata (DOIs checked against doi.org); the bibcodes from SciX.
+% The pylamda --online tests compare them with SciX.
+
+@article{Schoier2005,
+  author  = {Sch{\"o}ier, F. L. and van der Tak, F. F. S. and van Dishoeck, E. F.
+             and Black, J. H.},
+  title   = {{An atomic and molecular database for analysis of submillimetre line
+             observations}},
+  journal = {Astronomy and Astrophysics},
+  volume  = {432},
+  pages   = {369--379},
+  year    = {2005},
+  doi     = {10.1051/0004-6361:20041729},
+  adsurl  = {https://scixplorer.org/abs/2005A&A...432..369S},
+}
+
+@article{vanderTak2020,
+  author  = {van der Tak, F. F. S. and Lique, F. and Faure, A. and Black, J. H.
+             and van Dishoeck, E. F.},
+  title   = {{The Leiden Atomic and Molecular Database (LAMDA): Current Status,
+             Recent Updates, and Future Plans}},
+  journal = {Atoms},
+  volume  = {8},
+  number  = {2},
+  pages   = {15},
+  year    = {2020},
+  doi     = {10.3390/atoms8020015},
+  adsurl  = {https://scixplorer.org/abs/2020Atoms...8...15V},
+}
+
+@article{Faure2025,
+  author  = {Faure, A. and Bacmann, A. and Jacquot, R.},
+  title   = {{Excitation of Molecules and Atoms for Astrophysics (EMAA): A spectroscopic
+             and collisional database}},
+  journal = {Astronomy and Astrophysics},
+  volume  = {700},
+  pages   = {A266},
+  year    = {2025},
+  doi     = {10.1051/0004-6361/202554403},
+  adsurl  = {https://scixplorer.org/abs/2025A&A...700A.266F},
+}
+
+@misc{EMAA,
+  title        = {{EMAA: Excitation of Molecules and Atoms for Astrophysics}},
+  howpublished = {\url{https://emaa.osug.fr}},
+  note         = {Observatoire des Sciences de l'Univers de Grenoble (OSUG)},
+  doi          = {10.17178/EMAA},
+}

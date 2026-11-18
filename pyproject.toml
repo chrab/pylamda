@@ -73,4 +73,5 @@ testpaths = ["tests"]
 markers = [
     "corpus: runs on the files given with --corpus (skipped without it)",
     "fortran: needs gfortran on the PATH",
+    "online: uses SciX and doi.org (run with --online; SciX needs SCIX_API_TOKEN)",
 ]

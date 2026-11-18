@@ -3,7 +3,7 @@
 Status (2026-11-18): design with decisions taken (section 13). Moved from astrolinedata
 (`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 3 of section 14 are
 implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`;
-`compare` and `pylamda compare`).
+`compare` and `pylamda compare`), and step 4 (`bibtex` and `pylamda bib`).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
 the relation to astrolinedata, section 13 the decisions.
@@ -426,8 +426,11 @@ pylamda bib data/*.dat -o lamda_refs.bib --online
         pylamda warns if other users can read the file.
    - No token is shipped, and there is no default.
    - The token is never written to files, logs, the cache or error messages.
-   - SciX uses the same API as ADS. The exact base URL and the request form are confirmed
-     during implementation (SciX API documentation).
+   - SciX uses the same API as ADS. Confirmed on 2026-11-18 with a live token: base URL
+     `https://api.scixplorer.org/v1` (also `https://api.adsabs.harvard.edu/v1`, same
+     token); `GET /search/query` (`q`, `fl`, `rows`), header `Authorization: Bearer
+     <token>`; `POST /export/bibtex` with `{"bibcode": [...]}` -> `{"export": "..."}`. In a
+     search, `doi:"a" OR doi:"b"` works; `doi:("a" OR "b")` gives HTTP 400.
 5. **Without resolution**: an `@misc` entry with `doi` (or the SciX link) and a `note`
    saying what the reference is for ("CO: collision rates with p-H2"), as astrolinedata's
    `data_references` does.
@@ -448,6 +451,12 @@ pylamda bib data/*.dat -o lamda_refs.bib --online
 
    - The citation requests on the LAMDA and EMAA web pages are checked again during
      implementation. The list follows them.
+   - Checked on 2026-11-18: the LAMDA home page asks to cite Schöier et al. 2005 only;
+     it links van der Tak et al. 2020 (arXiv:2004.11230) as a review, not as a required
+     citation. Decided on 2026-11-18 to keep both in every export (decision 10). EMAA
+     (citation policy page) asks for Faure et al. 2025, the dataset DOI 10.17178/EMAA and
+     an acknowledgement sentence. LAMDA also asks to give the access date. Both requests
+     go into the BibTeX file as comments.
    - `--no-database-refs` leaves these papers out.
    - If an entry also comes from a file (same DOI), it appears once.
 9. **Where the main papers come from**: they are **shipped with the package** as a

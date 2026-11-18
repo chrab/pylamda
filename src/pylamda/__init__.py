@@ -14,6 +14,7 @@ reported as issues, never silently interpreted.
 
 from importlib.metadata import PackageNotFoundError, version
 
+from .bib import BibEntry, BibResult, bibtex, collect_references
 from .compare import LamdaDiff, LevelMatch, PartnerDiff, compare, critical_density, match_levels
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
 from .model import (
@@ -44,6 +45,8 @@ __all__ = [
     "PartnerDiff",
     "SEVERITIES",
     "STANDARD_PARTNERS",
+    "BibEntry",
+    "BibResult",
     "BlockSource",
     "CollisionSet",
     "Issue",
@@ -53,6 +56,8 @@ __all__ = [
     "LamdaReadError",
     "SourceMap",
     "__version__",
+    "bibtex",
+    "collect_references",
     "compare",
     "critical_density",
     "find_dois",

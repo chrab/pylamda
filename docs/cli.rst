@@ -1,7 +1,7 @@
 Command line
 ============
 
-``pylamda`` (or ``python -m pylamda``) has two commands so far, ``check`` and ``compare``.
+``pylamda`` (or ``python -m pylamda``) has three commands so far: ``check``, ``compare`` and ``bib``.
 
 pylamda check
 -------------
@@ -83,3 +83,35 @@ Exit codes, as ``diff``:
 - 0: no differences;
 - 1: differences;
 - 2: a file cannot be read (or opened).
+
+pylamda bib
+-----------
+
+.. code-block:: text
+
+   pylamda bib [options] FILE [FILE ...]
+
+Writes the references of LAMDA files as BibTeX (see :doc:`references`). Warnings and
+the references without an identifier go to standard error.
+
+Options:
+
+``-o FILE``, ``--output FILE``
+   The ``.bib`` file (default: standard output).
+``--online``
+   Resolve the identifiers with SciX (needs the API token) and doi.org.
+``--scix-token-file FILE``
+   File with the SciX API token (default: ``SCIX_API_TOKEN``, then
+   ``~/.config/pylamda/scix_token``).
+``--no-database-refs``
+   Leave out the LAMDA and EMAA papers.
+``--keys FILE``
+   JSON file identifier → key; read and updated, so that keys stay the same.
+``--no-cache``
+   Do not use the cache of resolved references.
+
+Exit codes:
+
+- 0: done;
+- 1: online resolution failed (e.g. SciX rejected the token);
+- 2: a file cannot be read (the others are still exported).

@@ -46,6 +46,9 @@ Commands
 ``--corpus`` takes a directory (all its ``.dat``, ``.radex`` and ``.txt`` files), a
 file, or a quoted glob pattern (``--corpus "data/*Lambda*.dat"``), and can be repeated.
 
+``pytest --online`` also runs the tests that use SciX and doi.org; SciX needs
+``SCIX_API_TOKEN`` (for example as a conda variable of ``PYLAMDA``).
+
 Tests that need ``gfortran`` (a RADEX-style Fortran read of a written file) are skipped
 if it is not on the ``PATH``.
 
@@ -60,10 +63,12 @@ Layout
      writer.py       write(): normalised layout
      verify.py       verify(): the checks L, R, C, F, P (plus the reader's S issues)
      compare.py      compare(), match_levels(), critical_density()
+     bib.py          bibtex(): BibTeX export, SciX and doi.org, token, cache
+     data/           database_refs.bib: the LAMDA and EMAA papers
      issues.py       Issue, the check codes (CODES), LamdaReadError
      formula.py      formula mass of a molecule name (check P04)
-     references.py   identifiers in reference texts (DOIs)
-     cli.py          the command line (pylamda check, pylamda compare)
+     references.py   identifiers in reference texts (DOIs, bibcodes, arXiv IDs)
+     cli.py          the command line (pylamda check, compare, bib)
    tests/
      data/           real LAMDA and EMAA files used as fixtures
      helpers.py      make_lamda() for small synthetic files (no issue with the defaults)

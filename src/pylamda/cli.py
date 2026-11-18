@@ -1,8 +1,9 @@
-"""Command line: ``pylamda check FILE ...`` and ``pylamda compare A B``.
+"""Command line: ``pylamda check FILE ...``, ``pylamda compare A B`` and ``pylamda bib FILE ...``.
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
 ``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
-0 = no differences, 1 = differences, 2 = a file cannot be read.
+0 = no differences, 1 = differences, 2 = a file cannot be read. Of ``pylamda bib``: 0 = done,
+1 = online resolution failed, 2 = a file cannot be read.
 """
 
 from __future__ import annotations
@@ -14,8 +15,11 @@ from collections import Counter
 from collections.abc import Sequence
 
 from . import __version__
+from .bib import BibError, bibtex
 from .compare import compare
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
+from .model import LamdaData
+from .reader import read
 from .verify import verify
 
 
@@ -83,6 +87,24 @@ def _parser() -> argparse.ArgumentParser:
     )
     cmp.add_argument("--format", choices=("text", "json"), default="text", help="output format (default text)")
     cmp.add_argument("--max-items", type=int, default=5, help="items named per list before '...' (default 5)")
+
+    bib = sub.add_parser(
+        "bib",
+        help="BibTeX file of the references of LAMDA files",
+        description="Write the references of LAMDA files as BibTeX. Offline: @misc entries with the DOIs, "
+        "bibcodes and arXiv IDs. --online: resolved with SciX (needs the user's API token) and doi.org.",
+    )
+    bib.add_argument("files", nargs="+", metavar="FILE", help="LAMDA files")
+    bib.add_argument("-o", "--output", metavar="FILE", help="the .bib file (default: standard output)")
+    bib.add_argument("--online", action="store_true", help="resolve the identifiers with SciX and doi.org")
+    bib.add_argument(
+        "--scix-token-file",
+        metavar="FILE",
+        help="file with the SciX API token (default: SCIX_API_TOKEN, then ~/.config/pylamda/scix_token)",
+    )
+    bib.add_argument("--no-database-refs", action="store_true", help="leave out the LAMDA and EMAA papers")
+    bib.add_argument("--keys", metavar="FILE", help="JSON file identifier -> key; read and updated (stable keys)")
+    bib.add_argument("--no-cache", action="store_true", help="do not use the cache of resolved references")
     return parser
 
 
@@ -189,6 +211,68 @@ def _compare(args: argparse.Namespace) -> int:
     return 1 if diff else 0
 
 
+def _bib(args: argparse.Namespace) -> int:
+    datas: list[LamdaData] = []
+    status = 0
+    for path in args.files:
+        try:
+            datas.append(read(path))
+        except LamdaReadError as exc:
+            print(f"pylamda bib: {path}: not readable:\n{exc}", file=sys.stderr)
+            status = 2
+        except OSError as exc:
+            print(f"pylamda bib: {path}: cannot open: {exc.strerror or exc}", file=sys.stderr)
+            status = 2
+    token = None
+    if args.scix_token_file:
+        from pathlib import Path
+
+        lines = Path(args.scix_token_file).read_text(encoding="utf-8").splitlines()
+        token = lines[0].strip() if lines else None
+    keys_path = None
+    keys = None
+    if args.keys:
+        from pathlib import Path
+
+        keys_path = Path(args.keys)
+        keys = json.loads(keys_path.read_text(encoding="utf-8")) if keys_path.is_file() else {}
+    try:
+        result = bibtex(
+            datas,
+            online=args.online,
+            token=token,
+            database_refs=not args.no_database_refs,
+            keys=keys,
+            cache=not args.no_cache,
+        )
+    except BibError as exc:
+        print(f"pylamda bib: error: {exc}", file=sys.stderr)
+        return 1
+    if args.output:
+        result.write(args.output)
+    else:
+        print(result.text(), end="")
+    if keys_path is not None:
+        keys_path.write_text(json.dumps(result.keys, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    for w in result.warnings:
+        print(f"pylamda bib: warning: {w}", file=sys.stderr)
+    if result.free_text:
+        print(
+            f"pylamda bib: {len(result.free_text)} references without DOI, bibcode or arXiv ID (not in the "
+            "BibTeX file):",
+            file=sys.stderr,
+        )
+        for r in result.free_text:
+            print(f"  {r.path}: {r.use}: {r.text}", file=sys.stderr)
+    counts = {}
+    for e in result.entries:
+        counts[e.source] = counts.get(e.source, 0) + 1
+    where = f" to {args.output}" if args.output else ""
+    parts = ", ".join(f"{n} {s}" for s, n in counts.items())
+    print(f"pylamda bib: {len(result.entries)} entries{where} ({parts})", file=sys.stderr)
+    return status
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command line.
 
@@ -207,6 +291,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _check(args)
     if args.command == "compare":
         return _compare(args)
+    if args.command == "bib":
+        return _bib(args)
     return 2  # pragma: no cover (argparse requires a command)
 
 

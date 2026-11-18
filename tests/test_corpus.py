@@ -15,7 +15,8 @@ import pytest
 from conftest import corpus_files
 from helpers import same_data
 
-from pylamda import CODES, SEVERITIES, LamdaReadError, compare, read, verify, write
+from pylamda import CODES, SEVERITIES, LamdaReadError, bibtex, compare, read, verify, write
+from pylamda.bib import split_entries
 
 pytestmark = pytest.mark.corpus
 
@@ -42,6 +43,13 @@ def test_corpus_verify(corpus_file):
     for issue in verify(corpus_file):
         assert issue.code in CODES and issue.severity in SEVERITIES and issue.count >= 1
         assert issue.line is None or 1 <= issue.line <= n_lines, issue
+
+
+def test_corpus_bib(corpus_file):
+    """The offline BibTeX export works on every file and gives one parsable entry per BibEntry."""
+    result = bibtex([corpus_file])
+    assert len(split_entries(result.text())) == len(result.entries)
+    assert len({e.key for e in result.entries}) == len(result.entries)
 
 
 def _counts(path: Path) -> dict[str, int]:

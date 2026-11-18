@@ -12,6 +12,7 @@ The functions and classes below are also available directly from ``pylamda``
    writer
    verify
    compare
+   bib
    issues
    formula
    references

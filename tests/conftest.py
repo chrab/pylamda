@@ -1,4 +1,4 @@
-"""pytest options: ``--corpus`` runs the corpus tests on real files outside the repository."""
+"""pytest options: ``--corpus`` (real files outside the repository) and ``--online`` (SciX, doi.org)."""
 
 from __future__ import annotations
 
@@ -25,6 +25,18 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="JSON file with the issue counts per corpus file and code; compared, or written if missing",
     )
     parser.addoption("--update-snapshot", action="store_true", help="write the --corpus-snapshot file anew")
+    parser.addoption(
+        "--online", action="store_true", help="run the tests that use SciX and doi.org (SciX needs SCIX_API_TOKEN)"
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    if config.getoption("--online"):
+        return
+    skip = pytest.mark.skip(reason="needs --online")
+    for item in items:
+        if "online" in item.keywords:
+            item.add_marker(skip)
 
 
 def corpus_files(config: pytest.Config) -> list[Path]:
