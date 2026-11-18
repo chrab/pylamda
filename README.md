@@ -9,9 +9,10 @@ pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/mo
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
 
-**Status:** early development. Reading, writing, checking, comparing, fixing and the BibTeX
-export work. The reference catalogue, combine functions
-and the BibTeX export follow (see `docs/design.md`, section 14).
+**Status:** early development. Reading, writing, checking, comparing, fixing, combining
+and the BibTeX export with a reference catalogue work. The switch of astrolinedata to
+pylamda follows; `cut_levels`, plots and an online check of DOIs are planned for later
+(see `docs/design.md`, sections 14 and 15).
 
 ```python
 import pylamda
@@ -28,6 +29,7 @@ pylamda check --statistics data/*.dat
 pylamda compare old.dat new.dat     # exit code 1 if they differ
 pylamda bib data/*.dat -o refs.bib --online   # SciX needs SCIX_API_TOKEN
 pylamda fix in.dat --in-place --trust id      # only the changed lines
+pylamda add-partner o.dat o_chianti.dat e -o o_with_e.dat
 ```
 
 ## Database papers

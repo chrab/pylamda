@@ -1,7 +1,7 @@
 Command line
 ============
 
-``pylamda`` (or ``python -m pylamda``) has four commands: ``check``, ``compare``, ``bib`` and ``fix``.
+``pylamda`` (or ``python -m pylamda``) has six commands: ``check``, ``compare``, ``bib``, ``fix``, ``add-partner`` and ``drop-partner``.
 
 pylamda check
 -------------
@@ -172,3 +172,16 @@ Exit codes:
 
 - 0: done;
 - 2: the file cannot be read, or a fix cannot be applied.
+
+pylamda add-partner, pylamda drop-partner
+-----------------------------------------
+
+.. code-block:: text
+
+   pylamda add-partner TARGET SOURCE PARTNER -o OUT [--match M] [--atol X] [--rtol-e X]
+                       [--replace] [--block N] [--source-label TEXT]
+   pylamda drop-partner FILE PARTNER -o OUT [--block N]
+
+See :doc:`combining`. Both write the normalised layout to a new file (``OUT`` must not be
+an input file) and print the note line. Exit codes: 0 done, 2 an error (file not
+readable, partner missing or ambiguous, levels that do not fit).

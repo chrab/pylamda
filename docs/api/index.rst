@@ -16,6 +16,7 @@ The functions and classes below are also available directly from ``pylamda``
    catalogue
    refsearch
    fix
+   combine
    issues
    formula
    references

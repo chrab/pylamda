@@ -1,10 +1,12 @@
 # pylamda: design
 
 Status (2026-11-18): design with decisions taken (section 13). Moved from astrolinedata
-(`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 3 of section 14 are
-implemented (package skeleton, data model, reader, writer; `verify` and `pylamda check`;
-`compare` and `pylamda compare`), step 4 (`bibtex` and `pylamda bib`) and step 5
-(`fix`, `patch` and `pylamda fix`; `--add-refs` follows with the catalogue, step 6).
+(`docs/design_lamda.md`, commit `e0c038f`). Steps 1 to 6 of section 14 are implemented
+(package skeleton, data model, reader, writer; `verify` and `pylamda check`; `compare`
+and `pylamda compare`; `bibtex` and `pylamda bib`; `fix`, `patch` and `pylamda fix`;
+the reference catalogue with `bib --search` and `fix --add-refs`), and `add_partner` and
+`drop_partner` (section 9) as the first part of step 7. Step 7 is open otherwise.
+Step 8 and check F04 are left for later (section 15).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
 the relation to astrolinedata, section 13 the decisions.
@@ -310,7 +312,8 @@ Implementation notes (step 2):
   another ΔE and may be missed (the O+H rows in `Oatom_Lambda_extra_NIST.dat`, whose
   grid starts at 50 K).
 - P03 limits: 1e-8 cm3 s-1 (neutral partners), 1e-7 (H+), 1e-4 (electrons).
-- F04 (`--online`) comes with step 4; the catalogue part of F03 with step 6.
+- F04 (`--online`) is left for later (section 15); the catalogue part of F03 is done
+  (step 6).
 
 ## 7. Fix
 
@@ -406,6 +409,15 @@ Implementation notes (step 3):
 
 All combine functions return the new data and a record (as `AddedPartner`), and add a
 note line.
+
+Implemented (2026-11-18, `pylamda/combine.py`): `add_partner` from astrolinedata, with
+partners by ID; a source or target with several blocks of the same ID (EMAA) needs
+`block=`; warnings (other molecule, H2 next to p-H2/o-H2) go into
+`AddedPartner.warnings`; the new partner line is normalised with the target's molecule;
+level matching by `match_levels` (tolerances 0.1 cm-1 + 1e-4 E). `drop_partner` with a
+`DroppedPartner` record. CLI `pylamda add-partner` and `drop-partner` (normalised
+layout, never the input file). `select_partners` stays a method of `LamdaData`;
+`cut_levels` is left for later (section 15).
 
 ## 10. References and BibTeX
 
@@ -671,4 +683,23 @@ Decided on 2026-11-18:
 6. Reference catalogue: maintainer script, search and review of the corpus references,
    ship `references.json`/`.bib`; `--search` for candidates.
 7. astrolinedata switches to pylamda; TEST_LAMDA_FILES switches to pylamda.
-8. `cut_levels`, plots.
+8. `cut_levels`, plots. Left for later (decided 2026-11-18, section 15).
+
+## 15. Possible future features
+
+Left for later (decided 2026-11-18). None of them changes the API of what exists.
+
+- **Step 8: `cut_levels` and plots.**
+  - `cut_levels(data, e_max | n_max)`: drop levels and all transitions to them, with a
+    record and a note line like the other combine functions (section 9).
+  - Plots with the `plot` extra (matplotlib): rate ratios b/a against E_up per
+    temperature, as `TEST_LAMDA_FILES/report.py`; the same for critical densities and
+    A values. The data are already in `LamdaDiff` (`rates_interpolated`,
+    `critical_density`, `a_ratio`).
+- **Check F04 (`pylamda check --online`)**: a DOI or bibcode in a file that does not
+  resolve (warning). It can use the HTTP client and the cache of `pylamda bib`: SciX
+  search for bibcodes, doi.org for DOIs. Needs the user's SciX token for bibcodes.
+- From section 9, if needed: replace the rates of a partner for some transitions only;
+  merge two temperature grids. These need physics decisions per case.
+- Reference search: hints from the comment lines of other files of the same molecule
+  (`CO_Lambda.dat` for `13CO_Lambda.dat`).

@@ -1,0 +1,4 @@
+Combining
+=========
+
+.. automodule:: pylamda.combine

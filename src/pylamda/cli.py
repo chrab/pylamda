@@ -1,4 +1,4 @@
-"""Command line: ``pylamda check``, ``compare``, ``bib`` and ``fix``.
+"""Command line: ``pylamda check``, ``compare``, ``bib``, ``fix``, ``add-partner`` and ``drop-partner``.
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
 ``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
@@ -17,6 +17,7 @@ from collections.abc import Sequence
 
 from . import __version__
 from .bib import BibError, bibtex
+from .combine import CombineError, add_partner, drop_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
@@ -162,7 +163,73 @@ def _parser() -> argparse.ArgumentParser:
         help="append the SciX links of free-text references: from the reference catalogue, or from the decisions "
         "in a review file (pylamda bib --search)",
     )
+
+    add = sub.add_parser(
+        "add-partner",
+        help="add the collision rates of one partner from another file",
+        description="Add the collision rates of one partner from SOURCE to TARGET (same species): the levels are "
+        "matched, the transitions between matched levels are copied unchanged. Writes the normalised layout.",
+    )
+    add.add_argument("target", metavar="TARGET", help="the file to extend")
+    add.add_argument("source", metavar="SOURCE", help="the file with the partner")
+    add.add_argument("partner", metavar="PARTNER", help="partner name (e, p-H2, ...)")
+    add.add_argument("-o", "--output", required=True, metavar="OUT", help="the new file (not TARGET)")
+    add.add_argument("--match", choices=("auto", "quanta", "energy", "index"), default="auto", help="level matching")
+    add.add_argument("--atol", type=float, default=0.1, help="energy tolerance [cm-1] (default 0.1)")
+    add.add_argument("--rtol-e", type=float, default=1e-4, help="relative energy tolerance (default 1e-4)")
+    add.add_argument("--replace", action="store_true", help="replace the partner if TARGET has it")
+    add.add_argument("--block", type=int, help="the block of SOURCE, if it has several with the partner's ID")
+    add.add_argument("--source-label", help="description of the source for the note line")
+
+    drop = sub.add_parser(
+        "drop-partner",
+        help="remove the collision data of one partner",
+        description="Remove the collision block of one partner. Writes the normalised layout.",
+    )
+    drop.add_argument("file", metavar="FILE")
+    drop.add_argument("partner", metavar="PARTNER", help="partner name (by ID), or 'ID <n>'")
+    drop.add_argument("-o", "--output", required=True, metavar="OUT", help="the new file (not FILE)")
+    drop.add_argument("--block", type=int, help="the block, if the file has several with the partner's ID")
     return parser
+
+
+def _same_file(a: str, b: str) -> bool:
+    from pathlib import Path
+
+    return Path(a).resolve() == Path(b).resolve()
+
+
+def _combine(args: argparse.Namespace) -> int:
+    inputs = [args.target, args.source] if args.command == "add-partner" else [args.file]
+    if any(_same_file(args.output, f) for f in inputs):
+        print(f"pylamda {args.command}: the output must be a new file, not {args.output}", file=sys.stderr)
+        return 2
+    try:
+        if args.command == "add-partner":
+            data, record = add_partner(
+                read(args.target),
+                read(args.source),
+                args.partner,
+                match=args.match,
+                atol=args.atol,
+                rtol_e=args.rtol_e,
+                replace_existing=args.replace,
+                source_label=args.source_label,
+                block=args.block,
+            )
+            for w in record.warnings:
+                print(f"pylamda add-partner: warning: {w}", file=sys.stderr)
+        else:
+            data, record = drop_partner(read(args.file), args.partner, block=args.block)
+    except (LamdaReadError, CombineError) as exc:
+        print(f"pylamda {args.command}: error: {exc}", file=sys.stderr)
+        return 2
+    except OSError as exc:
+        print(f"pylamda {args.command}: cannot open: {exc.strerror or exc}", file=sys.stderr)
+        return 2
+    write(data, args.output)
+    print(data.notes[-1].lstrip("! "), file=sys.stderr)
+    return 0
 
 
 def _list_codes() -> None:
@@ -453,6 +520,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _bib(args)
     if args.command == "fix":
         return _fix(args)
+    if args.command in ("add-partner", "drop-partner"):
+        return _combine(args)
     return 2  # pragma: no cover (argparse requires a command)
 
 

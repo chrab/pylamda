@@ -67,6 +67,7 @@ Layout
      catalogue.py    the reference catalogue: text parsing, lookup
      refsearch.py    SciX search for free-text references (bib --search, the tool)
      fix.py          fix(), patch(), add_reference(): normalised and patch mode
+     combine.py      add_partner(), drop_partner()
      data/           database_refs.bib (LAMDA and EMAA papers); references.json/.bib (catalogue)
    tools/
      catalogue.py    maintainer tool: builds the reference catalogue
@@ -74,7 +75,7 @@ Layout
      issues.py       Issue, the check codes (CODES), LamdaReadError
      formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs, bibcodes, arXiv IDs)
-     cli.py          the command line (pylamda check, compare, bib, fix)
+     cli.py          the command line (check, compare, bib, fix, add-partner, drop-partner)
    tests/
      data/           real LAMDA and EMAA files used as fixtures
      helpers.py      make_lamda() for small synthetic files (no issue with the defaults)
