@@ -21,6 +21,11 @@ classifiers = [
 ]
 dependencies = ["numpy>=1.26"]
 
+[project.urls]
+Documentation = "https://pylamda.readthedocs.io/"
+Repository = "https://github.com/chrab/pylamda"
+Issues = "https://github.com/chrab/pylamda/issues"
+
 [project.optional-dependencies]
 plot = ["matplotlib>=3.8"]
 bib = ["requests>=2.31"]
@@ -40,10 +45,6 @@ dev = [
 
 [project.scripts]
 pylamda = "pylamda.cli:main"
-
-[project.urls]
-Repository = "https://github.com/chrab/pylamda"
-Issues = "https://github.com/chrab/pylamda/issues"
 
 [tool.poetry]
 packages = [{ include = "pylamda", from = "src" }]
