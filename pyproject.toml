@@ -1,6 +1,6 @@
 [project]
 name = "pylamda"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "Read, write, verify, compare, combine and fix files in the LAMDA format, and export their references as BibTeX"
 readme = "README.md"
 license = "MIT"
@@ -9,7 +9,7 @@ authors = [{ name = "Christian Rab" }]
 requires-python = ">=3.11"
 keywords = ["LAMDA", "RADEX", "EMAA", "NLTE", "collision rates", "Einstein A", "molecular data", "astrophysics"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
