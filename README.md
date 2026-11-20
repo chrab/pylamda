@@ -1,7 +1,8 @@
 # pylamda
 
-[![Documentation](https://readthedocs.org/projects/pylamda/badge/?version=latest)](https://pylamda.readthedocs.io/)
-[![Coverage](https://raw.githubusercontent.com/chrab/pylamda/python-coverage-comment-action-data/badge.svg)](https://github.com/chrab/pylamda/tree/python-coverage-comment-action-data)
+[![PyPI](https://img.shields.io/pypi/v/pylamda)](https://pypi.org/project/pylamda/)
+[![Documentation](https://img.shields.io/readthedocs/pylamda)](https://pylamda.readthedocs.io/)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/chrab/pylamda/python-coverage-comment-action-data/endpoint.json)](https://github.com/chrab/pylamda/tree/python-coverage-comment-action-data)
 
 Python toolkit for working with and on files in the LAMDA format (the
 [Leiden Atomic and Molecular Database](https://home.strw.leidenuniv.nl/~moldata/)).
