@@ -69,7 +69,7 @@ _EXPORT_CHUNK = 200  # bibcodes per SciX export request
 
 
 class BibError(RuntimeError):
-    """Online resolution failed (e.g. SciX rejected the token, or requests is missing)."""
+    """Online resolution failed (e.g. SciX rejected the token)."""
 
 
 # ------------------------------------------------------------------- references in files
@@ -409,7 +409,7 @@ class _Cache:
 
 
 class HttpClient:
-    """SciX and doi.org over HTTPS (needs ``requests``, the ``bib`` extra).
+    """SciX and doi.org over HTTPS (with ``requests``).
 
     Parameters
     ----------
@@ -420,10 +420,8 @@ class HttpClient:
     """
 
     def __init__(self, token: str | None, timeout: float = 30.0):
-        try:
-            import requests
-        except ImportError:  # pragma: no cover (requests is in the dev environment)
-            raise BibError("resolving references online needs requests: pip install 'pylamda[bib]'") from None
+        import requests  # imported here, so that 'import pylamda' stays fast
+
         from . import __version__
 
         self._requests = requests

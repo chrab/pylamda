@@ -45,8 +45,8 @@ ask. The file is plain BibTeX and can be used on its own.
 ## Installation
 
 ```bash
-pip install .                 # numpy only
-pip install ".[plot,bib]"     # with matplotlib and requests
+pip install .                 # numpy and requests
+pip install ".[plot]"         # with matplotlib
 pip install -e ".[dev]"       # development: tests, ruff, Sphinx
 ```
 

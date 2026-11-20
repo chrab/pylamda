@@ -11,18 +11,19 @@ From the repository:
    cd pylamda
    pip install .
 
+The dependencies are numpy and requests (requests resolves DOIs and bibcodes for the
+BibTeX export).
+
 Optional extras:
 
 ``plot``
    matplotlib, for plots of comparisons.
-``bib``
-   requests, to resolve DOIs and bibcodes for the BibTeX export.
 ``dev``
-   pytest, ruff, Sphinx with the extensions of this documentation, and the other two
-   extras.
+   pytest, pytest-cov, ruff, Sphinx with the extensions of this documentation, and the
+   ``plot`` extra.
 
 .. code-block:: bash
 
-   pip install ".[plot,bib]"
+   pip install ".[plot]"
 
 For development, see :doc:`development`.

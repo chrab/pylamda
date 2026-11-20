@@ -39,6 +39,8 @@ Commands
 .. code-block:: bash
 
    pytest                                          # tests
+   pytest --cov                                    # tests with a coverage report
+   pytest --cov --cov-report=html                  # coverage as HTML in htmlcov/
    pytest --corpus /path/to/lamda_files            # also the round trip on real files
    ruff format . && ruff check .                   # formatting and linting
    sphinx-build -W -b html docs docs/_build/html   # documentation (warnings are errors)
@@ -48,6 +50,10 @@ file, or a quoted glob pattern (``--corpus "data/*Lambda*.dat"``), and can be re
 
 ``pytest --online`` also runs the tests that use SciX and doi.org; SciX needs
 ``SCIX_API_TOKEN`` (for example as a conda variable of ``PYLAMDA``).
+
+Coverage uses pytest-cov. The settings are in ``[tool.coverage.*]`` of
+``pyproject.toml``: branch coverage of the package ``pylamda``, with the missing lines
+in the report. The ``tools/`` scripts are not measured.
 
 Tests that need ``gfortran`` (a RADEX-style Fortran read of a written file) are skipped
 if it is not on the ``PATH``.
@@ -115,5 +121,5 @@ Continuous integration
 ----------------------
 
 GitHub Actions (``.github/workflows/tests.yml``) runs ruff, the tests on Python 3.11 to
-3.14, and the documentation build. Read the Docs builds the documentation from
-``.readthedocs.yaml`` with the versions pinned in ``docs/requirements.txt``.
+3.14 with a coverage report, and the documentation build. Read the Docs builds the
+documentation from ``.readthedocs.yaml`` with the versions pinned in ``docs/requirements.txt``.

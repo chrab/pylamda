@@ -25,12 +25,13 @@ Follow the LAMDA standard strictly (<https://home.strw.leidenuniv.nl/~moldata/mo
 - Supported Python: ≥ 3.11.
 - Packaging: Poetry. `poetry.toml` sets `virtualenvs.create = false`, so Poetry installs
   into the active environment (conda or venv).
-- Extras: `plot`, `bib`, `dev`. Keep `environment.yml` in line with the dependencies and
-  the `dev` extra in `pyproject.toml`.
+- Dependencies: numpy and requests. Extras: `plot`, `dev`. Keep `environment.yml` in line
+  with the dependencies and the `dev` extra in `pyproject.toml`.
 
 ```bash
 conda activate PYLAMDA
 pytest
+pytest --cov            # with coverage
 ruff format . && ruff check .
 sphinx-build -W -b html docs docs/_build/html
 ```

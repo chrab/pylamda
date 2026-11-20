@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -156,6 +157,26 @@ end program radex_style
 """
 
 
+def _gfortran_rpath_flags() -> list[str]:
+    """Flags that keep gfortran from writing duplicate rpaths into the program (macOS only).
+
+    On macOS, GCC >= 14 adds one rpath for each of its library directories. In a conda
+    environment several of them resolve to ``$CONDA_PREFIX/lib``, and dyld (macOS >= 15.4)
+    stops a program with a duplicate ``LC_RPATH``. ``-nodefaultrpaths`` drops these rpaths;
+    conda's gfortran adds ``-rpath $CONDA_PREFIX/lib`` itself. Older GCC and Linux do not
+    know the flag.
+
+    Returns
+    -------
+    list of str
+        ``["-nodefaultrpaths"]`` on macOS with GCC >= 14, else ``[]``.
+    """
+    if sys.platform != "darwin":
+        return []
+    version = subprocess.run(["gfortran", "-dumpversion"], check=True, capture_output=True, text=True).stdout
+    return ["-nodefaultrpaths"] if int(version.split(".")[0]) >= 14 else []
+
+
 @pytest.mark.fortran
 @pytest.mark.skipif(shutil.which("gfortran") is None, reason="needs gfortran on the PATH")
 def test_written_file_reads_like_radex(tmp_path):
@@ -165,7 +186,12 @@ def test_written_file_reads_like_radex(tmp_path):
     d.notes = ["!NOTES", "!a note"]
     write(d, tmp_path / "data.dat")
     (tmp_path / "radex_style.f90").write_text(RADEX_STYLE_READER)
-    subprocess.run(["gfortran", "-o", "radex_style", "radex_style.f90"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["gfortran", *_gfortran_rpath_flags(), "-o", "radex_style", "radex_style.f90"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
     out = subprocess.run(["./radex_style"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout
     lines = out.splitlines()
     assert lines[:2] == [

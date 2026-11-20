@@ -19,7 +19,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = ["numpy>=1.26"]
+dependencies = ["numpy>=1.26", "requests>=2.31"]
 
 [project.urls]
 Documentation = "https://pylamda.readthedocs.io/"
@@ -28,13 +28,12 @@ Issues = "https://github.com/chrab/pylamda/issues"
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.8"]
-bib = ["requests>=2.31"]
 dev = [
-    # the other extras
+    # the extra "plot"
     "matplotlib>=3.8",
-    "requests>=2.31",
     # tests and code style
     "pytest>=8",
+    "pytest-cov>=5",
     "ruff>=0.6",
     # documentation (docs/requirements.txt has the exact versions Read the Docs uses)
     "sphinx>=8.2",
@@ -76,3 +75,20 @@ markers = [
     "fortran: needs gfortran on the PATH",
     "online: uses SciX and doi.org (run with --online; SciX needs SCIX_API_TOKEN)",
 ]
+
+# Coverage is opt-in: "pytest --cov" (configuration below).
+[tool.coverage.run]
+source = ["pylamda"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

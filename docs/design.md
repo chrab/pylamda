@@ -67,13 +67,13 @@ limit).
 
 - Python ≥ 3.11. Sphinx ≥ 8.2 needs 3.11, and code and documentation use one
   environment.
-- Required: numpy only. No astropy, so that Fortran-centred groups can use the package
-  without a large stack.
+- Required: numpy and requests (requests resolves DOIs and bibcodes; the BibTeX export
+  is an integral part of the package). No astropy, so that Fortran-centred groups can
+  use the package without a large stack.
 - Optional extras:
   - `plot`: matplotlib;
-  - `bib`: requests, to resolve DOIs and bibcodes;
-  - `dev`: pytest, ruff, Sphinx with the extensions of the documentation, and the other
-    two extras.
+  - `dev`: pytest, pytest-cov, ruff, Sphinx with the extensions of the documentation, and
+    the `plot` extra.
 - Install for development: `pip install -e ".[dev]"`, or `poetry install --all-extras`.
 - Packaging with **Poetry**:
   - `pyproject.toml` with a `[project]` table (PEP 621) and the build backend
@@ -645,6 +645,8 @@ Done (step 7, 2026-11-18):
 
 - pytest. Tests run on Python 3.11, 3.12, 3.13 and 3.14 (GitHub Actions); locally in
   the conda environment `PYLAMDA`.
+- Coverage with pytest-cov, opt-in (`pytest --cov`); branch coverage of `pylamda`,
+  settings in `[tool.coverage.*]` of `pyproject.toml`. CI prints the report.
 - One small synthetic file per issue code (as `make_lamda` in TEST_LAMDA_FILES): the
   check finds it; the fix removes it; the round trip stays lossless.
 - Round trip: read → write → read gives equal data, for every file of the corpus.
