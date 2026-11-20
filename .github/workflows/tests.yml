@@ -31,6 +31,32 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest --cov
 
+  # Coverage badge and PR comments: py-cov-action/python-coverage-comment-action.
+  # On pushes to main it stores the coverage and the badge (badge.svg) on the branch
+  # python-coverage-comment-action-data; on pull requests it comments the coverage.
+  # Skipped for pull requests from forks: their token cannot write.
+  coverage:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the coverage data to the data branch
+      pull-requests: write  # post the coverage comment and update it
+    concurrency:
+      group: coverage-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest --cov
+      - uses: py-cov-action/python-coverage-comment-action@5d8df5979747514c914e1c5a12335a7cf9a2745f  # v4.1
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+
   docs:
     runs-on: ubuntu-latest
     steps:

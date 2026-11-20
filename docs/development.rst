@@ -121,5 +121,8 @@ Continuous integration
 ----------------------
 
 GitHub Actions (``.github/workflows/tests.yml``) runs ruff, the tests on Python 3.11 to
-3.14 with a coverage report, and the documentation build. Read the Docs builds the
+3.14 with a coverage report, and the documentation build. A separate job (Python 3.12)
+runs py-cov-action/python-coverage-comment-action: on ``main`` it stores the coverage
+badge on the branch ``python-coverage-comment-action-data`` (used in the README); on
+pull requests it posts the coverage as a comment. Read the Docs builds the
 documentation from ``.readthedocs.yaml`` with the versions pinned in ``docs/requirements.txt``.

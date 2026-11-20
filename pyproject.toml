@@ -80,6 +80,7 @@ markers = [
 [tool.coverage.run]
 source = ["pylamda"]
 branch = true
+relative_files = true  # needed by the coverage badge action in CI
 
 [tool.coverage.report]
 show_missing = true
