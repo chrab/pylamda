@@ -3,20 +3,20 @@
 [![Documentation](https://readthedocs.org/projects/pylamda/badge/?version=latest)](https://pylamda.readthedocs.io/)
 [![Coverage](https://raw.githubusercontent.com/chrab/pylamda/python-coverage-comment-action-data/badge.svg)](https://github.com/chrab/pylamda/tree/python-coverage-comment-action-data)
 
-Python toolkit for files in the LAMDA format (the
-[Leiden Atomic and Molecular Database](https://home.strw.leidenuniv.nl/~moldata/)):
-energy levels, Einstein A coefficients and collision rates, as used by LAMDA, EMAA,
-RADEX and ProDiMo.
+Python toolkit for working with and on files in the LAMDA format (the
+[Leiden Atomic and Molecular Database](https://home.strw.leidenuniv.nl/~moldata/)).
+
+**Documentation:** <https://pylamda.readthedocs.io/>
+
+## Main features
+
+- reading, writing and manipulating (i.e. adding collisional partner) LAMDA files
+- validating LAMDA files (i.e. do the follow the LAMDA standard)
+- bibliography support (i.e. get all references for a file in bib format)
 
 pylamda follows the [LAMDA standard](https://home.strw.leidenuniv.nl/~moldata/molformat.html)
 strictly: collision partners are identified by their ID only, and deviations are
 reported as issues, never silently interpreted.
-
-**Status:** early development. Reading, writing, checking, comparing, fixing, combining
-and the BibTeX export with a reference catalogue work. `cut_levels`, plots and an
-online check of DOIs are planned for later (see `docs/design.md`, sections 14 and 15).
-
-**Documentation:** <https://pylamda.readthedocs.io/>
 
 ```python
 import pylamda
@@ -35,13 +35,6 @@ pylamda bib data/*.dat -o refs.bib --online   # SciX needs SCIX_API_TOKEN
 pylamda fix in.dat --in-place --trust id      # only the changed lines
 pylamda add-partner o.dat o_chianti.dat e -o o_with_e.dat
 ```
-
-## Database papers
-
-`src/pylamda/data/database_refs.bib` holds the BibTeX entries of the main papers of the
-LAMDA and EMAA databases (Schöier et al. 2005; van der Tak et al. 2020; Faure et al.
-2025; the EMAA dataset DOI). `pylamda bib` adds them to every export, as the databases
-ask. The file is plain BibTeX and can be used on its own.
 
 ## Installation
 
