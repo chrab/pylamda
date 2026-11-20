@@ -1,6 +1,6 @@
 [project]
 name = "pylamda"
-version = "0.1.0b3"
+version = "0.1.0"
 description = "Work with and work on molecular Line data in the LAMDA format."
 readme = "README.md"
 license = "MIT"
