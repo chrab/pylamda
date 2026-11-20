@@ -1,7 +1,7 @@
 [project]
 name = "pylamda"
 version = "0.1.0b3"
-description = "Read, write, verify, compare, combine and fix files in the LAMDA format, and export their references as BibTeX"
+description = "Work with and work on molecular Line data in the LAMDA format."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
