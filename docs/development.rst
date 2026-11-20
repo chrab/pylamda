@@ -117,6 +117,27 @@ proposal where a hint names the paper or volume and page match. The reviewer set
 ``decision`` per group: ``"ok"`` (the proposal), a bibcode, ``"none"`` or ``"skip"``.
 Running ``search`` again keeps the decisions and adds new uses.
 
+Releases
+--------
+
+``.github/workflows/publish.yml`` publishes a release. Set the version in
+``pyproject.toml``, commit, then push a tag with the same version:
+
+.. code-block:: bash
+
+   git tag v0.1.0b4
+   git push origin v0.1.0b4
+
+The workflow builds the package and uploads it to TestPyPI. Check the release there, for
+example in a new virtual environment (the dependencies come from PyPI):
+
+.. code-block:: bash
+
+   pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pylamda==0.1.0b4
+
+Then approve the job ``pypi`` in the workflow run ("Review deployments"). It uploads the
+same files to PyPI. Both uploads use Trusted Publishing.
+
 Continuous integration
 ----------------------
 

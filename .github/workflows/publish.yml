@@ -1,9 +1,14 @@
-# Build pylamda and publish it on TestPyPI, with digital attestations (PEP 740).
+# Build pylamda and publish it on TestPyPI, then (after manual approval) on PyPI, with
+# digital attestations (PEP 740).
 #
 # Runs when a tag v<version> is pushed, e.g. v0.1.0b3. The tag must match the version
-# in pyproject.toml. Uploads use Trusted Publishing (no token): TestPyPI must list this
-# repository, this workflow (publish.yml) and the environment "testpypi" as a publisher.
-# pypa/gh-action-pypi-publish creates and uploads the attestations by default.
+# in pyproject.toml. The job "pypi" uploads the same files as "testpypi". It waits until
+# a reviewer approves it ("Review deployments" in the workflow run): the GitHub
+# environment "pypi" has required reviewers.
+#
+# Uploads use Trusted Publishing (no token): TestPyPI and PyPI must each list this
+# repository, this workflow (publish.yml) and the environment ("testpypi" or "pypi") as
+# a publisher. pypa/gh-action-pypi-publish creates and uploads the attestations by default.
 
 name: Publish
 
@@ -49,3 +54,18 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    needs: testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi  # required reviewers: the job waits for manual approval
+      url: https://pypi.org/p/pylamda
+    permissions:
+      id-token: write  # Trusted Publishing and attestations
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
