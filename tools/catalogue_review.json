@@ -9041,5 +9041,90 @@
   "proposal_reason": "",
   "decision": "skip",
   "comment": "first pass (Claude): not a reference: a CHIANTI note"
+ },
+ {
+  "key": "o-H2O|from faure et al 2007",
+  "molecule": "o-H2O",
+  "segment": "from Faure et al. 2007",
+  "normalised": "from faure et al 2007",
+  "uses": [
+   {
+    "id": "prodimo/H2O_ortho_rot_Lamda.dat/collisions/p-H2",
+    "database": "prodimo",
+    "file": "H2O_ortho_rot_Lamda.dat",
+    "role": "collisions",
+    "partner": "p-H2",
+    "named": null,
+    "text": "from Faure et al. 2007"
+   },
+   {
+    "id": "prodimo/H2O_ortho_rot_Lamda.dat/collisions/o-H2",
+    "database": "prodimo",
+    "file": "H2O_ortho_rot_Lamda.dat",
+    "role": "collisions",
+    "partner": "o-H2",
+    "named": null,
+    "text": "from Faure et al. 2007"
+   }
+  ],
+  "first_author": "Faure",
+  "authors": [],
+  "year": 2007,
+  "bibstem": null,
+  "volume": null,
+  "page": null,
+  "hints": [],
+  "query": "author:\"^Faure\" year:2007",
+  "candidates": [
+   {
+    "bibcode": "2007yCat..34721029F",
+    "score": 0.35,
+    "why": "first author, o-H2O in title, partner in title",
+    "title": "VizieR Online Data Catalog: (De)excitation rates of H2O by H2 (Faure+, 2007)",
+    "authors": "Faure, A.; Crimier, N.; Ceccarelli, C.; Valiron, P. et al.",
+    "pub": "VizieR Online Data Catalog 347, J/A+A/472/1029",
+    "doi": "10.26093/cds/vizier.34721029"
+   },
+   {
+    "bibcode": "2007A&A...472.1029F",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Quasi-classical rate coefficient calculations for the rotational (de)excitation of H{2}O by H{2}",
+    "authors": "Faure, A.; Crimier, N.; Ceccarelli, C.; Valiron, P. et al.",
+    "pub": "Astronomy and Astrophysics 472, 1029",
+    "doi": "10.1051/0004-6361:20077678"
+   },
+   {
+    "bibcode": "2007CoMP..153..405F",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Textural evolution of polyhedral olivine experiencing rapid cooling rates",
+    "authors": "Faure, François; Schiano, Pierre; Trolliard, Gilles; Nicollet, Christian et al.",
+    "pub": "Contributions to Mineralogy and Petrology 153, 405",
+    "doi": "10.1007/s00410-006-0154-8"
+   },
+   {
+    "bibcode": "2007MNRAS.382..840F",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Electron-impact rotational and hyperfine excitation of HCN, HNC, DCN and DNC",
+    "authors": "Faure, Alexandre; Varambhia, Hemal N.; Stoecklin, Thierry; Tennyson, Jonathan",
+    "pub": "Monthly Notices of the Royal Astronomical Society 382, 840",
+    "doi": "10.1111/j.1365-2966.2007.12416.x"
+   },
+   {
+    "bibcode": "2007JNCS..353.2767F",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Improvement of the Tm <SUP>3+</SUP>: <SUP>3</SUP>H <SUB>4</SUB> level lifetime in silica optical fibers by lowering the ",
+    "authors": "Faure, B.; Blanc, W.; Dussardier, B.; Monnom, G.",
+    "pub": "Journal of Non Crystalline Solids 353, 2767",
+    "doi": "10.1016/j.jnoncrysol.2007.05.025"
+   }
+  ],
+  "proposal": "2007yCat..34721029F",
+  "proposal_reason": "best candidate: species in the title, clear lead (check it)",
+  "decision": "2007A&A...472.1029F",
+  "comment": ""
  }
 ]

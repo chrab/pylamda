@@ -1,7 +1,7 @@
 {
  "description": "Reviewed free-text references of LAMDA files (pylamda design document, section 10.1). entries: key -> bibcode, DOI. lookup: one row per place a reference text occurs (text normalised: lower case, punctuation as blanks); key null = reviewed, not in SciX. Built by tools/catalogue.py.",
  "version": 1,
- "updated": "2026-11-18",
+ "updated": "2026-11-23",
  "entries": {
   "Abrahamsson2007": {
    "bibcode": "2007ApJ...654.1171A",
@@ -96,6 +96,11 @@
   "Faure2007": {
    "bibcode": "2007MNRAS.382..840F",
    "doi": "10.1111/j.1365-2966.2007.12416.x",
+   "reviewed": true
+  },
+  "Faure2007a": {
+   "bibcode": "2007A&A...472.1029F",
+   "doi": "10.1051/0004-6361:20077678",
    "reviewed": true
   },
   "Flower1977": {
@@ -1283,6 +1288,26 @@
    "partner": "H2",
    "text": "from flower 1999 & extrapolation",
    "key": "Flower1999",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-H2O",
+   "file": "H2O_ortho_rot_Lamda.dat",
+   "role": "collisions",
+   "partner": "o-H2",
+   "text": "from faure et al 2007",
+   "key": "Faure2007a",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-H2O",
+   "file": "H2O_ortho_rot_Lamda.dat",
+   "role": "collisions",
+   "partner": "p-H2",
+   "text": "from faure et al 2007",
+   "key": "Faure2007a",
    "status": "found"
   },
   {
