@@ -85,6 +85,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     check.add_argument("--list-codes", action="store_true", help="list all check codes and exit")
     check.add_argument("--no-catalogue", action="store_true", help="F03: do not use the reference catalogue")
+    check.add_argument(
+        "--skip-non-lamda",
+        action="store_true",
+        help="leave out files that are not LAMDA files (header does not read): no output, no effect on the exit "
+        "code; the summary gives their number",
+    )
 
     cmp = sub.add_parser(
         "compare",
@@ -309,6 +315,7 @@ def _check(args: argparse.Namespace) -> int:
         return 2
     stream = args.format == "text" and not args.statistics  # text: each file as soon as it is checked
     results = []  # (path, readable, error text, issues)
+    skipped = 0  # files that are not LAMDA files, with --skip-non-lamda
     for path in args.files:
         try:
             issues = verify(
@@ -322,6 +329,9 @@ def _check(args: argparse.Namespace) -> int:
             )
             result = (path, True, None, issues)
         except NotLamdaError as exc:  # one statement, not the structure issues of a file that is not LAMDA
+            if args.skip_non_lamda:
+                skipped += 1
+                continue
             result = (path, False, f"{_NOT_LAMDA}: {exc.reason}", [])
         except LamdaReadError as exc:
             result = (path, False, "not readable", exc.issues)
@@ -338,9 +348,9 @@ def _check(args: argparse.Namespace) -> int:
         ]
         print(json.dumps(out, indent=2, ensure_ascii=False))
     elif args.statistics:
-        _print_statistics(results)
+        _print_statistics(results, skipped)
     else:
-        _print_summary(results)
+        _print_summary(results, skipped)
 
     if any(not ok for _, ok, _, _ in results):
         return 2
@@ -356,7 +366,7 @@ def _print_result(path: str, ok: bool, err: str | None, issues: list[Issue]) -> 
     sys.stdout.flush()
 
 
-def _print_summary(results: list) -> None:
+def _print_summary(results: list, skipped: int = 0) -> None:
     counts = Counter(i.severity for *_, issues in results for i in issues)
     n = sum(counts.values())
     parts = ", ".join(f"{counts[s]} {s}{'s' if counts[s] != 1 else ''}" for s in SEVERITIES if counts[s])
@@ -368,10 +378,12 @@ def _print_summary(results: list) -> None:
         text += f"; {not_lamda} not {'a LAMDA file' if not_lamda == 1 else 'LAMDA files'}"
     if unreadable:
         text += f"; {unreadable} not readable"
+    if skipped:
+        text += f"; {skipped} non-LAMDA file{'s' if skipped != 1 else ''} skipped"
     print(text + ".")
 
 
-def _print_statistics(results: list) -> None:
+def _print_statistics(results: list, skipped: int = 0) -> None:
     issues_per_code: Counter = Counter()
     files_per_code: dict[str, set] = {}
     severities: dict[str, set] = {}
@@ -386,7 +398,7 @@ def _print_statistics(results: list) -> None:
             f"{issues_per_code[code]:6d}  {code}  {severity:<13s} in {len(files_per_code[code]):4d} files  "
             f"{CODES[code][1]}"
         )
-    _print_summary(results)
+    _print_summary(results, skipped)
 
 
 def _compare(args: argparse.Namespace) -> int:

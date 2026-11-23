@@ -50,6 +50,8 @@ Options:
    List all check codes with their severity and description.
 ``--no-catalogue``
    F03: do not use the reference catalogue.
+``--skip-non-lamda``
+   Leave out files that are not LAMDA files (see below); the summary gives their number.
 
 Exit codes:
 
@@ -74,6 +76,18 @@ issues, and the rest of it is not read (see :doc:`usage`, "Not a LAMDA file"):
 
 With ``--format json``, such a file has ``"readable": false`` and ``"error": "not a LAMDA
 file: <reason>"``.
+
+``--skip-non-lamda`` leaves such files out: they give no output line and no JSON entry,
+they are not counted as checked files, and they do not change the exit code. The summary
+gives their number, so that nothing disappears without notice. Files that are LAMDA
+files but cannot be read after the header ("not readable"), and files that cannot be
+opened, are still reported (exit code 2):
+
+.. code-block:: text
+
+   $ pylamda check --skip-non-lamda data/*.dat
+   ...
+   Found 379 issues (60 errors, 153 warnings, 166 infos) in 105 files; 71 non-LAMDA files skipped.
 
 pylamda compare
 ---------------

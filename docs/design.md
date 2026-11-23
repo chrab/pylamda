@@ -211,6 +211,10 @@ functions, not methods.
   file (`<path>: not a LAMDA file: <reason>`), not its structure issues. On ProDiMo's
   `data/` (177 files): 70 files of other formats are recognised; before, they gave about 9200
   issues.
+  `pylamda check --skip-non-lamda` (added 2026-11-23) leaves such files out: no output,
+  no JSON entry, no effect on the exit code; the summary gives their number
+  (`...; 71 non-LAMDA files skipped`). "not readable" and "cannot open" are still
+  reported.
 
 **Writing** has two modes:
 

@@ -90,6 +90,32 @@ def test_text_output_per_file(files, capsys, monkeypatch):
     assert capsys.readouterr().out.startswith("Found 1 issue (1 warning) in 3 files")
 
 
+def test_skip_non_lamda(files, capsys):
+    """--skip-non-lamda: files that are not LAMDA files give no output and do not change the exit code."""
+    assert main(["check", str(files["clean"]), str(files["other"])]) == 2
+    capsys.readouterr()
+    assert main(["check", "--skip-non-lamda", str(files["clean"]), str(files["other"])]) == 0
+    out = capsys.readouterr().out
+    assert "not a LAMDA file" not in out
+    assert out.splitlines()[-1] == "Found 0 issues in 1 file; 1 non-LAMDA file skipped."
+    # broken LAMDA files and missing files are still reported
+    args = ["check", "--skip-non-lamda", str(files["broken"]), str(files["other"]), str(files["other"])]
+    assert main(args) == 2
+    out = capsys.readouterr().out
+    assert f"{files['broken']}: not readable" in out
+    assert out.splitlines()[-1] == "Found 1 issue (1 error) in 1 file; 1 not readable; 2 non-LAMDA files skipped."
+    assert main(["check", "--skip-non-lamda", str(files["clean"]), str(files["clean"].with_name("missing.dat"))]) == 2
+    assert "missing.dat: cannot open" in capsys.readouterr().out
+    # JSON: no entry; statistics: the summary gives the number
+    assert main(["check", "--skip-non-lamda", "--format", "json", str(files["warning"]), str(files["other"])]) == 0
+    assert [f["path"] for f in json.loads(capsys.readouterr().out)] == [str(files["warning"])]
+    assert main(["check", "--skip-non-lamda", "--statistics", str(files["warning"]), str(files["other"])]) == 0
+    assert capsys.readouterr().out.splitlines()[-1].endswith("in 1 file; 1 non-LAMDA file skipped.")
+    # only files that are not LAMDA files
+    assert main(["check", "--skip-non-lamda", str(files["other"])]) == 0
+    assert capsys.readouterr().out == "Found 0 issues in 0 files; 1 non-LAMDA file skipped.\n"
+
+
 def test_json_output(files, capsys):
     args = ["check", "--format", "json", str(files["warning"]), str(files["broken"]), str(files["other"])]
     assert main(args) == 2
