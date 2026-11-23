@@ -50,13 +50,13 @@ CODES: dict[str, tuple[str, str]] = {
     "C10": ("error", "upper or lower level outside 1..NLEV, or upper = lower"),
     "C11": ("warning", "the partner text names a partner outside the standard (read by its ID)"),
     "C12": ("warning", "the partner text names He, the ID is H2, and the text says scaled (He rates scaled to H2)"),
+    "C13": ("info", "partner text says the rates are scaled (codes that scale may scale twice)"),
     # references
     "F01": ("warning", "no reference for the levels and lines"),
     "F02": ("warning", "partner without a reference"),
     "F03": ("info", "reference without a DOI, bibcode or link (free text only)"),
     # physics heuristics
     "P01": ("info", "rate row that behaves like an excitation rate"),
-    "P02": ("info", "partner text says the rates are scaled (codes that scale may scale twice)"),
     "P03": ("info", "rate outside the plausible range"),
     "P04": ("info", "mass differs from the formula mass of the molecule"),
 }

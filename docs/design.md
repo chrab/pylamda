@@ -115,7 +115,7 @@ These problems were found in real files. Each one is a check or fix in pylamda.
 | Comment line without `!` | ProDiMo CH+ file | check S05, fix |
 | Partner line ending in ` !` | ProDiMo files | reader robustness |
 | Excitation rates in the rows of de-excitation rates | `Oatom_Lambda_extra_NIST*` (O+H) | check P01 (heuristic) |
-| Rates "scaled from H2" but labelled He; ProDiMo scales again | O2, SO2 | checks P02 (text hint), C12; `scale_partner` (section 9) |
+| Rates "scaled from H2" but labelled He; ProDiMo scales again | O2, SO2 | checks C13 (text hint, was P02), C12; `scale_partner` (section 9) |
 | CHIANTI level order differs from energy order (inverted pairs) | CHIANTI conversions | check C08, fix (explicit) |
 | References missing or only as free text | many ProDiMo files | checks F01–F03, `bib` report |
 
@@ -290,6 +290,7 @@ Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-
 | C10 | up or low outside 1..NLEV, or up = low | error |
 | C11 | the partner text names a partner outside the standard (EMAA: p-H2O, o-H2O, CO); not supported, the block is read by its ID | warning |
 | C12 | the partner text names He, the ID is H2/p-H2/o-H2, and the text says the rates are scaled (`1 SO2 + He ! ... scaled *1.39`): He rates scaled to H2 with the name not changed; reported instead of C02 | warning |
+| C13 | partner text says "scaled" / "scaling" / "from H2": codes that scale He rates (ProDiMo `ncorr`) may scale twice (O2, SO2); was P02 until 2026-11-23 (a text check, so on by default) | info |
 
 **P: physics heuristics**
 
@@ -301,7 +302,7 @@ Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-
 | code | check |
 |---|---|
 | P01 | a row that behaves like an **excitation** rate: at T ≪ ΔE/k, log k falls with slope ≈ −ΔE/k in 1/T. This would have found the O+H rows. |
-| P02 | partner text says "scaled" / "scaling" / "from H2": warn that codes that scale He rates (ProDiMo `ncorr`) may scale twice (O2, SO2). |
+| P02 | moved to C13 on 2026-11-23 (the code is not reused) |
 | P03 | rates outside a plausible range (e.g. > 1e-8 cm3 s-1 for neutral partners) |
 | P04 | mass differs from the formula mass of `molecule` (only if the name parses; atomic weights table from astrolinedata) |
 

@@ -57,7 +57,7 @@ Scaling a partner
 Rates of one partner are often scaled rates of another one. The common case: He rates
 multiplied by about 1.37 (the square root of the ratio of the reduced masses) and given
 as H2 rates, e.g. ``1 HCN + H2 ! scaled (*1.37) HCN-He from Green & Thaddeus (1974)``.
-Checks P02 and C12 find such blocks. A code that scales He rates itself (ProDiMo) then
+Checks C13 and C12 find such blocks. A code that scales He rates itself (ProDiMo) then
 scales twice. :func:`pylamda.scale_partner` handles three cases:
 
 .. code-block:: python

@@ -97,6 +97,7 @@ code       severity  issue
 ``C10``    error     upper or lower level outside 1..NLEV, or upper = lower
 ``C11``    warning   the partner text names a partner outside the standard (read by its ID)
 ``C12``    warning   the partner text names He, the ID is H2, and the text says "scaled"
+``C13``    info      the partner text says the rates are scaled (codes that scale may scale twice)
 =========  ========  =========================================================================
 
 pylamda reads every block by its partner ID, as RADEX does. ProDiMo reads the name in
@@ -110,6 +111,12 @@ rates (by about 1.37, the ratio of the reduced masses), but keep the He name:
 right and the name is wrong. C12 reports such a line instead of C02 if the name is He,
 the ID is 1, 2 or 3, and the text says "scaled", "scaling" or gives a factor such as
 ``*1.39`` or ``x1.4``.
+
+C13 is a hint: the partner text says "scaled", "scaling" or "from H2" (also "from
+p-H2", ...). ProDiMo scales He rates to H2 itself; rates that are already scaled are then
+scaled twice. :func:`pylamda.scale_partner` can turn such rates back (:doc:`combining`).
+C13 was the physics check P02 until 2026-11-23; it is a check of the partner text, so it
+runs by default.
 
 F: references
 -------------
@@ -143,7 +150,6 @@ P01 fits every rate row, which is slow on large files (a 80 MB rovibrational fil
 code       severity  issue
 =========  ========  =========================================================================
 ``P01``    info      rate row that behaves like an excitation rate
-``P02``    info      partner text says the rates are scaled (codes that scale may scale twice)
 ``P03``    info      rate outside the plausible range
 ``P04``    info      mass differs from the formula mass of the molecule
 =========  ========  =========================================================================
@@ -153,9 +159,6 @@ code       severity  issue
    slope −ΔE/k. P01 fits this slope over the temperatures below ΔE/2k (at least two)
    and reports rows whose slope is between 2/3 and 3/2 of −ΔE/k. A row that is labelled
    with the wrong levels has another ΔE and may not be found.
-``P02``
-   The partner text says "scaled", "scaling" or "from H2". ProDiMo scales He rates to
-   H2 itself; rates that are already scaled are then scaled twice.
 ``P03``
    A rate above 1e-8 cm³ s⁻¹ for a neutral partner, 1e-7 for H+, or 1e-4 for
    electrons (:data:`pylamda.verify.P03_MAX_RATE`).

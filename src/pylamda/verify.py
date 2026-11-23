@@ -56,6 +56,7 @@ _REFERENCE_LIKE = re.compile(
     r"\bet\s+al\b|\b(?:19|20)\d\d\b|\b(?:CDMS|JPL|NIST|HITRAN|ExoMol|CHIANTI|BASECOL|LAMDA|EMAA)\b", re.I
 )
 _FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # a note line of pylamda fix (see pylamda.fix.FIX_NOTE)
+# C13: the partner text says the rates are scaled
 _SCALED = re.compile(r"\bscal(?:ed|ing)\b|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b", re.I)
 # C12: "scaled"/"scaling", or a scaling factor such as "*1.39", "x 1.4", "×1.37"
 _HE_SCALED = re.compile(r"\bscal(?:ed|ing)\b|(?:\*|×|\bx)\s*1\.\d+", re.I)
@@ -479,6 +480,14 @@ def _check_collisions(data: LamdaData, add: _Collector) -> None:
         src = _block_source(data, b)
         line = src.partner if src else None
         _check_partner(data, b, c, add, line)
+        text = (c.partner_text or c.reference).strip()
+        if _SCALED.search(text):
+            add(
+                "C13",
+                f"{_block_name(b, c)}: the partner text says the rates are scaled ({text!r}); codes that scale "
+                "rates themselves (e.g. ProDiMo for He) may scale twice",
+                line,
+            )
         if c.partner_id in first_block:
             add(
                 "C03",
@@ -623,15 +632,6 @@ def _check_physics(data: LamdaData, add: _Collector) -> None:
                 f"{slope:.3g} K, ΔE/k = {delta_e:.3g} K{more}",
                 _at(rows, k),
                 count=len(flagged),
-            )
-
-        text = (c.partner_text or c.reference).strip()
-        if _SCALED.search(text):
-            add(
-                "P02",
-                f"{block}: the partner text says the rates are scaled ({text!r}); codes that scale rates "
-                "themselves (e.g. ProDiMo for He) may scale twice",
-                src.partner if src else None,
             )
 
         limit = P03_MAX_RATE.get(c.partner_id)

@@ -57,18 +57,18 @@ def test_options(files, capsys, tmp_path):
     assert main(["check", "--ignore", "C", str(files["warning"]), str(files["error"])]) == 0
     assert main(["check", "--select", "F,P", "--select", "C05", str(files["error"])]) == 1
     capsys.readouterr()
-    scaled = tmp_path / "scaled.dat"
-    scaled.write_text(make_lamda(partner="1 X + H2 ! scaled from He, https://doi.org/10.1/x"))  # P02
-    main(["check", str(scaled)])
-    assert " P02 " not in capsys.readouterr().out  # the physics checks are off by default
-    main(["check", "--physics", str(scaled)])
-    assert " P02 " in capsys.readouterr().out
-    main(["check", "--select", "P", str(scaled)])
-    assert " P02 " in capsys.readouterr().out
-    main(["check", "--select", "P", "--no-physics", str(scaled)])
-    assert " P02 " not in capsys.readouterr().out
+    mass = tmp_path / "mass.dat"
+    mass.write_text(make_lamda(molecule="13CO"))  # P04: the mass 28 is not the formula mass
+    main(["check", str(mass)])
+    assert " P04 " not in capsys.readouterr().out  # the physics checks are off by default
+    main(["check", "--physics", str(mass)])
+    assert " P04 " in capsys.readouterr().out
+    main(["check", "--select", "P", str(mass)])
+    assert " P04 " in capsys.readouterr().out
+    main(["check", "--select", "P", "--no-physics", str(mass)])
+    assert " P04 " not in capsys.readouterr().out
     with pytest.raises(SystemExit):
-        main(["check", "--physics", "--no-physics", str(scaled)])
+        main(["check", "--physics", "--no-physics", str(mass)])
 
 
 def test_text_output_per_file(files, capsys, monkeypatch):

@@ -197,7 +197,7 @@ def test_c12_he_rates_scaled_to_h2(tmp_path, text):
     issue = _one(issues, "C12")
     assert (issue.line, issue.severity, issue.fixable) == (19, "warning", True)
     assert "probably He rates scaled to" in issue.message and "ProDiMo would read He" in issue.message
-    assert [i.code for i in issues] == ["C12"]
+    assert [i.code for i in issues if i.code != "C13"] == ["C12"]  # C13: the hint for "scaled"
 
 
 @pytest.mark.parametrize(
@@ -209,13 +209,12 @@ def test_c12_he_rates_scaled_to_h2(tmp_path, text):
     ],
 )
 def test_c12_not_reported(tmp_path, text):
-    assert [i.code for i in _check(tmp_path, "C", partner=text)] == ["C02"]
+    assert [i.code for i in _check(tmp_path, "C", partner=text) if i.code != "C13"] == ["C02"]
 
 
 def test_c12_he_with_its_id(tmp_path):
-    """He with ID 6 and 'scaled' is consistent: no C issue, only P02 (info; a physics check, off by default)."""
-    assert [i.code for i in _check(tmp_path, partner=f"6 X + He ! scaled by 1.0 {DOI}")] == []
-    assert [i.code for i in _check(tmp_path, "P", partner=f"6 X + He ! scaled by 1.0 {DOI}")] == ["P02"]
+    """He with ID 6 and 'scaled' is consistent: no C12, only the hint C13 (info)."""
+    assert [i.code for i in _check(tmp_path, partner=f"6 X + He ! scaled by 1.0 {DOI}")] == ["C13"]
 
 
 def test_emaa_extra_partners():
@@ -273,9 +272,13 @@ def test_p01_excitation_rates(tmp_path):
     assert excitation_slope(temps, excitation, 10.0) is None  # no temperature below ΔE/2k
 
 
-def test_p02_scaled(tmp_path):
-    issue = _one(_check(tmp_path, "P", partner=f"1 X + H2 ! scaled from He rates, Smith 2001 {DOI}"), "P02")
-    assert issue.line == 19 and "may scale twice" in issue.message
+def test_c13_scaled(tmp_path):
+    issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 ! scaled from He rates, Smith 2001 {DOI}"), "C13")
+    assert (issue.line, issue.severity) == (19, "info") and "may scale twice" in issue.message
+    assert _one(_check(tmp_path, "C", partner=f"1 X + H2 ! derived from p-H2 rates {DOI}"), "C13")
+    # on by default (not a physics check)
+    assert [i.code for i in _check(tmp_path, partner=f"1 X + H2 ! scaling of He rates {DOI}")] == ["C13"]
+    assert _check(tmp_path, "C", partner=f"1 X + H2 ! Smith 2001 {DOI}") == []
 
 
 def test_p03_large_rates(tmp_path):
@@ -296,14 +299,15 @@ def test_p04_mass(tmp_path):
 # ------------------------------------------------------------------- options
 def test_select_ignore_error_on(tmp_path):
     path = tmp_path / "x.dat"
-    path.write_text(make_lamda(partner="1 X + p-H2 ! scaled from He, Yang et al. (2010)"))
-    assert [i.code for i in verify(path)] == ["C02", "F03"]  # the P checks are off by default
-    assert [i.code for i in verify(path, physics=True)] == ["C02", "F03", "P02"]
-    assert [i.code for i in verify(path, physics=False)] == ["C02", "F03"]
-    assert [i.code for i in verify(path, physics=True, ignore=["F", "P0"])] == ["C02"]
+    # P04 (line 4): the mass of 13CO is not 28
+    path.write_text(make_lamda(molecule="13CO", partner="1 X + p-H2 ! scaled from He, Yang et al. (2010)"))
+    assert [i.code for i in verify(path)] == ["C02", "C13", "F03"]  # the P checks are off by default
+    assert [i.code for i in verify(path, physics=True)] == ["P04", "C02", "C13", "F03"]
+    assert [i.code for i in verify(path, physics=False)] == ["C02", "C13", "F03"]
+    assert [i.code for i in verify(path, physics=True, ignore=["F", "P0"])] == ["C02", "C13"]
     # selecting P codes runs them, unless physics=False
-    assert [i.code for i in verify(path, select=["c0", "P"])] == ["C02", "P02"]
-    assert [i.code for i in verify(path, select=["P02"])] == ["P02"]
+    assert [i.code for i in verify(path, select=["c0", "P"])] == ["P04", "C02"]
+    assert [i.code for i in verify(path, select=["P04"])] == ["P04"]
     assert [i.code for i in verify(path, select=["P"], physics=False)] == []
     raised = verify(path, select=["C02"], error_on=["C"])
     assert [(i.code, i.severity) for i in raised] == [("C02", "error")]
