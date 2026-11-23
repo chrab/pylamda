@@ -316,3 +316,25 @@ def test_fix_command(tmp_path, capsys):
     assert main(["fix", str(path), "-o", str(out), "--ref", "levels=nonsense"]) == 2
     with pytest.raises(SystemExit):
         main(["fix", str(path)])  # -o, --in-place or --dry-run is required
+
+
+def test_fix_command_names_the_reference_targets(tmp_path, capsys):
+    """The hints of F01-F03 name the targets for --ref (levels, partners)."""
+    path = tmp_path / "x.dat"
+    path.write_text(
+        make_lamda(
+            nlev="3 - Ref: Smith et al. (2001)",  # F03 levels
+            partner="2 X + p-H2 ! Jones et al. (1999)",  # F03 p-H2
+            npart="2",
+            after=collision_block("6 X + He"),  # F02 He
+        )
+    )
+    f02 = "pylamda fix: F02 remains (He); it needs --ref He=ID"
+    f03 = "pylamda fix: F03 remains (levels, p-H2); it needs --ref levels=ID --ref p-H2=ID or --add-refs"
+    for mode in (["--dry-run"], ["-o", str(tmp_path / "out.dat")]):  # patch and normalised
+        assert main(["fix", str(path), *mode]) == 0
+        err = capsys.readouterr().err
+        assert f02 in err and f03 in err, err
+    assert main(["fix", str(path), "--dry-run", "--ref", "p-H2=2010ApJ...718.1062Y", "--ref", "He=10.1000/xyz"]) == 0
+    err = capsys.readouterr().err
+    assert "F03 remains (levels); it needs --ref levels=ID or --add-refs" in err and "F02 remains" not in err

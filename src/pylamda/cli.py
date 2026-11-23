@@ -558,15 +558,51 @@ def _fix(args: argparse.Namespace) -> int:
         print(f"fixed: {r.code} {r.message}", file=sys.stderr)
     if not log:
         print("pylamda fix: nothing to fix with these options", file=sys.stderr)
-    # fixable issues that need an option
+    # fixable issues that need an option (the fixed file read back: its line numbers tell the targets)
     try:
-        remaining = verify(read_string(text) if keep_layout else data)
+        fixed = read_string(text) if keep_layout else read_string(_normalised_text(data))
+        remaining = verify(fixed)
     except LamdaReadError:  # pragma: no cover (the fixed data read back)
-        remaining = []
-    hints = sorted({i.code for i in remaining if i.code in OPTION_HINTS})
-    for code in hints:
-        print(f"pylamda fix: {code} remains; it needs {OPTION_HINTS[code]}", file=sys.stderr)
+        fixed, remaining = None, []
+    targets = _reference_targets(fixed, remaining) if fixed is not None else {}
+    for code in sorted({i.code for i in remaining if i.code in OPTION_HINTS}):
+        if targets.get(code):
+            where = ", ".join(targets[code])
+            needs = " ".join(f"--ref {t}=ID" for t in targets[code]) + (" or --add-refs" if code == "F03" else "")
+            print(f"pylamda fix: {code} remains ({where}); it needs {needs}", file=sys.stderr)
+        else:
+            print(f"pylamda fix: {code} remains; it needs {OPTION_HINTS[code]}", file=sys.stderr)
     return 0
+
+
+def _normalised_text(data: LamdaData) -> str:
+    """The text :func:`write` gives for ``data``."""
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "fixed.dat"
+        write(data, path)
+        return path.read_text(encoding="utf-8")
+
+
+def _reference_targets(data: LamdaData, issues: list[Issue]) -> dict[str, list[str]]:
+    """The ``--ref`` targets of the reference issues F01-F03: code -> ``levels`` and partner names.
+
+    An issue on a partner line is about that partner; the others are about the levels and
+    lines (``data`` must have its source map).
+    """
+    smap = data.source_map
+    if smap is None:  # pragma: no cover (read from text)
+        return {}
+    partner_at = {src.partner: c.label for src, c in zip(smap.blocks, data.collisions, strict=True)}
+    out: dict[str, list[str]] = {}
+    for issue in issues:
+        if issue.code in ("F01", "F02", "F03"):
+            target = partner_at.get(issue.line, "levels")
+            if target not in out.setdefault(issue.code, []):
+                out[issue.code].append(target)
+    return out
 
 
 def main(argv: Sequence[str] | None = None) -> int:

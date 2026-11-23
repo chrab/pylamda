@@ -373,7 +373,9 @@ Implementation notes (step 5):
 - C12 is fixed by `--trust` like C02.
 - CLI: `-o` = normalised, `--in-place` = patch, `--dry-run` = diff of the patch;
   `--patch`/`--normalise` switch. After fixing, the fixable issues that remain are
-  named with the option they need.
+  named with the option they need; for F01-F03 with their targets (`F03 remains
+  (levels, p-H2); it needs --ref levels=ID --ref p-H2=ID or --add-refs`, added
+  2026-11-23).
 - `--add-refs` (from the catalogue or a review file) follows with step 6.
 
 ## 8. Compare

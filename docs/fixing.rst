@@ -109,6 +109,15 @@ readers and :doc:`references` need no catalogue:
   ``arXiv:<id>``.
 - An identifier already in the text is not added again.
 - Only free text changes, which all readers ignore.
+- A bibcode has 19 characters; the last one is the initial of the first author
+  (``2007A&A...472.1029F``).
+
+After fixing, ``pylamda fix`` names the reference issues that remain with their
+targets:
+
+.. code-block:: text
+
+   pylamda fix: F03 remains (levels, p-H2); it needs --ref levels=ID --ref p-H2=ID or --add-refs
 
 ``--add-refs`` does this for all free-text references (references without any
 identifier) at once:
