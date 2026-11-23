@@ -17,9 +17,14 @@ Not part of the installed package. Steps:
 
    ``show`` prints the review file; ``confirm`` sets ``"ok"`` for all proposals at once
    (after checking them with ``show --proposals``).
-3. ``build``: the decided groups become ``pylamda/data/references.json`` (entries and
+3. ``merge``: the decided groups of other review files (``pylamda bib --search``, a
+   user's contribution) are added to the maintainer review file
+   ``tools/catalogue_review.json``. A group the file has already keeps its decision; a
+   different decision is reported as a conflict, never overwritten.
+4. ``build``: the decided groups become ``pylamda/data/references.json`` (entries and
    lookup rows) and ``references.bib`` (BibTeX from SciX). Keys stay the same across
-   rebuilds.
+   rebuilds. ``build`` writes the whole catalogue from the review file it is given:
+   always build from ``tools/catalogue_review.json``, never from a partial review file.
 
 Usage::
 
@@ -27,16 +32,19 @@ Usage::
     python tools/catalogue.py search --database prodimo data/CO_Lambda.dat -o review.json
     python tools/catalogue.py show review.json [--open | --proposals]
     python tools/catalogue.py confirm review.json
-    python tools/catalogue.py build review.json
+    python tools/catalogue.py merge review.json --database prodimo   # into tools/catalogue_review.json
+    python tools/catalogue.py build tools/catalogue_review.json
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import re
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pylamda.bib import (
@@ -84,6 +92,8 @@ from pylamda.refsearch import (  # noqa: F401 (also used by the tests)
 
 # ------------------------------------------------------------------- build
 DATA_DIR = Path(__file__).parents[1] / "src" / "pylamda" / "data"
+#: The maintainer review file: all decisions of the catalogue.
+REVIEW_FILE = Path(__file__).parent / "catalogue_review.json"
 CATALOGUE_VERSION = 1
 
 
@@ -153,6 +163,74 @@ def build(groups: list[Group], client, out_dir: Path = DATA_DIR) -> tuple[int, i
     return len(entries), len(rows)
 
 
+def _outcome(g: Group) -> str | None:
+    """What a decision means: the bibcode, ``"none"`` or ``"skip"`` (None if not decided)."""
+    return g.bibcode or (g.decision if g.decision in ("none", "skip") else None)
+
+
+@dataclass
+class MergeReport:
+    """What :func:`merge` did (group keys)."""
+
+    added: list[str] = field(default_factory=list)  # new groups
+    decided: list[str] = field(default_factory=list)  # known groups without a decision, now decided
+    known: list[str] = field(default_factory=list)  # known groups with the same decision (uses added)
+    conflicts: list[str] = field(default_factory=list)  # known groups with another decision (kept)
+    open: list[str] = field(default_factory=list)  # groups without a decision (not merged)
+
+
+def merge(incoming: list[Group], target: list[Group], database: str | None = None) -> MergeReport:
+    """Add the decided groups of ``incoming`` to ``target`` (changed in place).
+
+    Parameters
+    ----------
+    incoming : list of Group
+        The groups of another review file.
+    target : list of Group
+        The groups of the maintainer review file.
+    database : str or None, optional
+        Database label for the uses of the incoming groups (``"prodimo"``; the IDs are
+        relabelled too). Default: as they are (``pylamda bib --search`` writes ``"user"``).
+
+    Returns
+    -------
+    MergeReport
+        The groups added, decided, known and in conflict, and those left out (no decision).
+    """
+    report = MergeReport()
+    by_key = {g.key: g for g in target}
+    for g in incoming:
+        outcome = _outcome(g)
+        if outcome is None:
+            report.open.append(g.key)
+            continue
+        uses = [copy.deepcopy(u) for u in g.uses]
+        if database:
+            for u in uses:
+                u.id = database + u.id[u.id.index("/") :] if "/" in u.id else u.id
+                u.database = database
+        t = by_key.get(g.key)
+        if t is None:
+            new = copy.deepcopy(g)
+            new.uses, new.decision = uses, outcome  # "ok" becomes the bibcode: no proposal needed
+            target.append(new)
+            by_key[g.key] = new
+            report.added.append(g.key)
+            continue
+        if _outcome(t) is None:
+            t.decision = outcome
+            report.decided.append(g.key)
+        elif _outcome(t) == outcome:
+            report.known.append(g.key)
+        else:
+            report.conflicts.append(g.key)
+            continue
+        t.uses += [u for u in uses if u.id not in {x.id for x in t.uses}]
+        if g.comment and not t.comment:
+            t.comment = g.comment
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="catalogue.py", description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -179,6 +257,11 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("review")
     c.add_argument("--include-best", action="store_true", help='also the weaker "best candidate" proposals')
     c.add_argument("--include-first-pass", action="store_true", help="also the proposals of an assistant's first pass")
+    m = sub.add_parser("merge", help="add the decided groups of review files to the maintainer review file")
+    m.add_argument("reviews", nargs="+", metavar="REVIEW")
+    m.add_argument("--into", default=str(REVIEW_FILE), help="default: tools/catalogue_review.json")
+    m.add_argument("--database", help="database label of the merged uses, e.g. prodimo (default: as in REVIEW)")
+    m.add_argument("--dry-run", action="store_true", help="report only; write nothing")
     bld = sub.add_parser("build", help="write references.json and references.bib from the decided groups")
     bld.add_argument("review")
     bld.add_argument("--out-dir", default=str(DATA_DIR), help="default: src/pylamda/data")
@@ -202,6 +285,28 @@ def main(argv: list[str] | None = None) -> int:
         save(groups, Path(args.review))
         print(f"{n} proposals confirmed", file=sys.stderr)
         return 0
+
+    if args.command == "merge":
+        into = Path(args.into)
+        target = load(into)
+        report = MergeReport()
+        for path in args.reviews:
+            r = merge(load(Path(path)), target, args.database)
+            for name in ("added", "decided", "known", "conflicts", "open"):
+                getattr(report, name).extend(getattr(r, name))
+        for key in report.conflicts:
+            print(f"catalogue.py: conflict: {key}: another decision in {into}; kept (change it there)", file=sys.stderr)
+        if not args.dry_run:
+            save(target, into)
+        what = "would be merged" if args.dry_run else f"merged into {into}"
+        print(
+            f"{len(report.added)} added, {len(report.decided)} decided, {len(report.known)} known, "
+            f"{len(report.conflicts)} conflicts, {len(report.open)} without a decision (left out); {what}",
+            file=sys.stderr,
+        )
+        if (report.added or report.decided or report.known) and not args.dry_run:
+            print(f"next: python tools/catalogue.py build {into}", file=sys.stderr)
+        return 1 if report.conflicts else 0
 
     token = scix_token()
     if args.command == "build":

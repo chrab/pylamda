@@ -83,6 +83,32 @@ again keeps the decisions. Decided groups can then be written into the files
 (:doc:`fixing`, ``--add-refs review.json``) and sent to the pylamda maintainers as
 additions to the catalogue (a pull request with the review file).
 
+Adding decisions to the catalogue (maintainers)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All decisions of the catalogue are in the maintainer review file
+``tools/catalogue_review.json``. ``merge`` adds the decided groups of another review file
+to it, and ``build`` writes the catalogue from it (needs ``SCIX_API_TOKEN``):
+
+.. code-block:: bash
+
+   python tools/catalogue.py merge review.json --database prodimo --dry-run   # what would change
+   python tools/catalogue.py merge review.json --database prodimo
+   python tools/catalogue.py build tools/catalogue_review.json
+   pytest
+
+- Only decided groups are merged; open ones are left out.
+- A decision ``"ok"`` is stored as the bibcode of the proposal.
+- A group that the maintainer file has already keeps its decision. A different decision
+  is reported as a conflict (exit code 1) and never overwritten; change it in
+  ``tools/catalogue_review.json`` if the new one is right.
+- ``--database`` sets the database label of the merged uses (``pylamda bib --search``
+  writes ``user``); the maintainer file uses ``lamda``, ``prodimo``, ``chianti``, ...
+
+``build`` writes the **whole** catalogue from the review file it is given. Always build
+from ``tools/catalogue_review.json``: built from a partial review file, the catalogue
+has only the groups of that file.
+
 Offline and online
 ------------------
 

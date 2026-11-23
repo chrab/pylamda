@@ -576,6 +576,13 @@ package):
   molecule, journal article, named by a hint); a pre-filled `proposal` if a hint names
   the paper or volume and page match, a weaker "best candidate" proposal otherwise.
 - `confirm` (`--include-best`, `--include-first-pass`), `show` filters, `build`.
+- `merge` (added 2026-11-23): the decided groups of other review files (`bib --search`,
+  contributions) go into `tools/catalogue_review.json`; known groups keep their
+  decision, a different decision is a conflict (reported, not overwritten); `"ok"` is
+  stored as the bibcode; `--database` relabels the uses; `--dry-run`. `build` always
+  writes the whole catalogue from the file it is given, so it must run on
+  `tools/catalogue_review.json` (a build from a one-group review file replaced the
+  catalogue on 2026-11-23).
 - The review file `tools/catalogue_review.json` is kept in the repository.
 - First catalogue built from the existing corpus (75 ProDiMo files, the LAMDA and EMAA
   test files, `cn.dat`, one CHIANTI file): 126 groups, 167 uses; 114 confirmed (76

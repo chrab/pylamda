@@ -330,3 +330,72 @@ def test_build(tmp_path):
 def test_build_unknown_bibcode(tmp_path):
     with pytest.raises(SystemExit, match="not found in SciX: 1999XXX"):
         cat.build([_group("CO|x", None, "1999XXX.........1Y")], ExportClient(), tmp_path)
+
+
+# ------------------------------------------------------------------- merge
+def _merge_group(
+    key: str, decision: str | None, proposal: str | None = None, file: str = "a.dat", database: str = "user"
+):
+    molecule, text = key.split("|")
+    use = refsearch.Use(f"{database}/{file}/collisions/p-H2", database, file, "collisions", "p-H2", None, text)
+    return refsearch.Group(key, molecule, text, text, uses=[use], proposal=proposal, decision=decision)
+
+
+def test_merge():
+    target = [
+        _merge_group("CO|yang 2010", "2010ApJ...718.1062Y", file="co.dat", database="prodimo"),
+        _merge_group("CO|flower 2001", None, file="co.dat", database="prodimo"),
+        _merge_group("HCN|green 1974", "none", file="hcn.dat", database="prodimo"),
+    ]
+    incoming = [
+        _merge_group("o-H2O|faure et al 2007", "ok", proposal="2007A&A...472.1029F", file="h2o.dat"),  # new
+        _merge_group("CO|yang 2010", "2010ApJ...718.1062Y", file="13co.dat"),  # known, same decision
+        _merge_group("CO|flower 2001", "2001JPhB...34.2731F", file="13co.dat"),  # known, not decided there
+        _merge_group("HCN|green 1974", "1974ApJ...191..653G", file="h13cn.dat"),  # conflict: "none" there
+        _merge_group("CS|lique 2006", None, file="cs.dat"),  # no decision: left out
+    ]
+    report = cat.merge(incoming, target, database="prodimo")
+    assert report.added == ["o-H2O|faure et al 2007"]
+    assert report.known == ["CO|yang 2010"] and report.decided == ["CO|flower 2001"]
+    assert report.conflicts == ["HCN|green 1974"] and report.open == ["CS|lique 2006"]
+    by_key = {g.key: g for g in target}
+    assert len(target) == 4 and "CS|lique 2006" not in by_key
+    faure = by_key["o-H2O|faure et al 2007"]
+    assert faure.decision == "2007A&A...472.1029F"  # "ok" stored as the bibcode
+    assert [(u.id, u.database) for u in faure.uses] == [("prodimo/h2o.dat/collisions/p-H2", "prodimo")]
+    assert [u.file for u in by_key["CO|yang 2010"].uses] == ["co.dat", "13co.dat"]
+    assert by_key["CO|flower 2001"].decision == "2001JPhB...34.2731F"
+    green = by_key["HCN|green 1974"]
+    assert green.decision == "none" and [u.file for u in green.uses] == ["hcn.dat"]  # kept, uses not added
+    assert incoming[0].decision == "ok" and incoming[0].uses[0].database == "user"  # incoming unchanged
+    # merging again adds nothing
+    again = cat.merge(incoming, target, database="prodimo")
+    assert again.added == [] and len(by_key["CO|yang 2010"].uses) == 2
+    assert again.known == ["o-H2O|faure et al 2007", "CO|yang 2010", "CO|flower 2001"]
+
+
+def test_merge_command(tmp_path, capsys):
+    into = tmp_path / "catalogue_review.json"
+    refsearch.save([_merge_group("CO|yang 2010", "2010ApJ...718.1062Y", database="prodimo")], into)
+    review = tmp_path / "references_review.json"
+    refsearch.save(
+        [_merge_group("o-H2O|faure et al 2007", "2007A&A...472.1029F"), _merge_group("CS|lique 2006", None)], review
+    )
+    before = into.read_text()
+    assert cat.main(["merge", str(review), "--into", str(into), "--dry-run"]) == 0
+    assert into.read_text() == before  # nothing written
+    assert "1 added, 0 decided, 0 known, 0 conflicts, 1 without a decision (left out); would be merged" in (
+        capsys.readouterr().err
+    )
+    assert cat.main(["merge", str(review), "--into", str(into)]) == 0
+    err = capsys.readouterr().err
+    assert f"next: python tools/catalogue.py build {into}" in err
+    groups = refsearch.load(into)
+    assert [g.key for g in groups] == ["CO|yang 2010", "o-H2O|faure et al 2007"]
+    assert groups[1].uses[0].database == "user"  # no --database: as in the review file
+    # a conflict: exit code 1, the maintainer decision is kept
+    refsearch.save([_merge_group("CO|yang 2010", "none")], review)
+    assert cat.main(["merge", str(review), "--into", str(into)]) == 1
+    assert "conflict: CO|yang 2010" in capsys.readouterr().err
+    assert refsearch.load(into)[0].decision == "2010ApJ...718.1062Y"
+    assert cat.REVIEW_FILE.name == "catalogue_review.json" and cat.REVIEW_FILE.parent.name == "tools"
