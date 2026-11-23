@@ -4,7 +4,8 @@ Combining
 :func:`pylamda.add_partner` adds the collision rates of one partner from another data
 set of the same species, for example the electron rates of a CHIANTI conversion to a
 LAMDA file that has none. :func:`pylamda.drop_partner` removes the collision data of one
-partner.
+partner. :func:`pylamda.scale_partner` multiplies the rates of one partner by a factor,
+for example He rates that a file gives as H2 rates.
 
 .. code-block:: python
 
@@ -49,3 +50,60 @@ Partners are identified by their ID. If a file has several blocks with the same 
 
 Both functions return a copy and never change their input. The command line writes the
 normalised layout to a new file; it refuses to overwrite its input.
+
+Scaling a partner
+-----------------
+
+Rates of one partner are often scaled rates of another one. The common case: He rates
+multiplied by about 1.37 (the square root of the ratio of the reduced masses) and given
+as H2 rates, e.g. ``1 HCN + H2 ! scaled (*1.37) HCN-He from Green & Thaddeus (1974)``.
+Checks P02 and C12 find such blocks. A code that scales He rates itself (ProDiMo) then
+scales twice. :func:`pylamda.scale_partner` handles three cases:
+
+.. code-block:: python
+
+   import pylamda
+
+   data = pylamda.read("hcn.dat")
+
+   # change the partner: H2 rates that are He x 1.37 become He rates again
+   he, scaled = pylamda.scale_partner(data, "H2", 1 / 1.37, to="He", reference="Green & Thaddeus (1974)")
+
+   # scale in place (same ID): correct a factor 1.39 to 1.37
+   fixed, scaled = pylamda.scale_partner(data, "H2", 1.37 / 1.39)
+
+   # derive a new partner: keep He, add H2 = He x 1.37
+   both, scaled = pylamda.scale_partner(he, "He", 1.37, to="H2", keep=True)
+
+.. code-block:: bash
+
+   pylamda scale-partner hcn.dat H2 1/1.37 --to He --reference "Green & Thaddeus (1974)" -o hcn_he.dat
+   pylamda scale-partner hcn_he.dat He 1.37 --to H2 --keep -o hcn_he_h2.dat
+
+1. The partner is found by its ID, as everywhere in pylamda. ``block=`` (``--block``)
+   chooses among several blocks with one ID.
+2. The rates are multiplied by the factor. The factor is always given explicitly; a
+   factor written in the partner text is never used.
+3. The scaled block gets the normalised partner line
+   ``<id> <molecule> + <partner> -- Ref: <reference>``. The reference text stays as it
+   was, unless ``reference=`` (``--reference``) gives a new one.
+4. A note line records the operation:
+   ``! Collision partner H2 (block 1, 435 transitions) scaled by 0.729927 and relabelled He``.
+
+The scaled rates are rounded to as many significant digits as the rates of the source
+have in the file (at least 3; 6 if the data were not read from a file). ``digits=``
+(``--digits``) sets another number.
+
+``scale_partner`` refuses a factor that is not finite and > 0, a partner outside the
+standard, ``keep=True`` with the same partner (two blocks with one ID, check C03), and a
+partner ``to`` that the data have already (unless ``replace_existing``, ``--replace``).
+The record :class:`~pylamda.combine.ScaledPartner` holds warnings about:
+
+- a partner text that names another partner than the ID (checks C02, C11, C12): the
+  block was taken by its ID;
+- a factor in the partner text (``*1.37``, ``x 1.4``, ``by 1.39``) that is neither the
+  factor nor its inverse;
+- an unusual direction: He to H2 with a factor < 1, or H2 to He with a factor > 1;
+- a partner pair other than He and H2 (p-H2, o-H2);
+- H2 next to p-H2 or o-H2 in the result (check C04);
+- a kept reference text that mentions scaling: it may no longer describe the rates.

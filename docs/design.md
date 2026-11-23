@@ -6,7 +6,7 @@ Status (2026-11-18): design with decisions taken (section 13). Moved from astrol
 and `pylamda compare`; `bibtex` and `pylamda bib`; `fix`, `patch` and `pylamda fix`;
 the reference catalogue with `bib --search` and `fix --add-refs`) and step 7
 (`add_partner`, `drop_partner`; astrolinedata and TEST_LAMDA_FILES use pylamda,
-section 11).
+section 11). `scale_partner` was added on 2026-11-23 (section 9).
 Step 8 and check F04 are left for later (section 15).
 
 Section 1 shows what exists, section 2 the scope, sections 3–10 the design, section 11
@@ -115,7 +115,7 @@ These problems were found in real files. Each one is a check or fix in pylamda.
 | Comment line without `!` | ProDiMo CH+ file | check S05, fix |
 | Partner line ending in ` !` | ProDiMo files | reader robustness |
 | Excitation rates in the rows of de-excitation rates | `Oatom_Lambda_extra_NIST*` (O+H) | check P01 (heuristic) |
-| Rates "scaled from H2" but labelled He; ProDiMo scales again | O2, SO2 | check P02 (text hint) |
+| Rates "scaled from H2" but labelled He; ProDiMo scales again | O2, SO2 | checks P02 (text hint), C12; `scale_partner` (section 9) |
 | CHIANTI level order differs from energy order (inverted pairs) | CHIANTI conversions | check C08, fix (explicit) |
 | References missing or only as free text | many ProDiMo files | checks F01–F03, `bib` report |
 
@@ -419,6 +419,20 @@ level matching by `match_levels` (tolerances 0.1 cm-1 + 1e-4 E). `drop_partner` 
 `DroppedPartner` record. CLI `pylamda add-partner` and `drop-partner` (normalised
 layout, never the input file). `select_partners` stays a method of `LamdaData`;
 `cut_levels` is left for later (section 15).
+
+Added on 2026-11-23: `scale_partner(data, partner, factor, to=, keep=)` with a
+`ScaledPartner` record. It multiplies the rates of one partner by an explicit factor
+(never taken from the partner text): in place, as another partner (`to`, e.g. H2 rates
+that are He x 1.37 back to He), or as an added partner (`keep`, e.g. H2 = He x 1.37).
+Errors: factor not finite and > 0, a partner outside the standard, `keep` with the same
+partner (C03), `to` present already without `replace_existing`. Warnings: the partner
+text names another partner than the ID (C02/C11/C12), a factor in the text that is
+neither the factor nor its inverse, an unusual direction (He -> H2 with < 1, H2 -> He
+with > 1), a pair other than He and H2/p-H2/o-H2, H2 next to p-H2/o-H2 (C04), a kept
+reference text that mentions scaling. The rates are rounded to the significant digits
+of the source as written (at least 3; 6 without a source map). Normalised layout only.
+CLI `pylamda scale-partner FILE PARTNER FACTOR` (FACTOR also as `a/b`); it prints the C
+issues of the result.
 
 ## 10. References and BibTeX
 

@@ -1,4 +1,4 @@
-"""add_partner() and drop_partner(): ported from astrolinedata, plus the pylamda parts."""
+"""add_partner(), drop_partner() and scale_partner(): add_partner ported from astrolinedata, plus the pylamda parts."""
 
 from __future__ import annotations
 
@@ -6,10 +6,22 @@ import dataclasses
 
 import numpy as np
 import pytest
-from helpers import EMAA_CO, LAMDA
+from helpers import EMAA_CO, LAMDA, collision_block, make_lamda
 
-from pylamda import CollisionSet, CombineError, LamdaData, add_partner, drop_partner, read, verify, write
+from pylamda import (
+    CollisionSet,
+    CombineError,
+    LamdaData,
+    add_partner,
+    drop_partner,
+    read,
+    scale_partner,
+    verify,
+    write,
+)
 from pylamda.cli import main
+from pylamda.combine import SCALE_DEFAULT_DIGITS, _significant_digits
+from pylamda.reader import read_string
 
 
 def _o_source() -> LamdaData:
@@ -160,3 +172,216 @@ def test_combine_commands(tmp_path, capsys):
     assert read(tmp_path / "back.dat").partners == read(target).partners
     assert main(["drop-partner", str(EMAA_CO), "p-H2", "-o", str(tmp_path / "x.dat")]) == 2
     assert main(["drop-partner", str(EMAA_CO), "p-H2", "--block", "1", "-o", str(tmp_path / "x.dat")]) == 0
+
+
+# ------------------------------------------------------------------- scale_partner
+_RATES4 = "1 2 1 1.234e-11 2.345e-11\n2 3 1 3.456e-11 4.567e-11\n3 3 2 5.678e-11 6.789e-11"
+_HCN_LIKE = "1 X + H2 ! scaled (*1.37) X-He from Green (1991)"
+
+
+def _scaled_file(partner: str = _HCN_LIKE, rates: str = _RATES4, after: str = "", npart: str = "1") -> LamdaData:
+    """A synthetic file with rates of 4 significant digits."""
+    return read_string(make_lamda(partner=partner, rates=rates, after=after, npart=npart))
+
+
+def _round(x: np.ndarray, digits: int) -> np.ndarray:
+    return np.array([float(f"{v:.{digits - 1}e}") for v in x.ravel()]).reshape(x.shape)
+
+
+def test_scale_partner_in_place():
+    d = _scaled_file()
+    before = d.collisions[0].rates.copy()
+    out, scaled = scale_partner(d, "H2", 1.37 / 1.39)
+    c = out.collisions[0]
+    assert (c.partner_id, c.partner) == (1, "H2") and out.partners == ["H2"]
+    np.testing.assert_array_equal(c.rates, _round(before * (1.37 / 1.39), 4))
+    np.testing.assert_array_equal(d.collisions[0].rates, before)  # input unchanged
+    assert c.partner_text == "1 X + H2 -- Ref: scaled (*1.37) X-He from Green (1991)"
+    assert (scaled.block, scaled.new_block, scaled.n_transitions, scaled.digits) == (1, 1, 3, 4)
+    assert (scaled.kept_source, scaled.replaced_block, scaled.text_factor) == (False, None, 1.37)
+    assert out.notes[-1] == "! Collision partner H2 (block 1, 3 transitions) scaled by 0.985612"
+    assert out.source_map is None
+    # the text gives 1.37, the factor is 0.9856; the reference still says "scaled (*1.37)"
+    assert len(scaled.warnings) == 2
+    assert "the partner text gives the factor 1.37; the factor used is 0.985612" in scaled.warnings[0]
+    assert "mentions scaling" in scaled.warnings[1]
+    assert scaled.as_dict()["factor"] == pytest.approx(0.985612, rel=1e-6)
+
+
+def test_scale_partner_change_partner():
+    """HCN-like: H2 rates that are He x 1.37 become He rates."""
+    d = _scaled_file()
+    out, scaled = scale_partner(d, "H2", 1 / 1.37, to="He", reference="Green (1991)")
+    c = out.collisions[0]
+    assert (c.partner_id, c.partner, c.reference) == (6, "He", "Green (1991)")
+    assert c.partner_text == "6 X + He -- Ref: Green (1991)"
+    np.testing.assert_array_equal(c.rates, _round(d.collisions[0].rates / 1.37, 4))
+    assert (scaled.partner, scaled.partner_id, scaled.new_partner, scaled.new_partner_id) == ("H2", 1, "He", 6)
+    assert scaled.warnings == []  # 1/1.37 fits the text; a new reference text
+    assert out.notes[-1] == "! Collision partner H2 (block 1, 3 transitions) scaled by 0.729927 and relabelled He"
+    assert not {"C02", "C03", "C12"} & {i.code for i in verify(out)}
+
+
+def test_scale_partner_derive():
+    """Keep the He block and add H2 = He x 1.37."""
+    d = _scaled_file(partner="6 X + He ! Lique et al. (2006)")
+    out, scaled = scale_partner(d, "He", 1.37, to="H2", keep=True)
+    assert out.partners == ["He", "H2"]
+    np.testing.assert_array_equal(out.collisions[0].rates, d.collisions[0].rates)
+    np.testing.assert_array_equal(out.collisions[1].rates, _round(d.collisions[0].rates * 1.37, 4))
+    assert out.collisions[1].partner_text == "1 X + H2 -- Ref: Lique et al. (2006)"
+    assert (scaled.kept_source, scaled.new_block, scaled.warnings) == (True, 2, [])
+    assert out.notes[-1] == "! Collision partner He (block 1, 3 transitions) scaled by 1.37 and added as H2 (block 2)"
+
+
+def test_scale_partner_replace_existing():
+    # H2 (block 1) and He (block 2)
+    two = dict(partner="1 X + H2 ! Green", after=collision_block("6 X + He ! Lique"), npart="2")
+    d = _scaled_file(**two)
+    with pytest.raises(CombineError, match="already has collision partner H2 .use replace_existing"):
+        scale_partner(d, "He", 1.37, to="H2", keep=True)
+    out, scaled = scale_partner(d, "He", 1.37, to="H2", keep=True, replace_existing=True)
+    assert out.partners == ["H2", "He"] and (scaled.new_block, scaled.replaced_block) == (1, 1)
+    np.testing.assert_array_equal(out.collisions[0].rates, _round(d.collisions[1].rates * 1.37, 3))
+    assert out.notes[-1].endswith("added as H2 (block 1); the former H2 block (block 1) replaced")
+    # without keep: the scaled block stays at the place of the source, the old He block goes
+    out, scaled = scale_partner(d, "H2", 1 / 1.37, to="He", replace_existing=True)
+    assert out.partners == ["He"] and out.collisions[0].reference == "Green"
+    assert (scaled.new_block, scaled.replaced_block) == (1, 2)
+    # the source after the replaced block
+    d = _scaled_file(partner="6 X + He ! Lique", after=collision_block("1 X + H2 ! Green"), npart="2")
+    out, scaled = scale_partner(d, "H2", 1 / 1.37, to="He", replace_existing=True)
+    assert out.partners == ["He"] and out.collisions[0].reference == "Green" and scaled.new_block == 1
+
+
+def test_scale_partner_errors():
+    d = _scaled_file()
+    for factor in (0.0, -1.37, float("nan"), float("inf")):
+        with pytest.raises(CombineError, match="finite and > 0"):
+            scale_partner(d, "H2", factor)
+    with pytest.raises(CombineError, match="digits must be at least 1"):
+        scale_partner(d, "H2", 1.37, digits=0)
+    with pytest.raises(CombineError, match="'CO' is not a standard collision partner"):
+        scale_partner(d, "CO", 1.37)
+    with pytest.raises(CombineError, match="'p-H2O' is not a standard collision partner"):
+        scale_partner(d, "H2", 1.37, to="p-H2O")
+    with pytest.raises(CombineError, match="keep=True needs another partner"):
+        scale_partner(d, "H2", 1.37, to="H2", keep=True)
+    with pytest.raises(CombineError, match="no collision partner 'He'"):
+        scale_partner(d, "He", 1.37)
+    three = collision_block("6 X + He ! a") + collision_block("6 X + He ! b")
+    with pytest.raises(CombineError, match="has 2 blocks of He"):
+        scale_partner(_scaled_file(after=three, npart="3"), "H2", 1 / 1.37, to="He", replace_existing=True)
+    with pytest.raises(CombineError, match="choose one with block="):
+        scale_partner(read(EMAA_CO), "p-H2", 1.0)
+    _, scaled = scale_partner(read(EMAA_CO), "p-H2", 1.0, block=3)
+    assert scaled.block == 3
+
+
+def test_scale_partner_warnings():
+    # C12: He in the text, ID 1, and a factor 1.39 that fits neither 1/1.37 nor 1.37
+    d = _scaled_file(partner="1 X + He ! rates (Green 1995) scaled *1.39")
+    _, scaled = scale_partner(d, "H2", 1 / 1.37, to="He", reference="Green 1995")
+    assert len(scaled.warnings) == 2
+    assert "names 'He'; the block was taken by its ID 1 as H2" in scaled.warnings[0]
+    assert "gives the factor 1.39" in scaled.warnings[1]
+    # unusual directions
+    he = _scaled_file(partner="6 X + He ! Lique")
+    _, scaled = scale_partner(he, "He", 0.73, to="H2")
+    assert scaled.warnings == ["He -> H2 with a factor < 1: He rates scaled to H2 are usually larger (about 1.37)"]
+    h2 = _scaled_file(partner="1 X + H2 ! Green")
+    _, scaled = scale_partner(h2, "H2", 1.37, to="He")
+    assert scaled.warnings[0].startswith("H2 -> He with a factor > 1")
+    # a pair that is not He and H2
+    e = _scaled_file(partner="4 X + e ! Faure")
+    _, scaled = scale_partner(e, "e", 1.0, to="H")
+    assert scaled.warnings == ["e -> H: scaling is a standard approximation only between He and H2 (p-H2, o-H2)"]
+    # H2 next to p-H2 in the result (C04)
+    d = _scaled_file(partner="2 X + p-H2 ! Yang", after=collision_block("6 X + He ! Lique"), npart="2")
+    _, scaled = scale_partner(d, "He", 1.37, to="H2", keep=True)
+    assert scaled.warnings == ["X: H2 next to p-H2; a code may count H2 collisions twice"]
+    # H2 -> p-H2 (a relabelling within H2) gives no pair warning
+    _, scaled = scale_partner(h2, "H2", 1.0, to="p-H2")
+    assert scaled.warnings == []
+
+
+def test_scale_partner_digits():
+    d = _scaled_file()
+    _, scaled = scale_partner(d, "H2", 1.37)
+    assert scaled.digits == 4  # as written
+    out, scaled = scale_partner(d, "H2", 1.37, digits=2)
+    assert scaled.digits == 2 and out.collisions[0].rates[0, 0] == 1.7e-11
+    out, scaled = scale_partner(dataclasses.replace(d, source_map=None), "H2", 1.37)
+    assert scaled.digits == SCALE_DEFAULT_DIGITS
+    np.testing.assert_array_equal(out.collisions[0].rates, _round(d.collisions[0].rates * 1.37, 6))
+    # two digits as written ("1.0e-11"): at least 3
+    _, scaled = scale_partner(read_string(make_lamda()), "p-H2", 1.37)
+    assert scaled.digits == 3
+    # rate rows that continue on the next line
+    _, scaled = scale_partner(
+        _scaled_file(rates="1 2 1 1.234e-11\n 2.34567e-11\n2 3 1 1e-11 1e-11\n3 3 2 1e-11 1e-11"), "H2", 2.0
+    )
+    assert scaled.digits == 6
+
+
+@pytest.mark.parametrize(
+    ("token", "digits"), [("5.47E-10", 3), ("0.00123", 3), ("10.", 2), ("1.0D-10", 2), ("7", 1), ("0.0", 0), ("abc", 0)]
+)
+def test_significant_digits(token, digits):
+    assert _significant_digits(token) == digits
+
+
+def test_scale_partner_writes_and_reads_back(tmp_path):
+    out, _ = scale_partner(_scaled_file(), "H2", 1 / 1.37, to="He", reference="Green (1991)")
+    write(out, tmp_path / "x.dat")
+    back = read(tmp_path / "x.dat")
+    assert back.partners == ["He"] and back.issues == []
+    np.testing.assert_array_equal(back.collisions[0].rates, out.collisions[0].rates)
+    assert not {"C02", "C03", "C12"} & {i.code for i in verify(back)}
+
+
+def test_scale_partner_command(tmp_path, capsys):
+    src = tmp_path / "in.dat"
+    src.write_text(make_lamda(partner="2 X + p-H2 ! Yang", after=collision_block("6 X + He ! scaled *1.39"), npart="2"))
+    out = tmp_path / "out.dat"
+    assert main(["scale-partner", str(src), "He", "1.37", "--to", "H2", "--keep", "-o", str(out)]) == 0
+    assert read(out).partners == ["p-H2", "He", "H2"]
+    err = capsys.readouterr().err
+    assert "warning: the partner text gives the factor 1.39" in err
+    assert "warning: X: H2 next to p-H2" in err
+    assert "Collision partner He (block 2, 1 transitions) scaled by 1.37 and added as H2 (block 3)" in err
+    assert f"{out}:" in err and "C04 warning" in err  # the C checks of the result
+    # a fraction, a new reference text and fixed digits
+    assert (
+        main(
+            [
+                "scale-partner",
+                str(src),
+                "p-H2",
+                "1/1.37",
+                "--to",
+                "He",
+                "--replace",
+                "--reference",
+                "Yang 2010",
+                "--digits",
+                "4",
+                "-o",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    back = read(out)
+    assert back.partners == ["He"] and back.collisions[0].reference == "Yang 2010"
+    assert back.collisions[0].rates[0, 0] == pytest.approx(7.299e-12, rel=0)
+    capsys.readouterr()
+    assert main(["scale-partner", str(src), "He", "1.37", "-o", str(src)]) == 2  # never the input file
+    assert "must be a new file" in capsys.readouterr().err
+    assert main(["scale-partner", str(src), "H2", "1.37", "-o", str(out)]) == 2
+    assert "no collision partner 'H2'" in capsys.readouterr().err
+    for bad in ("abc", "1/0", "1/2/3"):
+        with pytest.raises(SystemExit) as exc:
+            main(["scale-partner", str(src), "He", bad, "-o", str(out)])
+        assert exc.value.code == 2
+    assert "not a number or a fraction a/b" in capsys.readouterr().err

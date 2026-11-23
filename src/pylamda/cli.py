@@ -1,4 +1,5 @@
-"""Command line: ``pylamda check``, ``compare``, ``bib``, ``fix``, ``add-partner`` and ``drop-partner``.
+"""Command line: ``pylamda check``, ``compare``, ``bib``, ``fix`` and the combine commands
+(``add-partner``, ``drop-partner``, ``scale-partner``).
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
 ``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
@@ -17,7 +18,7 @@ from collections.abc import Sequence
 
 from . import __version__
 from .bib import BibError, bibtex
-from .combine import CombineError, add_partner, drop_partner
+from .combine import CombineError, add_partner, drop_partner, scale_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError
@@ -30,6 +31,17 @@ from .writer import write
 def _codes(values: list[str] | None) -> list[str]:
     """Code selectors from repeated, comma-separated options (``--select C02,C1``)."""
     return [code.strip() for value in values or [] for code in value.split(",") if code.strip()]
+
+
+def _factor(text: str) -> float:
+    """A scaling factor from the command line: a number or a fraction ``a/b`` (``1/1.37``)."""
+    try:
+        if "/" in text:
+            num, den = text.split("/")
+            return float(num) / float(den)
+        return float(text)
+    except (ValueError, ZeroDivisionError):
+        raise argparse.ArgumentTypeError(f"not a number or a fraction a/b: {text!r}") from None
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -190,6 +202,26 @@ def _parser() -> argparse.ArgumentParser:
     drop.add_argument("partner", metavar="PARTNER", help="partner name (by ID), or 'ID <n>'")
     drop.add_argument("-o", "--output", required=True, metavar="OUT", help="the new file (not FILE)")
     drop.add_argument("--block", type=int, help="the block, if the file has several with the partner's ID")
+
+    scale = sub.add_parser(
+        "scale-partner",
+        help="multiply the collision rates of one partner by a factor",
+        description="Multiply the collision rates of one partner by FACTOR: in place, as another partner (--to), "
+        "or as an added partner (--to with --keep). Writes the normalised layout and shows the C checks of the "
+        "result.",
+    )
+    scale.add_argument("file", metavar="FILE")
+    scale.add_argument("partner", metavar="PARTNER", help="the partner to scale (by ID)")
+    scale.add_argument("factor", metavar="FACTOR", type=_factor, help="a number or a fraction a/b, e.g. 1/1.37")
+    scale.add_argument("-o", "--output", required=True, metavar="OUT", help="the new file (not FILE)")
+    scale.add_argument("--to", metavar="NAME", help="the partner of the scaled block (default: PARTNER)")
+    scale.add_argument("--keep", action="store_true", help="keep the PARTNER block and add the scaled block")
+    scale.add_argument("--block", type=int, help="the block, if the file has several with the partner's ID")
+    scale.add_argument("--replace", action="store_true", help="replace the block of --to if the file has it")
+    scale.add_argument("--reference", metavar="TEXT", help="new reference text of the scaled block")
+    scale.add_argument(
+        "--digits", type=int, help="significant digits of the scaled rates (default: as written in FILE)"
+    )
     return parser
 
 
@@ -201,6 +233,7 @@ def _same_file(a: str, b: str) -> bool:
 
 def _combine(args: argparse.Namespace) -> int:
     inputs = [args.target, args.source] if args.command == "add-partner" else [args.file]
+    warnings: list[str] = []
     if any(_same_file(args.output, f) for f in inputs):
         print(f"pylamda {args.command}: the output must be a new file, not {args.output}", file=sys.stderr)
         return 2
@@ -217,8 +250,20 @@ def _combine(args: argparse.Namespace) -> int:
                 source_label=args.source_label,
                 block=args.block,
             )
-            for w in record.warnings:
-                print(f"pylamda add-partner: warning: {w}", file=sys.stderr)
+            warnings = record.warnings
+        elif args.command == "scale-partner":
+            data, record = scale_partner(
+                read(args.file),
+                args.partner,
+                args.factor,
+                to=args.to,
+                keep=args.keep,
+                block=args.block,
+                replace_existing=args.replace,
+                reference=args.reference,
+                digits=args.digits,
+            )
+            warnings = record.warnings
         else:
             data, record = drop_partner(read(args.file), args.partner, block=args.block)
     except (LamdaReadError, CombineError) as exc:
@@ -227,8 +272,13 @@ def _combine(args: argparse.Namespace) -> int:
     except OSError as exc:
         print(f"pylamda {args.command}: cannot open: {exc.strerror or exc}", file=sys.stderr)
         return 2
+    for w in warnings:
+        print(f"pylamda {args.command}: warning: {w}", file=sys.stderr)
     write(data, args.output)
     print(data.notes[-1].lstrip("! "), file=sys.stderr)
+    if args.command == "scale-partner":
+        for issue in verify(args.output, select=["C"]):
+            print(_issue_line(args.output, issue), file=sys.stderr)
     return 0
 
 
@@ -520,7 +570,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _bib(args)
     if args.command == "fix":
         return _fix(args)
-    if args.command in ("add-partner", "drop-partner"):
+    if args.command in ("add-partner", "drop-partner", "scale-partner"):
         return _combine(args)
     return 2  # pragma: no cover (argparse requires a command)
 

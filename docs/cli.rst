@@ -1,7 +1,7 @@
 Command line
 ============
 
-``pylamda`` (or ``python -m pylamda``) has six commands: ``check``, ``compare``, ``bib``, ``fix``, ``add-partner`` and ``drop-partner``.
+``pylamda`` (or ``python -m pylamda``) has seven commands: ``check``, ``compare``, ``bib``, ``fix``, ``add-partner``, ``drop-partner`` and ``scale-partner``.
 
 pylamda check
 -------------
@@ -185,3 +185,18 @@ pylamda add-partner, pylamda drop-partner
 See :doc:`combining`. Both write the normalised layout to a new file (``OUT`` must not be
 an input file) and print the note line. Exit codes: 0 done, 2 an error (file not
 readable, partner missing or ambiguous, levels that do not fit).
+
+pylamda scale-partner
+---------------------
+
+.. code-block:: text
+
+   pylamda scale-partner FILE PARTNER FACTOR -o OUT [--to NAME] [--keep] [--block N]
+                         [--replace] [--reference TEXT] [--digits N]
+
+Multiply the collision rates of one partner by ``FACTOR`` (a number or a fraction
+``a/b``, e.g. ``1/1.37``). See :doc:`combining`. Writes the normalised layout to a new
+file (``OUT`` must not be ``FILE``), prints the warnings and the note line, and then the
+C issues of the new file (``pylamda check --select C``). Exit codes: 0 done, 2 an error
+(file not readable, partner missing or ambiguous, factor not > 0, partner exists
+already).
