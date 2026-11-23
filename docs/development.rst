@@ -78,7 +78,7 @@ Layout
    tools/
      catalogue.py    maintainer tool: builds the reference catalogue
      catalogue_review.json   the reviewed corpus
-     issues.py       Issue, the check codes (CODES), LamdaReadError
+     issues.py       Issue, the check codes (CODES), LamdaReadError, NotLamdaError
      formula.py      formula mass of a molecule name (check P04)
      references.py   identifiers in reference texts (DOIs, bibcodes, arXiv IDs)
      cli.py          the command line (check, compare, bib, fix, add-partner, drop-partner)

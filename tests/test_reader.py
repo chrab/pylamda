@@ -9,7 +9,9 @@ import pytest
 from helpers import EMAA_CO, LAMDA, make_lamda
 
 import pylamda
-from pylamda import LamdaReadError, read
+from pylamda import LamdaReadError, NotLamdaError, read
+from pylamda import reader as reader_module
+from pylamda.reader import read_string
 
 
 def _write(tmp_path: Path, text: str) -> Path:
@@ -128,6 +130,8 @@ def test_issue_file_too_short(tmp_path):
         read(_write(tmp_path, text))
     assert [i.code for i in exc.value.issues] == ["S01"]
     assert isinstance(exc.value, ValueError)
+    assert isinstance(exc.value, NotLamdaError)  # it ends in the header
+    assert exc.value.reason == "line 8: the file ends before level 3"
 
 
 def test_issue_numbering(tmp_path):
@@ -231,3 +235,77 @@ def test_source_map(tmp_path):
     assert m.raw[m.lines[1] - 1].split()[3] == "6.910e-07"
     assert m.raw[b.partner - 1] == d.collisions[0].partner_text
     assert read(_write(tmp_path, make_lamda())).source_map.notes is None
+
+
+# ------------------------------------------------------------------- not a LAMDA file
+_HEAD = "!MOLECULE\nCO\n!WEIGHT\n28.0\n!NLEV\n1\n1 0.0 1.0\n!NLIN\n"
+
+
+@pytest.mark.parametrize(
+    ("text", "reason", "codes"),
+    [
+        ("", "the file ends before the molecule name", ["S01"]),
+        ("!only\n! comments\n\n", "line 3: the file ends before the molecule name", ["S01"]),
+        ("28.0\n3\n", "line 1: the molecule name '28.0' is a number", []),
+        ("hello world\nthis is text\nmore text\n", "line 2: cannot read the molecular weight from 'this'", ["S06"]),
+        ("CO\n0\n1\n", "line 2: the molecular weight 0 is not > 0", []),
+        ("CO\n-28\n1\n", "line 2: the molecular weight -28 is not > 0", []),
+        ("CO\ninf\n1\n", "line 2: the molecular weight inf is not > 0", []),
+        ("CO\n28\n-3\n", "line 3: cannot read the number of levels from '-3'", ["S06"]),
+        ("CO\n28\n0\n0\n", "line 3: the number of levels is 0", []),
+        ("CO\n28\napples\n", "line 3: the file ends before the number of levels", ["S05", "S01"]),
+        (_HEAD, "line 8: the file ends before the number of radiative transitions", ["S01"]),
+        (_HEAD + "-\n", "line 9: cannot read the number of radiative transitions from '-'", ["S06"]),
+        ("CO\n28\x00\x00\n", "line 2: binary data (NUL characters)", []),
+    ],
+)
+def test_not_a_lamda_file(tmp_path, text, reason, codes):
+    with pytest.raises(NotLamdaError) as exc:
+        read(_write(tmp_path, text))
+    assert exc.value.reason == reason
+    assert [i.code for i in exc.value.issues] == codes
+    assert str(exc.value).startswith(f"{tmp_path / 'x.dat'}: not a LAMDA file: {reason}")
+    assert isinstance(exc.value, LamdaReadError)
+
+
+def test_after_the_header_a_lamda_file(tmp_path):
+    """Once the header has been read, a failure is a read error of a LAMDA file."""
+    with pytest.raises(LamdaReadError) as exc:
+        read(_write(tmp_path, make_lamda(ncol_comment="-")))
+    assert not isinstance(exc.value, NotLamdaError)
+    assert read(_write(tmp_path, make_lamda(molecule="13CO"))).molecule == "13CO"  # a name, not a number
+
+
+def test_not_a_lamda_file_stops_early():
+    """The reader takes lines only as needed: it stops at the header of a file that is not LAMDA."""
+    taken = []
+
+    def lines():
+        for k in range(100_000):
+            taken.append(k)
+            yield "hello world" if k == 0 else "this is text"
+
+    with pytest.raises(NotLamdaError, match="cannot read the molecular weight"):
+        reader_module._parse(lines(), "<big>", strict=False)
+    assert len(taken) == 2
+
+
+def test_long_lines(tmp_path, monkeypatch):
+    monkeypatch.setattr(reader_module, "MAX_LINE_LENGTH", 100)
+    # a binary-like file without line ends: never read whole
+    with pytest.raises(NotLamdaError, match="line 1: longer than 100 characters"):
+        read(_write(tmp_path, "x" * 10_000))
+    # a long line after the header (in the notes)
+    with pytest.raises(NotLamdaError, match="longer than 100 characters"):
+        read(_write(tmp_path, make_lamda(after="!" + "y" * 500 + "\n")))
+    # lines up to the limit read
+    assert read(_write(tmp_path, make_lamda(after="!" + "y" * 99 + "\n"))).notes[-1] == "!" + "y" * 99
+
+
+def test_read_splits_lines_as_read_string(tmp_path):
+    """Read line by line, a file gives the same lines as str.splitlines (CRLF, form feed)."""
+    text = make_lamda(after="! a\x0cb\n").replace("\n", "\r\n")
+    path = tmp_path / "x.dat"
+    path.write_bytes(text.encode())
+    a, b = read(path), read_string(text)
+    assert a.source_map.raw == b.source_map.raw and a.notes == b.notes == ["! a", "b"]

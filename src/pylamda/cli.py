@@ -2,7 +2,7 @@
 (``add-partner``, ``drop-partner``, ``scale-partner``).
 
 Exit codes of ``pylamda check``: 0 = no errors, 1 = at least one issue of severity
-``error``, 2 = at least one file cannot be read. Of ``pylamda compare`` (as ``diff``):
+``error``, 2 = at least one file cannot be read or is not a LAMDA file. Of ``pylamda compare`` (as ``diff``):
 0 = no differences, 1 = differences, 2 = a file cannot be read. Of ``pylamda bib``: 0 = done,
 1 = online resolution failed, 2 = a file cannot be read. Of ``pylamda fix``: 0 = done,
 2 = the file cannot be read or a fix cannot be applied.
@@ -21,11 +21,13 @@ from .bib import BibError, bibtex
 from .combine import CombineError, add_partner, drop_partner, scale_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
-from .issues import CODES, SEVERITIES, Issue, LamdaReadError
+from .issues import CODES, SEVERITIES, Issue, LamdaReadError, NotLamdaError
 from .model import LamdaData
 from .reader import read, read_string
 from .verify import verify
 from .writer import write
+
+_NOT_LAMDA = "not a LAMDA file"
 
 
 def _codes(values: list[str] | None) -> list[str]:
@@ -312,6 +314,8 @@ def _check(args: argparse.Namespace) -> int:
                 catalogue=not args.no_catalogue,
             )
             results.append((path, True, None, issues))
+        except NotLamdaError as exc:  # one statement, not the structure issues of a file that is not LAMDA
+            results.append((path, False, f"{_NOT_LAMDA}: {exc.reason}", []))
         except LamdaReadError as exc:
             results.append((path, False, "not readable", exc.issues))
         except OSError as exc:
@@ -342,9 +346,12 @@ def _print_summary(results: list) -> None:
     counts = Counter(i.severity for *_, issues in results for i in issues)
     n = sum(counts.values())
     parts = ", ".join(f"{counts[s]} {s}{'s' if counts[s] != 1 else ''}" for s in SEVERITIES if counts[s])
-    unreadable = sum(1 for _, ok, _, _ in results if not ok)
+    not_lamda = sum(1 for _, ok, err, _ in results if not ok and err.startswith(_NOT_LAMDA))
+    unreadable = sum(1 for _, ok, _, _ in results if not ok) - not_lamda
     files = f"{len(results)} file{'s' if len(results) != 1 else ''}"
     text = f"Found {n} issue{'s' if n != 1 else ''}" + (f" ({parts})" if parts else "") + f" in {files}"
+    if not_lamda:
+        text += f"; {not_lamda} not {'a LAMDA file' if not_lamda == 1 else 'LAMDA files'}"
     if unreadable:
         text += f"; {unreadable} not readable"
     print(text + ".")

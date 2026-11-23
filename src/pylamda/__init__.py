@@ -18,7 +18,7 @@ from .bib import BibEntry, BibResult, bibtex, collect_references
 from .combine import AddedPartner, CombineError, DroppedPartner, ScaledPartner, add_partner, drop_partner, scale_partner
 from .compare import LamdaDiff, LevelMatch, PartnerDiff, compare, critical_density, match_levels
 from .fix import FixError, FixRecord, add_reference, fix, patch
-from .issues import CODES, SEVERITIES, Issue, LamdaReadError
+from .issues import CODES, SEVERITIES, Issue, LamdaReadError, NotLamdaError
 from .model import (
     PARTNER_IDS,
     PARTNERS,
@@ -61,6 +61,7 @@ __all__ = [
     "LamdaData",
     "LamdaDiff",
     "LamdaReadError",
+    "NotLamdaError",
     "ScaledPartner",
     "SourceMap",
     "__version__",

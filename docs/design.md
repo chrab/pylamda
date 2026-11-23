@@ -198,6 +198,15 @@ functions, not methods.
 - Surplus values on a line are ignored and give an issue.
 - Everything after the last declared block is kept as `notes`.
 - `strict=True` turns every structure issue into an error, for CI.
+- Not a LAMDA file (added 2026-11-23): the reader takes lines only as needed. If the
+  header does not read (molecule name not a number, molecular weight a number > 0,
+  NLEV >= 1, the level rows, NLIN), it raises `NotLamdaError` (a subclass of
+  `LamdaReadError`) with a one-line `reason` and does not read the rest of the file.
+  Binary data (NUL) in the header and lines longer than `MAX_LINE_LENGTH` (10^6
+  characters, never read whole) count as well. `pylamda check` prints one line per such
+  file (`<path>: not a LAMDA file: <reason>`), not its structure issues. On ProDiMo's
+  `data/` (177 files): 70 files of other formats are recognised; before, they gave about 9200
+  issues.
 
 **Writing** has two modes:
 

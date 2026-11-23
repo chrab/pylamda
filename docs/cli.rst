@@ -52,7 +52,21 @@ Exit codes:
 
 - 0: no issue of severity ``error``;
 - 1: at least one error;
-- 2: at least one file cannot be read (or opened).
+- 2: at least one file cannot be read (or opened), or is not a LAMDA file.
+
+A file whose header does not read is reported with one line, not with its structure
+issues, and the rest of it is not read (see :doc:`usage`, "Not a LAMDA file"):
+
+.. code-block:: text
+
+   $ pylamda check data/*.dat
+   ...
+   data/ATOM_Al.dat: not a LAMDA file: line 1: the molecule name '30' is a number
+   data/DustChem.dat: not a LAMDA file: line 2: cannot read the molecular weight from '============'
+   Found 633 issues (155 errors, 237 warnings, 241 infos) in 184 files; 70 not LAMDA files; 1 not readable.
+
+With ``--format json``, such a file has ``"readable": false`` and ``"error": "not a LAMDA
+file: <reason>"``.
 
 pylamda compare
 ---------------

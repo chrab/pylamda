@@ -8,6 +8,10 @@ Rules (design document, section 5):
 * Everything after the last declared block is kept as notes (data there: S03).
 * Collision partners are identified by their ID only.
 * Deviations are collected as :class:`~pylamda.issues.Issue` objects, not logged.
+* The header (molecule name, molecular weight, number of levels, level rows, number of
+  radiative transitions) must read; else the file is not a LAMDA file
+  (:class:`~pylamda.issues.NotLamdaError`). Lines are read only as needed, so the reader
+  stops there without reading the rest of a large file.
 """
 
 from __future__ import annotations
@@ -15,42 +19,91 @@ from __future__ import annotations
 import math
 import os
 import re
+from collections.abc import Iterable, Iterator
 from pathlib import Path
-from typing import NoReturn
+from typing import NoReturn, TextIO
 
 import numpy as np
 
-from .issues import Issue, LamdaReadError, make_issue
+from .issues import Issue, LamdaReadError, NotLamdaError, make_issue
 from .model import BlockSource, CollisionSet, LamdaData, SourceMap, split_partner_line
 
 # numbers as Fortran list-directed input reads them (D exponents allowed, no commas)
 _REAL = re.compile(r"[+-]?(?:(?:\d+\.?\d*|\.\d+)(?:[eEdD][+-]?\d+)?|nan|inf|infinity)", re.I)
 _INT = re.compile(r"[+-]?\d+")
 _DATASET_DOI = re.compile(r"\s*--\s*(?:\w+_)?DATASET_DOI:\s*(\S+)\s*$")
+# a number without "nan"/"inf": a molecule name that reads as one is not a molecule name
+_NUMBER = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eEdD][+-]?\d+)?")
+
+#: A line longer than this (characters) means the file is not a LAMDA file (e.g. a
+#: binary file without line ends); longer lines are never read whole.
+MAX_LINE_LENGTH = 1_000_000
+
+
+def _file_lines(f: TextIO) -> Iterator[str]:
+    """The lines of an open file, one at a time, split as :meth:`str.splitlines` splits them.
+
+    A line longer than :data:`MAX_LINE_LENGTH` is yielded as its first
+    ``MAX_LINE_LENGTH + 1`` characters (the reader stops there).
+    """
+    while True:
+        piece = f.readline(MAX_LINE_LENGTH + 1)
+        if not piece:
+            return
+        if len(piece) > MAX_LINE_LENGTH and not piece.endswith("\n"):  # text mode: all line ends are "\n"
+            yield piece
+            return
+        yield from piece.splitlines()
 
 
 class _Reader:
-    """The non-comment lines of a file, read one value or line at a time, with the issues found."""
+    """The non-comment lines of a file, read one value or line at a time, with the issues found.
 
-    def __init__(self, path: str, raw: list[str]):
+    Lines are taken from ``lines`` only when needed. While ``header`` is True, a failure
+    means that the file is not a LAMDA file (:class:`NotLamdaError`).
+    """
+
+    def __init__(self, path: str, lines: Iterable[str]):
         self.path = path
-        self.raw = raw
-        self.data = [(i, line) for i, line in enumerate(raw, 1) if line.strip() and not line.lstrip().startswith("!")]
+        self.raw: list[str] = []  # the lines taken so far (all of them after rest())
+        self.data: list[tuple[int, str]] = []  # (line number, text) of the non-comment lines taken so far
+        self._lines = iter(lines)
         self.pos = 0
         self.issues: list[Issue] = []
+        self.header = True
 
     def issue(self, code: str, message: str, line: int | None = None, fixable: bool = False) -> None:
         """Record an issue."""
         self.issues.append(make_issue(code, message, line, fixable))
 
+    def not_lamda(self, reason: str, line: int | None = None) -> NoReturn:
+        """Stop reading: the file is not a LAMDA file."""
+        raise NotLamdaError(self.path, self.issues, f"line {line}: {reason}" if line else reason)
+
     def fail(self, code: str, message: str, line: int | None = None) -> NoReturn:
-        """Record an issue and stop reading."""
+        """Record an issue and stop reading (in the header: not a LAMDA file)."""
         self.issue(code, message, line)
+        if self.header:
+            self.not_lamda(message, line)
         raise LamdaReadError(self.path, self.issues)
+
+    def _take(self) -> bool:
+        """Take lines up to the next non-comment line; False at the end of the file."""
+        for text in self._lines:
+            self.raw.append(text)
+            lineno = len(self.raw)
+            if len(text) > MAX_LINE_LENGTH:
+                self.not_lamda(f"longer than {MAX_LINE_LENGTH} characters", lineno)
+            if self.header and "\x00" in text:
+                self.not_lamda("binary data (NUL characters)", lineno)
+            if text.strip() and not text.lstrip().startswith("!"):
+                self.data.append((lineno, text))
+                return True
+        return False
 
     def line(self, what: str) -> tuple[int, str]:
         """The next non-comment line: (line number, text)."""
-        if self.pos >= len(self.data):
+        if self.pos >= len(self.data) and not self._take():
             self.fail("S01", f"the file ends before {what}", len(self.raw) or None)
         self.pos += 1
         return self.data[self.pos - 1]
@@ -104,7 +157,10 @@ class _Reader:
         return int(token), lineno, text
 
     def rest(self) -> tuple[int | None, list[str]]:
-        """The first line number after the last line read, and all lines from there."""
+        """The first line number after the last line read, and all lines from there (reads the file to its end)."""
+        self.raw.extend(self._lines)
+        if any(len(text) > MAX_LINE_LENGTH for text in self.raw[-1:]):
+            self.not_lamda(f"longer than {MAX_LINE_LENGTH} characters", len(self.raw))
         last = self.data[self.pos - 1][0] if self.pos else 0
         return (last + 1 if last < len(self.raw) else None), self.raw[last:]
 
@@ -138,6 +194,10 @@ def read(path: str | os.PathLike, strict: bool = False) -> LamdaData:
 
     Raises
     ------
+    NotLamdaError
+        If the header does not read (molecule name, molecular weight, number of levels,
+        level rows, number of radiative transitions): the file is not a LAMDA file. The
+        rest of the file is not read. A subclass of LamdaReadError.
     LamdaReadError
         If the file ends before its counts are satisfied (S01), a count cannot be read
         (S06), or ``strict`` is True and there is any structure issue. A subclass of
@@ -146,7 +206,8 @@ def read(path: str | os.PathLike, strict: bool = False) -> LamdaData:
         If the file cannot be opened.
     """
     path = Path(path)
-    return _parse(path.read_text(encoding="utf-8", errors="replace").splitlines(), str(path), strict)
+    with path.open(encoding="utf-8", errors="replace") as f:
+        return _parse(_file_lines(f), str(path), strict)
 
 
 def read_string(text: str, name: str = "<string>", strict: bool = False) -> LamdaData:
@@ -168,16 +229,16 @@ def read_string(text: str, name: str = "<string>", strict: bool = False) -> Lamd
 
     Raises
     ------
-    LamdaReadError
+    NotLamdaError, LamdaReadError
         As :func:`read`.
     """
     return _parse(text.splitlines(), name, strict)
 
 
-def _parse(raw: list[str], path: str, strict: bool) -> LamdaData:
+def _parse(lines: Iterable[str], path: str, strict: bool) -> LamdaData:
     """Read the lines of a LAMDA file (see :func:`read`)."""
-    reader = _Reader(path, raw)
-    smap = SourceMap(path=path, raw=raw)
+    reader = _Reader(path, lines)
+    smap = SourceMap(path=path, raw=reader.raw)  # the same list, complete after reader.rest()
 
     smap.molecule, name_line = reader.line("the molecule name")
     m = _DATASET_DOI.search(name_line)
@@ -185,11 +246,19 @@ def _parse(raw: list[str], path: str, strict: bool) -> LamdaData:
     if m:
         name_line = name_line[: m.start()]
     molecule, _, title = name_line.strip().partition(" ")
+    if _NUMBER.fullmatch(molecule):
+        reader.not_lamda(f"the molecule name {molecule!r} is a number", smap.molecule)
     smap.mass, text = reader.line("the molecular weight")
     mass = reader.real(text.split()[0], smap.mass, "the molecular weight")
+    if math.isnan(mass):
+        reader.not_lamda(f"cannot read the molecular weight from {text.split()[0]!r}", smap.mass)
+    if not (math.isfinite(mass) and mass > 0):
+        reader.not_lamda(f"the molecular weight {mass:g} is not > 0", smap.mass)
 
     # levels
     nlev, smap.nlev, text = reader.count("the number of levels")
+    if nlev < 1:
+        reader.not_lamda("the number of levels is 0", smap.nlev)
     level_type, level_reference = "", ""
     after = text.strip().split(None, 1)[1] if len(text.split()) > 1 else ""
     if after:  # EMAA: "14 - ROTATION - Ref: ..."
@@ -218,6 +287,7 @@ def _parse(raw: list[str], path: str, strict: bool) -> LamdaData:
 
     # radiative transitions
     nlin, smap.nlin, _ = reader.count("the number of radiative transitions")
+    reader.header = False  # the header has been read: a LAMDA file from here on
     up = np.zeros(nlin, dtype=int)
     low = np.zeros(nlin, dtype=int)
     a = np.full(nlin, np.nan)

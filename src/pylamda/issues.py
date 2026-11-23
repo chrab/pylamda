@@ -180,3 +180,29 @@ class LamdaReadError(ValueError):
         self.issues = list(issues)
         lines = [f"{path}: {issue}" for issue in self.issues]
         super().__init__("\n".join(lines) if lines else f"{path}: cannot be read")
+
+
+class NotLamdaError(LamdaReadError):
+    """The header of a file does not read as a LAMDA header: the file is not a LAMDA file.
+
+    The header is the molecule name, the molecular weight, the number of levels, the
+    level rows and the number of radiative transitions. The reader stops at the first
+    of these that fails, so it does not read the rest of a large file. A subclass of
+    :class:`LamdaReadError`.
+
+    Attributes
+    ----------
+    path : str
+        The file.
+    issues : list of Issue
+        The issues found up to that point (may be empty).
+    reason : str
+        Why the file is not a LAMDA file, in one line.
+    """
+
+    def __init__(self, path: str, issues: list[Issue], reason: str):
+        self.path = path
+        self.issues = list(issues)
+        self.reason = reason
+        lines = [f"{path}: not a LAMDA file: {reason}", *(f"{path}: {issue}" for issue in self.issues)]
+        ValueError.__init__(self, "\n".join(lines))

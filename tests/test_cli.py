@@ -22,8 +22,10 @@ def files(tmp_path):
     error = tmp_path / "error.dat"
     error.write_text(make_lamda(temps="20.0 10.0"))  # C05
     broken = tmp_path / "broken.dat"
-    broken.write_text("!MOLECULE\nX\n")
-    return {"clean": clean, "warning": warning, "error": error, "broken": broken}
+    broken.write_text(make_lamda(ncol_comment="-"))  # a LAMDA header, then a count that does not read
+    other = tmp_path / "other.txt"
+    other.write_text("!MOLECULE\nX\n")  # ends before the molecular weight: not a LAMDA file
+    return {"clean": clean, "warning": warning, "error": error, "broken": broken, "other": other}
 
 
 def test_exit_codes(files, capsys):
@@ -32,18 +34,21 @@ def test_exit_codes(files, capsys):
     assert main(["check", str(files["clean"]), str(files["warning"])]) == 0
     assert main(["check", str(files["warning"]), str(files["error"])]) == 1
     assert main(["check", str(files["error"]), str(files["broken"])]) == 2
+    assert main(["check", str(files["clean"]), str(files["other"])]) == 2
     assert main(["check", str(files["clean"]), str(files["broken"].with_name("missing.dat"))]) == 2
     out = capsys.readouterr().out
     assert "missing.dat: cannot open" in out
 
 
 def test_text_output(files, capsys):
-    main(["check", str(files["warning"]), str(files["broken"])])
+    main(["check", str(files["warning"]), str(files["broken"]), str(files["other"])])
     out = capsys.readouterr().out.splitlines()
     assert out[0].startswith(f"{files['warning']}:19: C02 warning: partner line '1 X + p-H2")
-    assert out[1] == f"{files['broken']}:2: S01 error: the file ends before the molecular weight"
+    assert out[1].startswith(f"{files['broken']}:20: S06 error: cannot read the number of collisional transitions")
     assert out[2] == f"{files['broken']}: not readable"
-    assert out[3] == "Found 2 issues (1 error, 1 warning) in 2 files; 1 not readable."
+    # one statement for a file that is not LAMDA, without its structure issues
+    assert out[3] == f"{files['other']}: not a LAMDA file: line 2: the file ends before the molecular weight"
+    assert out[4] == "Found 2 issues (1 error, 1 warning) in 3 files; 1 not a LAMDA file; 1 not readable."
 
 
 def test_options(files, capsys):
@@ -57,14 +62,16 @@ def test_options(files, capsys):
 
 
 def test_json_output(files, capsys):
-    assert main(["check", "--format", "json", str(files["warning"]), str(files["broken"])]) == 2
+    args = ["check", "--format", "json", str(files["warning"]), str(files["broken"]), str(files["other"])]
+    assert main(args) == 2
     out = json.loads(capsys.readouterr().out)
     assert [(f["path"], f["readable"], f["error"]) for f in out] == [
         (str(files["warning"]), True, None),
         (str(files["broken"]), False, "not readable"),
+        (str(files["other"]), False, "not a LAMDA file: line 2: the file ends before the molecular weight"),
     ]
     assert out[0]["issues"][0]["code"] == "C02" and out[0]["issues"][0]["line"] == 19
-    assert out[1]["issues"][0]["code"] == "S01"
+    assert out[1]["issues"][0]["code"] == "S06" and out[2]["issues"] == []
 
 
 def test_statistics(files, capsys):

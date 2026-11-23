@@ -83,6 +83,35 @@ With ``strict=True``, every structure issue raises
 :class:`~pylamda.issues.LamdaReadError`, for example in CI. Without it, only S01 and an
 unreadable count stop the reader.
 
+Not a LAMDA file
+^^^^^^^^^^^^^^^^
+
+The reader takes the lines of a file only as it needs them. The header must read:
+
+1. the molecule name: the first word must not be a number;
+2. the molecular weight: a number > 0;
+3. the number of levels: an integer >= 1;
+4. the level rows (the file must not end in them);
+5. the number of radiative transitions: an integer >= 0.
+
+If one of these fails, the reader raises :class:`~pylamda.issues.NotLamdaError` (a
+subclass of :class:`~pylamda.issues.LamdaReadError`) with the ``reason``, and does not
+read the rest of the file. Binary data (NUL characters) in the header, and a line longer
+than :data:`pylamda.reader.MAX_LINE_LENGTH` (10\ :sup:`6` characters) anywhere, have the
+same result; such a line is never read whole. After the header, the file is taken as a
+LAMDA file: a failure later is a :class:`~pylamda.issues.LamdaReadError`.
+
+.. code-block:: python
+
+   try:
+       data = pylamda.read("ATOM_Al.dat")
+   except pylamda.NotLamdaError as exc:
+       print(exc.reason)  # line 1: the molecule name '30' is a number
+
+The header is checked by its structure only, as Fortran reads it. A file of another
+format can have a header that reads by chance; it then gets the ordinary structure
+issues.
+
 The :class:`~pylamda.model.SourceMap` in ``data.source_map`` holds the line number of
 every level, line, partner line and rate row, and the raw lines of the file.
 
