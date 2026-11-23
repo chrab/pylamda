@@ -69,7 +69,13 @@ def _parser() -> argparse.ArgumentParser:
     check.add_argument(
         "--error-on", action="append", metavar="CODES", help="report these codes (prefixes) as errors, e.g. C02"
     )
-    check.add_argument("--no-physics", action="store_true", help="leave out the physics heuristics (= --ignore P)")
+    phys = check.add_mutually_exclusive_group()
+    phys.add_argument(
+        "--physics", action="store_true", help="also run the physics heuristics P01-P04 (slow on large files)"
+    )
+    phys.add_argument(
+        "--no-physics", action="store_true", help="never run the physics heuristics, even with --select P"
+    )
     check.add_argument(
         "--rtol", type=float, default=1e-4, help="relative tolerance of R04/R05, on top of rounding (default 1e-4)"
     )
@@ -301,25 +307,29 @@ def _check(args: argparse.Namespace) -> int:
     if not args.files:
         print("pylamda check: no files given", file=sys.stderr)
         return 2
+    stream = args.format == "text" and not args.statistics  # text: each file as soon as it is checked
     results = []  # (path, readable, error text, issues)
     for path in args.files:
         try:
             issues = verify(
                 path,
-                physics=not args.no_physics,
+                physics=True if args.physics else False if args.no_physics else None,
                 select=_codes(args.select) or None,
                 ignore=_codes(args.ignore),
                 error_on=_codes(args.error_on),
                 rtol=args.rtol,
                 catalogue=not args.no_catalogue,
             )
-            results.append((path, True, None, issues))
+            result = (path, True, None, issues)
         except NotLamdaError as exc:  # one statement, not the structure issues of a file that is not LAMDA
-            results.append((path, False, f"{_NOT_LAMDA}: {exc.reason}", []))
+            result = (path, False, f"{_NOT_LAMDA}: {exc.reason}", [])
         except LamdaReadError as exc:
-            results.append((path, False, "not readable", exc.issues))
+            result = (path, False, "not readable", exc.issues)
         except OSError as exc:
-            results.append((path, False, f"cannot open: {exc.strerror or exc}", []))
+            result = (path, False, f"cannot open: {exc.strerror or exc}", [])
+        results.append(result)
+        if stream:
+            _print_result(*result)
 
     if args.format == "json":
         out = [
@@ -330,16 +340,20 @@ def _check(args: argparse.Namespace) -> int:
     elif args.statistics:
         _print_statistics(results)
     else:
-        for path, _, err, issues in results:
-            for issue in issues:
-                print(_issue_line(path, issue))
-            if err:
-                print(f"{path}: {err}")
         _print_summary(results)
 
     if any(not ok for _, ok, _, _ in results):
         return 2
     return 1 if any(i.severity == "error" for *_, issues in results for i in issues) else 0
+
+
+def _print_result(path: str, ok: bool, err: str | None, issues: list[Issue]) -> None:
+    """The issues of one file, or why it was not checked (flushed, so that it shows at once)."""
+    for issue in issues:
+        print(_issue_line(path, issue))
+    if err:
+        print(f"{path}: {err}")
+    sys.stdout.flush()
 
 
 def _print_summary(results: list) -> None:

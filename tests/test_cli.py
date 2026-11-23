@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 import pytest
-from helpers import LAMDA, make_lamda
+from helpers import make_lamda
 
 from pylamda import CODES
 from pylamda.cli import main
@@ -51,14 +51,43 @@ def test_text_output(files, capsys):
     assert out[4] == "Found 2 issues (1 error, 1 warning) in 3 files; 1 not a LAMDA file; 1 not readable."
 
 
-def test_options(files, capsys):
+def test_options(files, capsys, tmp_path):
     assert main(["check", "--error-on", "C02", str(files["warning"])]) == 1
     assert "C02 error:" in capsys.readouterr().out
     assert main(["check", "--ignore", "C", str(files["warning"]), str(files["error"])]) == 0
     assert main(["check", "--select", "F,P", "--select", "C05", str(files["error"])]) == 1
     capsys.readouterr()
-    main(["check", "--no-physics", str(LAMDA / "c+.dat")])
-    assert " P0" not in capsys.readouterr().out
+    scaled = tmp_path / "scaled.dat"
+    scaled.write_text(make_lamda(partner="1 X + H2 ! scaled from He, https://doi.org/10.1/x"))  # P02
+    main(["check", str(scaled)])
+    assert " P02 " not in capsys.readouterr().out  # the physics checks are off by default
+    main(["check", "--physics", str(scaled)])
+    assert " P02 " in capsys.readouterr().out
+    main(["check", "--select", "P", str(scaled)])
+    assert " P02 " in capsys.readouterr().out
+    main(["check", "--select", "P", "--no-physics", str(scaled)])
+    assert " P02 " not in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        main(["check", "--physics", "--no-physics", str(scaled)])
+
+
+def test_text_output_per_file(files, capsys, monkeypatch):
+    """Text output: the issues of each file are printed before the next file is checked."""
+    import pylamda.cli as cli
+
+    seen = []
+    real_verify = cli.verify
+
+    def spy(path, **kw):
+        seen.append(capsys.readouterr().out)  # what was printed before this file is checked
+        return real_verify(path, **kw)
+
+    monkeypatch.setattr(cli, "verify", spy)
+    main(["check", str(files["warning"]), str(files["other"]), str(files["clean"])])
+    assert seen[0] == ""
+    assert "C02 warning" in seen[1]
+    assert "not a LAMDA file" in seen[2]
+    assert capsys.readouterr().out.startswith("Found 1 issue (1 warning) in 3 files")
 
 
 def test_json_output(files, capsys):

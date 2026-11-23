@@ -41,7 +41,7 @@ def test_corpus_round_trip(corpus_file, tmp_path):
 def test_corpus_verify(corpus_file):
     """verify() runs on every file; codes, severities and line numbers are valid."""
     n_lines = len(Path(corpus_file).read_text(encoding="utf-8", errors="replace").splitlines())
-    for issue in verify(corpus_file):
+    for issue in verify(corpus_file, physics=True):
         assert issue.code in CODES and issue.severity in SEVERITIES and issue.count >= 1
         assert issue.line is None or 1 <= issue.line <= n_lines, issue
 
@@ -67,7 +67,7 @@ def test_corpus_fix(corpus_file):
 
 def _counts(path: Path) -> dict[str, int]:
     counts: Counter = Counter()
-    for issue in verify(path):
+    for issue in verify(path, physics=True):
         counts[issue.code] += issue.count
     return dict(sorted(counts.items()))
 

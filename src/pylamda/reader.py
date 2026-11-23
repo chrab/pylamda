@@ -20,6 +20,7 @@ import math
 import os
 import re
 from collections.abc import Iterable, Iterator
+from functools import lru_cache
 from pathlib import Path
 from typing import NoReturn, TextIO
 
@@ -29,8 +30,18 @@ from .issues import Issue, LamdaReadError, NotLamdaError, make_issue
 from .model import BlockSource, CollisionSet, LamdaData, SourceMap, split_partner_line
 
 # numbers as Fortran list-directed input reads them (D exponents allowed, no commas)
-_REAL = re.compile(r"[+-]?(?:(?:\d+\.?\d*|\.\d+)(?:[eEdD][+-]?\d+)?|nan|inf|infinity)", re.I)
-_INT = re.compile(r"[+-]?\d+")
+_REAL_TEXT = r"[+-]?(?:(?:\d+\.?\d*|\.\d+)(?:[eEdD][+-]?\d+)?|nan|inf|infinity)"
+_INT_TEXT = r"[+-]?\d+"
+_REAL = re.compile(_REAL_TEXT, re.I)
+_INT = re.compile(_INT_TEXT)
+
+
+@lru_cache(maxsize=32)
+def _rate_row(ntemp: int) -> re.Pattern[str]:
+    """A rate row on one line with exactly ``3 + ntemp`` values that Fortran can read."""
+    return re.compile(rf"\s*{_INT_TEXT}\s+{_INT_TEXT}\s+{_INT_TEXT}(?:\s+(?:{_REAL_TEXT})){{{ntemp}}}\s*", re.I)
+
+
 _DATASET_DOI = re.compile(r"\s*--\s*(?:\w+_)?DATASET_DOI:\s*(\S+)\s*$")
 # a number without "nan"/"inf": a molecule name that reads as one is not a molecule name
 _NUMBER = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eEdD][+-]?\d+)?")
@@ -108,6 +119,12 @@ class _Reader:
         self.pos += 1
         return self.data[self.pos - 1]
 
+    def peek(self, n: int) -> list[tuple[int, str]]:
+        """The next ``n`` non-comment lines (fewer at the end of the file), without taking them."""
+        while len(self.data) - self.pos < n and self._take():
+            pass
+        return self.data[self.pos : self.pos + n]
+
     def values(self, n: int, what: str) -> tuple[list[str], int, bool]:
         """``n`` whitespace-separated values, continuing on the next lines if needed.
 
@@ -167,11 +184,38 @@ class _Reader:
 
 def _numbering(reader: _Reader, numbers: list[tuple[int, int]], what: str) -> None:
     """One S02 issue if the row numbers are not 1..N in order: ``numbers`` = (number, line)."""
-    bad = [(k, n, line) for k, (n, line) in enumerate(numbers, 1) if n != k]
-    if bad:
-        k, n, line = bad[0]
-        more = f" ({len(bad) - 1} more rows)" if len(bad) > 1 else ""
-        reader.issue("S02", f"{what}: row {k} has the number {n}{more}", line, fixable=True)
+    _numbering_arrays(reader, np.array([n for n, _ in numbers], dtype=int), [line for _, line in numbers], what)
+
+
+def _numbering_arrays(reader: _Reader, numbers: np.ndarray, lines: Iterable[int], what: str) -> None:
+    """As :func:`_numbering`, with the numbers and their lines as two sequences."""
+    bad = np.flatnonzero(numbers != np.arange(1, len(numbers) + 1))
+    if bad.size:
+        k = int(bad[0])
+        more = f" ({bad.size - 1} more rows)" if bad.size > 1 else ""
+        reader.issue("S02", f"{what}: row {k + 1} has the number {int(numbers[k])}{more}", list(lines)[k], fixable=True)
+
+
+def _fast_rate_rows(reader: _Reader, ncol: int, ntemp: int) -> tuple[np.ndarray, np.ndarray] | None:
+    """The rate rows of a block, if each is on one line with exactly ``3 + ntemp`` readable values.
+
+    Returns the line numbers and the values (shape (ncol, 3 + ntemp)), with the lines
+    taken; None (nothing taken) otherwise: the rows are then read value by value, which
+    finds the issues (rows over several lines, surplus values, numbers Fortran cannot
+    read, the end of the file).
+    """
+    lines = reader.peek(ncol)
+    if len(lines) < ncol:
+        return None
+    row = _rate_row(ntemp)
+    if not all(row.fullmatch(text) for _, text in lines):
+        return None
+    text = " ".join(t for _, t in lines)
+    if "d" in text or "D" in text:  # Fortran's D exponent (the values have no other letter d)
+        text = text.replace("D", "E").replace("d", "e")
+    values = np.array(text.split(), dtype=float).reshape(ncol, 3 + ntemp)
+    reader.pos += ncol
+    return np.array([lineno for lineno, _ in lines], dtype=int), values
 
 
 def read(path: str | os.PathLike, strict: bool = False) -> LamdaData:
@@ -349,6 +393,14 @@ def _parse(lines: Iterable[str], path: str, strict: bool) -> LamdaData:
         clow = np.zeros(ncol, dtype=int)
         rates = np.full((ncol, ntemp), np.nan)
         rows = np.zeros(ncol, dtype=int)
+        fast = _fast_rate_rows(reader, ncol, ntemp)
+        if fast is not None:  # the usual layout: one row per line (same result as the loop below)
+            rows, values = fast
+            _numbering_arrays(reader, values[:, 0].astype(int), rows, label)
+            cup, clow, rates = values[:, 1].astype(int), values[:, 2].astype(int), values[:, 3:].copy()
+            smap.blocks.append(BlockSource(lineno_p, lineno_ncol, lineno_ntemp, lineno_t, rows))
+            collisions.append(CollisionSet(pid, temperatures, cup, clow, rates, reference, pline.rstrip()))
+            continue
         numbers = []
         first_surplus, n_surplus = 0, 0
         for k in range(ncol):

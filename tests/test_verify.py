@@ -213,8 +213,9 @@ def test_c12_not_reported(tmp_path, text):
 
 
 def test_c12_he_with_its_id(tmp_path):
-    """He with ID 6 and 'scaled' is consistent: only P02 (info)."""
-    assert [i.code for i in _check(tmp_path, partner=f"6 X + He ! scaled by 1.0 {DOI}")] == ["P02"]
+    """He with ID 6 and 'scaled' is consistent: no C issue, only P02 (info; a physics check, off by default)."""
+    assert [i.code for i in _check(tmp_path, partner=f"6 X + He ! scaled by 1.0 {DOI}")] == []
+    assert [i.code for i in _check(tmp_path, "P", partner=f"6 X + He ! scaled by 1.0 {DOI}")] == ["P02"]
 
 
 def test_emaa_extra_partners():
@@ -296,13 +297,33 @@ def test_p04_mass(tmp_path):
 def test_select_ignore_error_on(tmp_path):
     path = tmp_path / "x.dat"
     path.write_text(make_lamda(partner="1 X + p-H2 ! scaled from He, Yang et al. (2010)"))
-    codes = [i.code for i in verify(path)]
-    assert codes == ["C02", "F03", "P02"]
+    assert [i.code for i in verify(path)] == ["C02", "F03"]  # the P checks are off by default
+    assert [i.code for i in verify(path, physics=True)] == ["C02", "F03", "P02"]
     assert [i.code for i in verify(path, physics=False)] == ["C02", "F03"]
-    assert [i.code for i in verify(path, ignore=["F", "P0"])] == ["C02"]
+    assert [i.code for i in verify(path, physics=True, ignore=["F", "P0"])] == ["C02"]
+    # selecting P codes runs them, unless physics=False
     assert [i.code for i in verify(path, select=["c0", "P"])] == ["C02", "P02"]
+    assert [i.code for i in verify(path, select=["P02"])] == ["P02"]
+    assert [i.code for i in verify(path, select=["P"], physics=False)] == []
     raised = verify(path, select=["C02"], error_on=["C"])
     assert [(i.code, i.severity) for i in raised] == [("C02", "error")]
+
+
+def test_physics_not_run_by_default(tmp_path, monkeypatch):
+    """Off by default, the physics heuristics are not run at all (they are slow on large files)."""
+    import sys
+
+    verify_module = sys.modules["pylamda.verify"]  # pylamda.verify is also the function
+    calls = []
+    monkeypatch.setattr(verify_module, "_check_physics", lambda data, add: calls.append(data))
+    path = tmp_path / "x.dat"
+    path.write_text(make_lamda())
+    verify(path)
+    verify(path, select=["C", "F"])
+    assert calls == []
+    verify(path, physics=True)
+    verify(path, select=["P04"])
+    assert len(calls) == 2
 
 
 def test_reader_issues_included():

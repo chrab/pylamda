@@ -143,4 +143,4 @@ levels, lines, collisions, references and physics. See :doc:`checks` for the cod
 .. code-block:: python
 
    issues = pylamda.verify("co.dat")
-   issues = pylamda.verify(data, physics=False, ignore=["F03"])
+   issues = pylamda.verify(data, physics=True, ignore=["F03"])  # with the physics heuristics

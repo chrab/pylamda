@@ -198,6 +198,10 @@ functions, not methods.
 - Surplus values on a line are ignored and give an issue.
 - Everything after the last declared block is kept as `notes`.
 - `strict=True` turns every structure issue into an error, for CI.
+- Speed (2026-11-23): a collision block whose rate rows are each on one line with
+  exactly 3 + NTEMP readable values (checked by one regex per line) is converted with
+  numpy at once; any other block is read value by value, which finds the issues. Same
+  results on the corpus; reading ProDiMo's `data/` 21.5 s -> 12.6 s.
 - Not a LAMDA file (added 2026-11-23): the reader takes lines only as needed. If the
   header does not read (molecule name not a number, molecular weight a number > 0,
   NLEV >= 1, the level rows, NLIN), it raises `NotLamdaError` (a subclass of
@@ -222,7 +226,7 @@ everything else.
 
 ```python
 issues = pylamda.verify("co.dat")  # list[Issue]
-issues = pylamda.verify("co.dat", physics=False)  # without the P checks
+issues = pylamda.verify("co.dat", physics=True)  # with the P checks (off by default)
 ```
 
 ```text
@@ -289,9 +293,10 @@ Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-
 
 **P: physics heuristics**
 
-- On by default, as `info`.
-- They can give false alarms.
-- Switched off with `physics=False` / `--no-physics` (the same as `--ignore P`).
+- Off by default (changed on 2026-11-23; before: on), as `info`.
+- They can give false alarms, and P01 is slow on large files (it fits every rate row).
+- Switched on with `physics=True` / `--physics`, or by selecting P codes (`--select P`);
+  `physics=False` / `--no-physics` never runs them.
 
 | code | check |
 |---|---|
@@ -689,8 +694,9 @@ Decided on 2026-11-18:
 3. **Standard**: strict LAMDA standard; partners by ID only; EMAA's extra partners
    (p-H2O, o-H2O, CO) are not supported (3.3).
 4. **Patch mode**: part of the first version (sections 5, 7).
-5. **P checks**: on by default as `info`; `physics=False` / `--no-physics` switches them
-   off (6.1).
+5. **P checks**: as `info`; off by default since 2026-11-23 (before: on), because they
+   can give false alarms and P01 is slow on large files; `physics=True` / `--physics` or
+   `--select P` runs them (6.1).
 6. **BibTeX**: SciX for bibcodes (and for DOIs and arXiv IDs it knows); the user
    provides the SciX API token (10).
 7. **Class name**: keep `LamdaData`.

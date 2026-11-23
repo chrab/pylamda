@@ -7,7 +7,7 @@ checks of the data:
 * ``R``: radiative transitions;
 * ``C``: collisions;
 * ``F``: references;
-* ``P``: physics heuristics (``info``; they can give false alarms).
+* ``P``: physics heuristics (``info``; they can give false alarms; off by default).
 
 Checks of many rows (rates, transitions) give one issue per block or section, with the
 number of rows (:attr:`Issue.count <pylamda.issues.Issue.count>`), the first example and
@@ -26,7 +26,7 @@ import numpy as np
 
 from .catalogue import Catalogue, load_catalogue
 from .formula import formula_mass
-from .issues import Issue, make_issue, match_codes
+from .issues import CODES, Issue, make_issue, match_codes
 from .model import PARTNERS, BlockSource, CollisionSet, LamdaData, SourceMap, partner_name
 from .reader import read
 from .references import find_dois
@@ -658,7 +658,7 @@ def _check_physics(data: LamdaData, add: _Collector) -> None:
 
 
 # ------------------------------------------------------------------- verify
-def check_data(data: LamdaData, rtol: float = 1e-4, catalogue: bool = True) -> list[Issue]:
+def check_data(data: LamdaData, rtol: float = 1e-4, catalogue: bool = True, physics: bool = True) -> list[Issue]:
     """The issues of the checks L, R, C, F and P of ``data`` (not the reader's S issues).
 
     Parameters
@@ -670,6 +670,8 @@ def check_data(data: LamdaData, rtol: float = 1e-4, catalogue: bool = True) -> l
     catalogue : bool, optional
         F03: a free-text reference found in the reference catalogue is not reported.
         Default: True.
+    physics : bool, optional
+        Run the physics heuristics (P checks). Default: True.
 
     Returns
     -------
@@ -681,14 +683,15 @@ def check_data(data: LamdaData, rtol: float = 1e-4, catalogue: bool = True) -> l
     _check_lines(data, add, rtol)
     _check_collisions(data, add)
     _check_references(data, add, load_catalogue() if catalogue else None)
-    _check_physics(data, add)
+    if physics:
+        _check_physics(data, add)
     return add.issues
 
 
 def verify(
     source: str | os.PathLike | LamdaData,
     *,
-    physics: bool = True,
+    physics: bool | None = None,
     select: Iterable[str] | None = None,
     ignore: Iterable[str] = (),
     error_on: Iterable[str] = (),
@@ -701,9 +704,11 @@ def verify(
     ----------
     source : str, os.PathLike or LamdaData
         A file (read with :func:`pylamda.read`) or data already read.
-    physics : bool, optional
-        Run the physics heuristics (P checks). Default: True. ``physics=False`` is the
-        same as ``ignore=["P"]``.
+    physics : bool or None, optional
+        Run the physics heuristics (P checks): True runs them, False does not (the same
+        as ``ignore=["P"]``). Default: None, they run only if ``select`` names P codes
+        (``select=["P"]``, ``["P01"]``). They are slow on large files (P01 fits every rate
+        row) and can give false alarms.
     select : iterable of str or None, optional
         Report only these codes (prefixes, as in ruff: ``"C"``, ``"C0"``, ``"C02"``).
         Default: all.
@@ -730,13 +735,15 @@ def verify(
     OSError
         If the file cannot be opened.
     """
+    select = None if select is None else list(select)
+    if physics is None:
+        physics = select is not None and any(match_codes(code, select) for code in CODES if code.startswith("P"))
     data = source if isinstance(source, LamdaData) else read(source)
-    issues = [*data.issues, *check_data(data, rtol=rtol, catalogue=catalogue)]
+    issues = [*data.issues, *check_data(data, rtol=rtol, catalogue=catalogue, physics=physics)]
     # a partner line without the ID (S06) is read as ID 0: do not report it again as C01
     s06_lines = {i.line for i in issues if i.code == "S06"}
     issues = [i for i in issues if not (i.code == "C01" and i.line in s06_lines and i.line is not None)]
     ignore = [*ignore, *([] if physics else ["P"])]
-    select = None if select is None else list(select)
     error_on = list(error_on)
     out = []
     for issue in issues:

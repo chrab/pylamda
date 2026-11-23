@@ -34,8 +34,11 @@ Options:
 ``--error-on CODES``
    Report these codes as errors, e.g. ``--select C02 --error-on C02`` in a CI job for
    ProDiMo's files.
+``--physics``
+   Also run the physics heuristics P01-P04 (off by default; slow on large files).
+   ``--select P`` (or single P codes) runs them too.
 ``--no-physics``
-   Leave out the physics heuristics (the same as ``--ignore P``).
+   Never run the physics heuristics, even with ``--select P``.
 ``--rtol X``
    Relative tolerance of R04 and R05, on top of the rounding (default 1e-4).
 ``--format text|json``
@@ -53,6 +56,10 @@ Exit codes:
 - 0: no issue of severity ``error``;
 - 1: at least one error;
 - 2: at least one file cannot be read (or opened), or is not a LAMDA file.
+
+In text output, the issues of each file are printed as soon as the file is checked; the
+summary line follows at the end. JSON and ``--statistics`` are printed after the last
+file.
 
 A file whose header does not read is reported with one line, not with its structure
 issues, and the rest of it is not read (see :doc:`usage`, "Not a LAMDA file"):

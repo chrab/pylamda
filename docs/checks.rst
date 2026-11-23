@@ -24,7 +24,8 @@ Each issue has:
 Options:
 
 - ``select`` / ``ignore`` take code prefixes: ``"C"`` (all C codes), ``"C0"``, ``"C02"``.
-- ``physics=False`` leaves out the P checks (the same as ``ignore=["P"]``).
+- ``physics``: the P checks are off by default; ``physics=True`` runs them,
+  ``select=["P"]`` (or single P codes) too, and ``physics=False`` never runs them.
 - ``error_on`` raises codes to ``error``, for example ``["C02"]`` for ProDiMo's files,
   which must have no C02 issue.
 
@@ -133,7 +134,10 @@ A check that DOIs and bibcodes resolve (F04, ``--online``) follows.
 P: physics heuristics
 ---------------------
 
-The P checks are on by default, with severity ``info``. They can give false alarms.
+The P checks are off by default (decided 2026-11-23): they can give false alarms, and
+P01 fits every rate row, which is slow on large files (a 80 MB rovibrational file: about
+6 s). Run them with ``physics=True`` (``pylamda check --physics``) or by selecting them
+(``select=["P"]``, ``--select P``). Their severity is ``info``.
 
 =========  ========  =========================================================================
 code       severity  issue
