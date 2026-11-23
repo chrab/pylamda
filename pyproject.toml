@@ -45,12 +45,13 @@ dev = [
 [project.scripts]
 pylamda = "pylamda.cli:main"
 
-[tool.poetry]
-packages = [{ include = "pylamda", from = "src" }]
-
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+# cspell:ignore pylamda
+packages = [{ include = "pylamda", from = "src" }]
 
 [tool.ruff]
 line-length = 120
