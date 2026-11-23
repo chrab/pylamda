@@ -1,8 +1,11 @@
 # pylamda
 
 [![PyPI](https://img.shields.io/pypi/v/pylamda)](https://pypi.org/project/pylamda/)
+[![Tests](https://img.shields.io/github/actions/workflow/status/chrab/pylamda/tests.yml?branch=main&label=tests)](https://github.com/chrab/pylamda/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/pypi/pyversions/pylamda)](https://pypi.org/project/pylamda/)
 [![Documentation](https://img.shields.io/readthedocs/pylamda)](https://pylamda.readthedocs.io/)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/chrab/pylamda/python-coverage-comment-action-data/endpoint.json)](https://github.com/chrab/pylamda/tree/python-coverage-comment-action-data)
+[![License](https://img.shields.io/pypi/l/pylamda)](https://github.com/chrab/pylamda/blob/main/LICENSE)
 
 Python toolkit for working with and on files in the LAMDA format (the
 [Leiden Atomic and Molecular Database](https://home.strw.leidenuniv.nl/~moldata/)).
@@ -44,5 +47,3 @@ pip install .                 # numpy and requests
 pip install ".[plot]"         # with matplotlib
 pip install -e ".[dev]"       # development: tests, ruff, Sphinx
 ```
-
-Python ≥ 3.11. License: MIT.
