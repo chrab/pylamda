@@ -257,6 +257,8 @@ _HEAD = "!MOLECULE\nCO\n!WEIGHT\n28.0\n!NLEV\n1\n1 0.0 1.0\n!NLIN\n"
         (_HEAD, "line 8: the file ends before the number of radiative transitions", ["S01"]),
         (_HEAD + "-\n", "line 9: cannot read the number of radiative transitions from '-'", ["S06"]),
         ("CO\n28\x00\x00\n", "line 2: binary data (NUL characters)", []),
+        # tab-separated table (ProDiMo's pah_resonnances.dat): the first word is the number 1
+        ("1\t0.0722\t0.195\n2\t0.2175\t0.217\n3\t1.050\t0.055\n", "line 1: the molecule name '1' is a number", []),
     ],
 )
 def test_not_a_lamda_file(tmp_path, text, reason, codes):
@@ -266,6 +268,13 @@ def test_not_a_lamda_file(tmp_path, text, reason, codes):
     assert [i.code for i in exc.value.issues] == codes
     assert str(exc.value).startswith(f"{tmp_path / 'x.dat'}: not a LAMDA file: {reason}")
     assert isinstance(exc.value, LamdaReadError)
+
+
+def test_molecule_line_split_on_any_whitespace(tmp_path):
+    d = read(_write(tmp_path, make_lamda(molecule="CO\tcarbon monoxide")))
+    assert (d.molecule, d.title) == ("CO", "carbon monoxide")
+    d = read(_write(tmp_path, make_lamda(molecule="CO")))
+    assert (d.molecule, d.title) == ("CO", "")
 
 
 def test_after_the_header_a_lamda_file(tmp_path):

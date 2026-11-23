@@ -289,7 +289,7 @@ def _parse(lines: Iterable[str], path: str, strict: bool) -> LamdaData:
     dataset_doi = m.group(1) if m else None
     if m:
         name_line = name_line[: m.start()]
-    molecule, _, title = name_line.strip().partition(" ")
+    molecule, title = ([*name_line.split(None, 1), ""])[:2]  # any whitespace (tabs too), as Fortran reads
     if _NUMBER.fullmatch(molecule):
         reader.not_lamda(f"the molecule name {molecule!r} is a number", smap.molecule)
     smap.mass, text = reader.line("the molecular weight")
