@@ -18,8 +18,8 @@ Checks LAMDA files against the standard and prints the issues (see :doc:`checks`
    data/CH+_Lambda.dat:6: F03 info: the levels and lines have a reference only as free text (no DOI, bibcode or link)
    data/CH+_Lambda.dat:8: L04 info: 16 of 16 levels without quanta
    data/CH+_Lambda.dat:33: R04 warning: frequency differs from the level energies beyond rounding and rtol 0.0001 in 9 lines; ...
-   data/CH+_Lambda.dat:45: C02 warning: partner line '1 CH+ + e ! Lim et al 1999 ...': ID 1 is H2, the name says e (read as H2; ProDiMo would read e)
-   data/CH+_Lambda.dat:45: C04 warning: H2 (collision block 1) together with p-H2: some codes count H2 collisions twice
+   data/CH+_Lambda.dat:45: C02 warning: partner "CH+ + e" (ID 1 = H2): the name says e (read as H2, ProDiMo reads e)
+   data/CH+_Lambda.dat:45: C04 warning: partner "CH+ + e" (ID 1 = H2): H2 together with p-H2: some codes count H2 collisions twice
    data/CH+_Lambda.dat:46: S05 error: comment line without '!' before the number of collisional transitions of collision block 1: 'NUMBER OF COLL TRANS'
    ...
    Found 12 issues (2 errors, 4 warnings, 6 infos) in 1 file.

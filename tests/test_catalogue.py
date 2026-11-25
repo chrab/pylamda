@@ -90,7 +90,7 @@ def test_bib_text_only_match_warns(tmp_path):
 
 def test_check_f03_uses_the_catalogue():
     def partner_f03(**kw):
-        return [i for i in verify(LAMDA / "catom.dat", select=["F03"], **kw) if "collision block" in i.message]
+        return [i for i in verify(LAMDA / "catom.dat", select=["F03"], **kw) if i.message.startswith("partner ")]
 
     assert partner_f03() == []  # all six partner references are in the catalogue
     assert len(partner_f03(catalogue=False)) == 6
@@ -98,9 +98,9 @@ def test_check_f03_uses_the_catalogue():
 
 def test_cli_no_catalogue(capsys):
     assert main(["check", "--select", "F03", str(LAMDA / "catom.dat")]) == 0
-    assert "collision block" not in capsys.readouterr().out
+    assert ": partner " not in capsys.readouterr().out
     main(["check", "--select", "F03", "--no-catalogue", str(LAMDA / "catom.dat")])
-    assert "collision block 1 (H)" in capsys.readouterr().out
+    assert 'F03 info: partner "C + H" (ID 5 = H)' in capsys.readouterr().out
     assert main(["bib", str(LAMDA / "catom.dat"), "--no-database-refs"]) == 0
     captured = capsys.readouterr()
     assert "@ARTICLE{Launay1977," in captured.out and "(5 catalogue)" in captured.err  # p-H2 and o-H2 share one paper
@@ -133,7 +133,7 @@ def test_fix_add_refs_from_the_catalogue(tmp_path):
     fixed = tmp_path / "catom.dat"
     fixed.write_text(text)
     issues = verify(fixed, select=["F"], catalogue=False)
-    assert [i.message for i in issues if "collision block" in i.message] == []  # the links are identifiers now
+    assert [i.message for i in issues if i.message.startswith("partner ")] == []  # the links are identifiers now
     assert [i.code for i in issues] == ["F03"]  # the levels: still free text, the fix notes do not count
     assert pylamda.patch(fixed, add_refs=True)[1] == []  # a second run adds nothing
     assert {e.source for e in bibtex([fixed], database_refs=False).entries} == {"catalogue"}

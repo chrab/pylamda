@@ -145,8 +145,33 @@ def _duplicates(pairs: Iterable[tuple]) -> list[tuple[int, int]]:
     return out
 
 
-def _block_name(b: int, c: CollisionSet) -> str:
-    return f"collision block {b + 1} ({c.label})"
+def _written_pair(c: CollisionSet) -> str | None:
+    """``"<molecule> + <partner>"`` as written on the partner line, or None if the line has no such form."""
+    name = c.text_partner
+    if not name:
+        return None
+    parts = c.partner_text.strip().split(None, 1)
+    rest = parts[1] if len(parts) > 1 else ""
+    left, sep, _ = rest.partition("--")
+    if sep and " + " in left and left.rsplit(" + ", 1)[1].strip() == name:  # "<mol> + <name> -- Ref: ..."
+        molecule = left.rsplit(" + ", 1)[0]
+    else:  # "<mol> + <name> ! ..."
+        molecule = rest.split(" + ", 1)[0]
+    return f"{molecule.strip()} + {name}"
+
+
+def _partner(data: LamdaData, b: int, c: CollisionSet) -> str:
+    """The prefix of a message about collision block ``b`` (0-based).
+
+    ``partner "CO + p-H2" (ID 2 = p-H2)``: the pair as written (if the line has the form
+    ``<molecule> + <partner>``) and the ID with the partner it stands for. The block number
+    only if another block has the same ID (the ID alone does not identify the block then).
+    """
+    ids = f"ID {c.partner_id} = {c.partner}" if c.partner else f"ID {c.partner_id}"
+    if sum(x.partner_id == c.partner_id for x in data.collisions) > 1:
+        ids += f", block {b + 1}"
+    pair = _written_pair(c)
+    return f'partner "{pair}" ({ids})' if pair else f"partner {ids}"
 
 
 # ------------------------------------------------------------------- L: levels
@@ -385,38 +410,28 @@ def column_mismatches(data: LamdaData, rtol: float = 1e-4) -> dict[str, list[int
 # ------------------------------------------------------------------- C: collisions
 def _check_partner(data: LamdaData, b: int, c: CollisionSet, add: _Collector, line: int | None) -> None:
     """C01, C02, C11, C12: the partner ID and the name in the partner text."""
+    who = _partner(data, b, c)
     if c.partner is None:
-        add(
-            "C01",
-            f"{_block_name(b, c)}: partner ID {c.partner_id} is not in 1..7 (1=H2 2=p-H2 3=o-H2 4=e 5=H 6=He 7=H+)",
-            line,
-        )
+        add("C01", f"{who}: the ID is not in 1..7 (1=H2 2=p-H2 3=o-H2 4=e 5=H 6=He 7=H+)", line)
     written = c.text_partner
     if not written:
         return
     canonical = partner_name(written)
     text = c.partner_text.strip()
     if canonical not in PARTNERS.values():
-        add(
-            "C11",
-            f"partner line {text!r}: {written!r} is not a standard partner; the block is read by its "
-            f"ID {c.partner_id} as {c.label}",
-            line,
-        )
+        add("C11", f"{who}: {written!r} is not a standard partner; read by the ID as {c.label}", line)
     elif canonical == "He" and c.partner in ("H2", "p-H2", "o-H2") and _HE_SCALED.search(text):
         add(
             "C12",
-            f"partner line {text!r}: the name says He, the ID {c.partner_id} is {c.partner}, and the text says the "
-            f"rates are scaled: probably He rates scaled to {c.partner}, with the name not changed "
-            f"(read as {c.partner}; ProDiMo would read He)",
+            f"{who}: the name says He, the text says scaled: probably He rates scaled to {c.partner} "
+            f"(read as {c.partner}, ProDiMo reads He)",
             line,
             fixable=True,
         )
     elif c.partner is not None and canonical != c.partner:
         add(
             "C02",
-            f"partner line {text!r}: ID {c.partner_id} is {c.partner}, the name says {canonical} "
-            f"(read as {c.partner}; ProDiMo would read {canonical})",
+            f"{who}: the name says {canonical} (read as {c.partner}, ProDiMo reads {canonical})",
             line,
             fixable=True,
         )
@@ -424,7 +439,7 @@ def _check_partner(data: LamdaData, b: int, c: CollisionSet, add: _Collector, li
 
 def _check_rows(data: LamdaData, b: int, c: CollisionSet, add: _Collector, rows: np.ndarray | None) -> None:
     """C06-C10: the rate rows of one block."""
-    block = _block_name(b, c)
+    block = _partner(data, b, c)
     nlev = data.n_levels
 
     def row(k: int) -> str:
@@ -487,21 +502,17 @@ def _check_collisions(data: LamdaData, add: _Collector) -> None:
         _check_partner(data, b, c, add, line)
         text = (c.partner_text or c.reference).strip()
         if scaled := _SCALED.search(text):
-            add("C13", f'{_block_name(b, c)}: comment says rates are scaled "{scaled.group()}"', line)
+            add("C13", f'{_partner(data, b, c)}: comment says rates are scaled "{scaled.group()}"', line)
         if c.partner_id in first_block:
-            add(
-                "C03",
-                f"{_block_name(b, c)}: partner ID {c.partner_id} also in collision block "
-                f"{first_block[c.partner_id] + 1}",
-                line,
-            )
+            add("C03", f"{_partner(data, b, c)}: the ID is also in block {first_block[c.partner_id] + 1}", line)
         else:
             first_block[c.partner_id] = b
         t = c.temperatures
         if t.size and (not np.all(np.isfinite(t)) or np.any(t <= 0) or np.any(np.diff(t) <= 0)):
             add(
                 "C05",
-                f"{_block_name(b, c)}: temperatures not strictly increasing or <= 0: {' '.join(f'{x:g}' for x in t)}",
+                f"{_partner(data, b, c)}: temperatures not strictly increasing or <= 0: "
+                f"{' '.join(f'{x:g}' for x in t)}",
                 src.temperatures if src else None,
             )
         _check_rows(data, b, c, add, src.rows if src else None)
@@ -513,7 +524,7 @@ def _check_collisions(data: LamdaData, add: _Collector) -> None:
         src = _block_source(data, b)
         add(
             "C04",
-            f"H2 (collision block {b + 1}) together with {both}: some codes count H2 collisions twice",
+            f"{_partner(data, b, data.collisions[b])}: H2 together with {both}: some codes count H2 collisions twice",
             src.partner if src else None,
         )
 
@@ -567,9 +578,14 @@ def _check_references(data: LamdaData, add: _Collector, cat: Catalogue | None = 
         src = _block_source(data, b)
         line = src.partner if src else None
         if not c.reference.strip():
-            add("F02", f"{_block_name(b, c)}: no reference on the partner line", line, fixable=True)
+            add("F02", f"{_partner(data, b, c)}: no reference on the partner line", line, fixable=True)
         elif not _has_identifier(c.reference) and not _in_catalogue(cat, data, "collisions", c.label, c.reference):
-            add("F03", f"{_block_name(b, c)}: reference only as free text: {c.reference.strip()!r}", line, fixable=True)
+            add(
+                "F03",
+                f"{_partner(data, b, c)}: reference only as free text: {c.reference.strip()!r}",
+                line,
+                fixable=True,
+            )
 
 
 # ------------------------------------------------------------------- P: physics heuristics
@@ -609,7 +625,7 @@ def _check_physics(data: LamdaData, add: _Collector) -> None:
     for b, c in enumerate(data.collisions):
         src = _block_source(data, b)
         rows = src.rows if src else None
-        block = _block_name(b, c)
+        block = _partner(data, b, c)
 
         flagged = []  # P01
         for k in range(c.n_transitions):

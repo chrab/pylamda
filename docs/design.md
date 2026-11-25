@@ -234,7 +234,7 @@ issues = pylamda.verify("co.dat", physics=True)  # with the P checks (off by def
 ```
 
 ```text
-Issue(code="C02", severity="warning", line=312, message="partner line '1 CO + p-H2 ...': ID 1 is H2, the name says p-H2 (read as H2; ProDiMo would read p-H2)", fixable=True)
+Issue(code="C02", severity="warning", line=312, message='partner "CO + p-H2" (ID 1 = H2): the name says p-H2 (read as H2, ProDiMo reads p-H2)', fixable=True)
 ```
 
 - Every check has a code, a default severity (`error`, `warning`, `info`) and a short

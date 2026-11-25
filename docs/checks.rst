@@ -11,7 +11,7 @@ code, a severity and a message, as ruff does for Python code.
 
    for issue in pylamda.verify("co.dat"):
        print(issue)
-   # line 95: C04 warning: H2 (collision block 1) together with p-H2/o-H2: some codes count H2 collisions twice
+   # line 95: C04 warning: partner "CO + H2" (ID 1 = H2): H2 together with p-H2/o-H2: some codes count H2 collisions twice
 
 Each issue has:
 

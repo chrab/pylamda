@@ -43,7 +43,7 @@ def test_exit_codes(files, capsys):
 def test_text_output(files, capsys):
     main(["check", str(files["warning"]), str(files["broken"]), str(files["other"])])
     out = capsys.readouterr().out.splitlines()
-    assert out[0].startswith(f"{files['warning']}:19: C02 warning: partner line '1 X + p-H2")
+    assert out[0].startswith(f'{files["warning"]}:19: C02 warning: partner "X + p-H2" (ID 1 = H2)')
     assert out[1].startswith(f"{files['broken']}:20: S06 error: cannot read the number of collisional transitions")
     assert out[2] == f"{files['broken']}: not readable"
     # one statement for a file that is not LAMDA, without its structure issues

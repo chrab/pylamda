@@ -132,17 +132,19 @@ def test_c01_not_repeated_after_s06(tmp_path):
 def test_c02_name_and_id(tmp_path):
     issue = _one(_check(tmp_path, "C", partner=f"1 X + para-H2 ! Smith 2001 {DOI}"), "C02")
     assert (issue.line, issue.severity, issue.fixable) == (19, "warning", True)
-    assert "ID 1 is H2, the name says p-H2 (read as H2; ProDiMo would read p-H2)" in issue.message
+    assert issue.message == 'partner "X + para-H2" (ID 1 = H2): the name says p-H2 (read as H2, ProDiMo reads p-H2)'
     assert _check(tmp_path, "C", partner=f"2 X + pH2 ! Smith 2001 {DOI}") == []
 
 
 def test_c03_c04_partners(tmp_path):
     after = collision_block(f"2 X + p-H2 -- Ref: {DOI}")
     issue = _one(_check(tmp_path, "C", npart="2", after=after), "C03")
-    assert issue.line == 31 and "partner ID 2 also in collision block 1" in issue.message
+    assert issue.line == 31
+    assert issue.message == 'partner "X + p-H2" (ID 2 = p-H2, block 2): the ID is also in block 1'
     after = collision_block(f"1 X + H2 -- Ref: {DOI}")
     issue = _one(_check(tmp_path, "C", npart="2", after=after), "C04")
-    assert issue.line == 31 and issue.message.startswith("H2 (collision block 2) together with p-H2")
+    assert issue.line == 31
+    assert issue.message.startswith('partner "X + H2" (ID 1 = H2): H2 together with p-H2')
 
 
 def test_c05_temperatures(tmp_path):
@@ -176,7 +178,10 @@ def test_c09_c10_rows(tmp_path):
 
 def test_c11_partner_outside_standard(tmp_path):
     issue = _one(_check(tmp_path, "C", partner=f"2 X + p-H2O -- Ref: {DOI}"), "C11")
-    assert "'p-H2O' is not a standard partner; the block is read by its ID 2 as p-H2" in issue.message
+    assert (
+        issue.message
+        == "partner \"X + p-H2O\" (ID 2 = p-H2): 'p-H2O' is not a standard partner; read by the ID as p-H2"
+    )
     issue = _one(_check(tmp_path, "C", partner=f"2 X + pH2O -- Ref: {DOI}"), "C11")  # unknown spelling
     assert "'pH2O'" in issue.message
 
@@ -196,7 +201,8 @@ def test_c12_he_rates_scaled_to_h2(tmp_path, text):
     issues = _check(tmp_path, "C", partner=text)
     issue = _one(issues, "C12")
     assert (issue.line, issue.severity, issue.fixable) == (19, "warning", True)
-    assert "probably He rates scaled to" in issue.message and "ProDiMo would read He" in issue.message
+    assert "the name says He, the text says scaled: probably He rates scaled to" in issue.message
+    assert issue.message.endswith("ProDiMo reads He)")
     assert [i.code for i in issues if i.code != "C13"] == ["C12"]  # C13: the hint for "scaled"
 
 
@@ -275,7 +281,7 @@ def test_p01_excitation_rates(tmp_path):
 def test_c13_scaled(tmp_path):
     issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 ! scaled from He rates, Smith 2001 {DOI}"), "C13")
     assert (issue.line, issue.severity) == (19, "info")
-    assert issue.message == 'collision block 1 (H2): comment says rates are scaled "scaled"'
+    assert issue.message == 'partner "X + H2" (ID 1 = H2): comment says rates are scaled "scaled"'
     issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 ! derived from p-H2 rates {DOI}"), "C13")
     assert issue.message.endswith('scaled "from p-H2"')
     # the factor right after "scaled" is part of the quoted text
@@ -384,3 +390,16 @@ def test_every_code_documented():
 def test_constants():
     assert pylamda.verify is verify
     assert math.isclose(HC_K, 1.438776877, rel_tol=1e-9)
+
+
+def test_partner_prefix(tmp_path):
+    """Collision messages start with the pair as written and the ID (design: no block numbers)."""
+    # a partner line without "<molecule> + <partner>": only the ID
+    issue = _one(_check(tmp_path, "C", partner=f"1 CO-H2 scaled from He {DOI}"), "C13")
+    assert issue.message.startswith("partner ID 1 = H2: ")
+    # the "-- Ref:" form
+    issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 -- Ref: scaled, {DOI}"), "C13")
+    assert issue.message.startswith('partner "X + H2" (ID 1 = H2): ')
+    # an ID outside the standard
+    issue = _one(_check(tmp_path, "C", partner=f"9 X + H2 ! {DOI}"), "C01")
+    assert issue.message.startswith('partner "X + H2" (ID 9): the ID is not in 1..7')
