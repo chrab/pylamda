@@ -180,14 +180,17 @@ def _parser() -> argparse.ArgumentParser:
         metavar="TARGET=ID",
         help="append an identifier to a reference: TARGET levels, dataset or a partner; ID a DOI, bibcode or arXiv ID",
     )
-    fx.add_argument(
+    # two options, not one with an optional value: "--add-refs FILE" would take FILE as the review file
+    refs = fx.add_mutually_exclusive_group()
+    refs.add_argument(
         "--add-refs",
-        nargs="?",
-        const=True,
-        default=False,
+        action="store_true",
+        help="append the SciX links of free-text references from the reference catalogue",
+    )
+    refs.add_argument(
+        "--add-refs-from",
         metavar="REVIEW",
-        help="append the SciX links of free-text references: from the reference catalogue, or from the decisions "
-        "in a review file (pylamda bib --search)",
+        help="append the SciX links of free-text references from the decisions in a review file (pylamda bib --search)",
     )
 
     add = sub.add_parser(
@@ -541,7 +544,7 @@ def _fix(args: argparse.Namespace) -> int:
         "recompute": args.recompute,
         "extra_blocks": args.extra_blocks,
         "refs": args.ref,
-        "add_refs": args.add_refs,
+        "add_refs": args.add_refs_from or args.add_refs,
     }
     keep_layout = args.dry_run or args.patch or (args.in_place and not args.normalise)
     try:

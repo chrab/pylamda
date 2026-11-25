@@ -195,9 +195,11 @@ Fixes:
 ``--ref TARGET=ID``
    Append a DOI, bibcode or arXiv ID to a reference (TARGET: ``levels``, ``dataset`` or
    a partner); repeatable.
-``--add-refs [REVIEW]``
-   Append the SciX links of all free-text references: from the reference catalogue, or
-   from the decisions in a review file.
+``--add-refs``
+   Append the SciX links of all free-text references from the reference catalogue.
+``--add-refs-from REVIEW``
+   The same, from the decisions in a review file (``pylamda bib --search``). Use only
+   one of ``--add-refs`` and ``--add-refs-from``.
 ``--no-sort``
    L01: do not sort the levels.
 ``--no-missing-columns``

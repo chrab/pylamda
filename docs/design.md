@@ -359,7 +359,7 @@ pylamda fix in.dat --in-place --trust name   # patch mode: only changed lines
 | S04 surplus values | drop them (what all readers do) | default on |
 | S05 comment without `!` | add `!` | default on |
 | partner text | normalise to the `-- Ref:` style | default on in normalised mode, off in patch mode |
-| F01–F03 references | append a bibcode (as SciX link) or DOI to the reference text (10.2) | `--add-refs` (catalogue or confirmed review file) or `--ref TARGET=ID` |
+| F01–F03 references | append a bibcode (as SciX link) or DOI to the reference text (10.2) | `--add-refs` (catalogue) or `--add-refs-from REVIEW` (confirmed review file) or `--ref TARGET=ID` |
 
 - **Record**: each fix adds a note line, `! pylamda <version> fix: C02 partner 2: ID 1 -> 2 (trusted name)`,
   as astrolinedata's `add_partner` does. `log` holds the same as data.
@@ -605,7 +605,7 @@ package):
   review file) moved into the package; `pylamda bib --search` writes candidates for
   references not in the catalogue to a review file (same format as the tool), never to
   the BibTeX file; `python -m pylamda.refsearch FILE` shows it.
-- `pylamda fix --add-refs [REVIEW]`: SciX links of free-text references from the
+- `pylamda fix --add-refs` / `--add-refs-from REVIEW`: SciX links of free-text references from the
   catalogue (only matches by place or molecule) or from the decisions of a review file.
   Links are written with `%26` for `&`; `find_bibcodes` also reads a raw `&`. Fix note
   lines are not reference texts for `check` and `bib`.
@@ -629,7 +629,7 @@ A file can get its identifiers written in, so that later readers need no catalog
 
 ```bash
 pylamda fix co.dat --in-place --add-refs                 # from the catalogue
-pylamda fix co.dat --in-place --add-refs review.json     # confirmed candidates
+pylamda fix co.dat --in-place --add-refs-from review.json  # confirmed candidates
 pylamda fix co.dat --in-place --ref p-H2=2010ApJ...718.1062Y --ref levels=10.1051/0004-6361:20041729
 ```
 

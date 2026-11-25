@@ -125,7 +125,7 @@ identifier) at once:
 .. code-block:: bash
 
    pylamda fix co.dat --in-place --add-refs                 # from the reference catalogue
-   pylamda fix co.dat --in-place --add-refs review.json     # from the decisions in a review file
+   pylamda fix co.dat --in-place --add-refs-from review.json  # from the decisions in a review file
 
 - From the catalogue, only papers found at the same place or for the same molecule are
   written; a match by the text alone is not.

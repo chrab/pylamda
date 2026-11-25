@@ -80,7 +80,7 @@ The results are only **candidates**: they go into the review file, never into th
 BibTeX file or a data file. Set ``"decision"`` for each group in the review file
 (``"ok"`` for the proposal, a bibcode, ``"none"`` or ``"skip"``). Running ``--search``
 again keeps the decisions. Decided groups can then be written into the files
-(:doc:`fixing`, ``--add-refs review.json``) and sent to the pylamda maintainers as
+(:doc:`fixing`, ``--add-refs-from review.json``) and sent to the pylamda maintainers as
 additions to the catalogue (a pull request with the review file).
 
 Adding decisions to the catalogue (maintainers)

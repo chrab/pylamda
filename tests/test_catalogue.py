@@ -167,6 +167,21 @@ def test_fix_add_refs_from_a_review_file(tmp_path):
     ]  # Jones 2001 has only a proposal, no decision: not added
     data, log2 = pylamda.fix(path, add_refs=review)
     assert data.collisions[0].reference.endswith("https://scixplorer.org/abs/1999ApJ...500..100S")
+    # the same from the command line, with the option before FILE
+    out = tmp_path / "out.dat"
+    assert main(["fix", "--add-refs-from", str(review), "-o", str(out), str(path)]) == 0
+    assert pylamda.read(out).collisions[0].reference.endswith("https://scixplorer.org/abs/1999ApJ...500..100S")
+
+
+def test_cli_add_refs_before_the_file(tmp_path, capsys):
+    """--add-refs takes no value: a FILE after it is the file to fix (not a review file)."""
+    out = tmp_path / "catom.dat"
+    assert main(["fix", "--trust", "name", "--add-refs", str(LAMDA / "catom.dat"), "-o", str(out)]) == 0
+    assert "scixplorer.org/abs/1977A%26A....56..289L" in out.read_text()
+    capsys.readouterr()
+    with pytest.raises(SystemExit):  # only one of the two
+        main(["fix", "--add-refs", "--add-refs-from", "r.json", str(LAMDA / "catom.dat"), "--dry-run"])
+    assert "not allowed with argument" in capsys.readouterr().err
 
 
 # ------------------------------------------------------------------- --search
