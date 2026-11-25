@@ -10,11 +10,10 @@ Merged from astrolinedata's ``compare_lamda`` and ``compare_rates`` of TEST_LAMD
   :attr:`PartnerDiff.n_rates_changed`) and on the union grid of both tables in the
   common temperature range, interpolated linearly in log T and log k (trends also when
   the grids differ, :attr:`PartnerDiff.rates_interpolated`).
-* Per upper level and partner, the critical density
-  n_crit(T) = sum_l A_ul / sum_l k_ul(T) and the total de-excitation rate
-  sum_l k_ul(T) are compared: one number per level that says whether a change of the
-  rates matters for NLTE. They use all rows of each data set, so added or removed
-  transitions count too.
+* Per upper level and partner, the total de-excitation rate sum_l k_ul(T) is
+  compared. It uses all rows of each data set, so added or removed transitions count
+  too. (The critical density, :func:`critical_density`, is not compared: it changes
+  only with the rates or the A values, which are compared themselves.)
 * Changes are also summarised per E_up range (:data:`EUP_BINS`), so that a change of
   the high levels does not hide behind many unchanged low levels.
 """
@@ -284,14 +283,16 @@ class RatioSummary:
         Median, 5th and 95th percentile of all ratios.
     max_factor : float
         Largest deviation as a factor ``max(b/a, a/b)``.
+    max_ratio : float
+        The ratio b/a of that deviation (below 1 if b is smaller).
     max_at : str
         Item (and temperature) of that deviation.
     by_temperature : list of dict
         Per temperature: ``temperature``, ``n``, ``median``, ``p05``, ``p95``,
-        ``max_factor`` (empty for a quantity without temperatures).
+        ``max_factor``, ``max_ratio`` (empty for a quantity without temperatures).
     by_eup : list of dict
         Per E_up range (:data:`EUP_BINS`) with items: ``eup_min``, ``eup_max`` [K],
-        ``n_items``, ``n_changed``, ``median``, ``max_factor``.
+        ``n_items``, ``n_changed``, ``median``, ``max_factor``, ``max_ratio``.
     """
 
     n: int = 0
@@ -302,18 +303,24 @@ class RatioSummary:
     p05: float = 1.0
     p95: float = 1.0
     max_factor: float = 1.0
+    max_ratio: float = 1.0
     max_at: str = ""
     by_temperature: list[dict] = field(default_factory=list)
     by_eup: list[dict] = field(default_factory=list)
 
     def eup_text(self) -> str:
-        """The changes per E_up range in one line (``"0-100 K 0/12, 100-300 K 3/40 (max 2.1)"``)."""
+        """The changes per E_up range in one line.
+
+        ``"0-100 K 0 of 12, 100-300 K 3 of 40 (max change B/A 2.1)"``: per range, the items
+        changed by more than :attr:`limit` of all items, and the largest change as the
+        ratio B/A, as all ratios in the summary.
+        """
         parts = []
         for x in self.by_eup:
             hi = "" if math.isinf(x["eup_max"]) else f"-{x['eup_max']:g}"
-            text = f"{x['eup_min']:g}{hi if hi else '+'} K {x['n_changed']}/{x['n_items']}"
+            text = f"{x['eup_min']:g}{hi if hi else '+'} K {x['n_changed']} of {x['n_items']}"
             if x["n_changed"]:
-                text += f" (max {x['max_factor']:.3g})"
+                text += f" (max change B/A {x['max_ratio']:.3g})"
             parts.append(text)
         return ", ".join(parts)
 
@@ -365,6 +372,7 @@ def summarise_ratios(
         p05=float(np.percentile(vals, 5)),
         p95=float(np.percentile(vals, 95)),
         max_factor=float(factor[k, j]),
+        max_ratio=float(q[k, j]),
         max_at=at,
     )
     if temperatures is not None:
@@ -380,6 +388,7 @@ def summarise_ratios(
                         "p05": float(np.percentile(v, 5)),
                         "p95": float(np.percentile(v, 95)),
                         "max_factor": float(factor[col, j].max()),
+                        "max_ratio": float(v[np.argmax(factor[col, j])]),
                     }
                 )
     for lo, hi in zip(EUP_BINS[:-1], EUP_BINS[1:], strict=True):
@@ -394,6 +403,7 @@ def summarise_ratios(
                     "n_changed": int(changed[rows].any(axis=1).sum()),
                     "median": float(np.median(v)),
                     "max_factor": float(factor[rows].max()),
+                    "max_ratio": float(np.where(ok, q, 1.0)[rows].flat[np.argmax(factor[rows])]),
                 }
             )
     return s
@@ -427,6 +437,8 @@ class PartnerDiff:
     max_rate_factor : float
         Largest deviation of a rate with both values positive, as a factor
         ``max(b/a, a/b)`` (1 if none).
+    max_rate_ratio : float
+        The ratio b/a of that same rate (1 if none).
     max_rate_change : float
         The relative change ``|b - a| / a`` of that same rate (0 if none).
     max_rate_change_at : str
@@ -449,8 +461,6 @@ class PartnerDiff:
     rates_interpolated : RatioSummary or None
         Rates b/a of the common transitions on ``interp_temperatures`` (log-log
         interpolated), with the summary per E_up range.
-    critical_density : RatioSummary or None
-        Critical densities b/a of the matched levels on ``interp_temperatures``.
     total_rate : RatioSummary or None
         Total de-excitation rates b/a of the matched levels on ``interp_temperatures``.
     """
@@ -467,6 +477,7 @@ class PartnerDiff:
     n_rates_zero_changed: int = 0
     max_rate_change: float = 0.0
     max_rate_factor: float = 1.0
+    max_rate_ratio: float = 1.0
     max_rate_change_at: str = ""
     ratio: dict = field(default_factory=dict)
     ratio_by_temperature: list[dict] = field(default_factory=list)
@@ -474,7 +485,6 @@ class PartnerDiff:
     reference_changed: bool = False
     interp_temperatures: list[float] = field(default_factory=list)
     rates_interpolated: RatioSummary | None = None
-    critical_density: RatioSummary | None = None
     total_rate: RatioSummary | None = None
 
     def __bool__(self) -> bool:
@@ -518,6 +528,8 @@ class LamdaDiff:
         Largest relative change of A.
     max_a_factor : float
         Largest deviation of A as a factor, ``max(b/a, a/b)``.
+    max_a_ratio : float
+        The ratio b/a of that A value (1 if none).
     n_freq_changed : int
         Matched transitions whose frequency differs by more than ``rtol``.
     a_ratio : RatioSummary or None
@@ -547,6 +559,7 @@ class LamdaDiff:
     n_a_changed: int = 0
     max_a_change: float = 0.0
     max_a_factor: float = 1.0
+    max_a_ratio: float = 1.0
     n_freq_changed: int = 0
     a_ratio: RatioSummary | None = None
     partners_added: list[str] = field(default_factory=list)
@@ -615,10 +628,13 @@ class LamdaDiff:
             if self.n_a_changed:
                 out.append(
                     f"  A differs for {self.n_a_changed} by more than {self.rtol:g} (relative), "
-                    f"up to a factor {self.max_a_factor:.3g}"
+                    f"max change B/A {self.max_a_ratio:.3g}"
                 )
                 if self.a_ratio and self.a_ratio.n_changed:
-                    out.append(f"  A changed by > {self.limit:g} per E_up range: {self.a_ratio.eup_text()}")
+                    out.append(
+                        f"  A by E_up of the upper level (changed by > {_percent(self.limit)}): "
+                        f"{self.a_ratio.eup_text()}"
+                    )
             if self.n_freq_changed:
                 out.append(f"  frequency changed for {self.n_freq_changed}")
         for p in self.partners_added:
@@ -652,6 +668,11 @@ def _json_safe(x):
     return x
 
 
+def _percent(x: float) -> str:
+    """A relative change as percent (``0.1`` -> ``"10%"``, ``0.005`` -> ``"0.5%"``)."""
+    return f"{x * 100:g}%"
+
+
 def _partner_summary(name: str, d: PartnerDiff, rtol: float, limit: float, items) -> list[str]:
     """The summary lines of one partner."""
     (t0a, t1a), (t0b, t1b) = d.t_range
@@ -670,54 +691,44 @@ def _partner_summary(name: str, d: PartnerDiff, rtol: float, limit: float, items
         r = d.ratio
         where = f"{d.n_rates_compared} compared on {d.n_temperatures_compared} common temperatures"
         if r:
-            out.append(f"  rates b/a ({where}): median {r['median']:.3g}, 90% within {r['p05']:.3g}-{r['p95']:.3g}")
+            out.append(f"  rates B/A ({where}): median {r['median']:.3g}, 90% within {r['p05']:.3g}-{r['p95']:.3g}")
         else:  # no pair with both rates > 0 (e.g. all old rates 0): no ratios
-            out.append(f"  rates b/a ({where}): no pair with both rates > 0")
+            out.append(f"  rates B/A ({where}): no pair with both rates > 0")
         if len(d.ratio_by_temperature) > 1:
+            # only the temperature whose median is farthest from 1 (the full list is in ratio_by_temperature)
+            x = max(d.ratio_by_temperature, key=lambda x: abs(math.log(x["median"])) if x["median"] > 0 else math.inf)
             out.append(
-                "  by temperature (median [5%-95%]): "
-                + "; ".join(
-                    f"{x['temperature']:g} K {x['median']:.2f} [{x['p05']:.2f}-{x['p95']:.2f}]"
-                    for x in d.ratio_by_temperature
-                )
+                f"  largest deviation by temperature at {x['temperature']:g} K: median {x['median']:.3g}, "
+                f"90% within {x['p05']:.3g}-{x['p95']:.3g}"
             )
-        n, z = d.n_rates_changed, d.n_rates_zero_changed
-        line = f"  {n} rate{'s' if n != 1 else ''} differ{'' if n != 1 else 's'}"
+        # one line: the counts and only the largest change (all changed transitions are in changed_transitions)
+        n, z, nt = d.n_rates_changed, d.n_rates_zero_changed, len(d.changed_transitions)
+        line = f"  {n} rate{'s' if n != 1 else ''} in {nt} transition{'s' if nt != 1 else ''} "
+        line += "differ" if n != 1 else "differs"
         if n > z:
-            line += (
-                f" by more than {rtol:g} (relative), up to a factor {d.max_rate_factor:.3g} ({d.max_rate_change_at})"
-            )
+            line += f" by more than {rtol:g} (relative), max change B/A {d.max_rate_ratio:.3g} ({d.max_rate_change_at})"
         if z:
             line += f"{';' if n > z else ':'} {'all' if z == n else z} to or from a zero rate"
+            c = next(c for c in d.changed_transitions if c["ratio"] is None)  # these come first
+            line += f" ({c['transition']}: {c['rate_a']:.3g} -> {c['rate_b']:.3g} at {c['temperature']:g} K)"
         out.append(line)
-        out.append(
-            f"  in {len(d.changed_transitions)} transition{'s' if len(d.changed_transitions) != 1 else ''}: "
-            + items(
-                [
-                    f"{c['transition']} (b/a {c['ratio']:.3g} at {c['temperature']:g} K)"
-                    if c["ratio"] is not None
-                    else f"{c['transition']} ({c['rate_a']:.3g} -> {c['rate_b']:.3g} at {c['temperature']:g} K)"
-                    for c in d.changed_transitions
-                ]
-            )
-        )
     if d.reference_changed:
         out.append("  reference changed")
     s = d.rates_interpolated
     if s is not None and s.n_changed and (d.temperatures_added or d.temperatures_removed):
         out.append(
-            f"  rates b/a on the union grid ({len(d.interp_temperatures)} temperatures, log-log interpolated): "
-            f"median {s.median:.3g}, 90% within {s.p05:.3g}-{s.p95:.3g}, up to a factor {s.max_factor:.3g} "
+            f"  rates B/A on the union grid ({len(d.interp_temperatures)} temperatures, log-log interpolated): "
+            f"median {s.median:.3g}, 90% within {s.p05:.3g}-{s.p95:.3g}, max change {s.max_ratio:.3g} "
             f"({s.max_at})"
         )
     if s is not None and s.n_changed:
-        out.append(f"  transitions changed by > {limit:g} per E_up range: {s.eup_text()}")
-    for what, s in (("critical density", d.critical_density), ("total de-excitation rate", d.total_rate)):
-        if s is not None and s.n_changed:
-            out.append(
-                f"  {what} b/a: {s.n_changed} of {s.n_items} levels changed by > {limit:g}, median {s.median:.3g}, "
-                f"up to a factor {s.max_factor:.3g} ({s.max_at}); per E_up range: {s.eup_text()}"
-            )
+        out.append(f"  by E_up of the upper level (transitions changed by > {_percent(limit)}): {s.eup_text()}")
+    s = d.total_rate
+    if s is not None and s.n_changed:
+        out.append(
+            f"  total de-excitation rate B/A: {s.n_changed} of {s.n_items} levels changed by > {_percent(limit)}, "
+            f"median {s.median:.3g}, max change {s.max_ratio:.3g} ({s.max_at}); by E_up of the level: {s.eup_text()}"
+        )
     return out
 
 
@@ -810,6 +821,7 @@ def _exact_rates(pd: PartnerDiff, ra: np.ndarray, rb: np.ndarray, labels: list[s
     if pos_changed.any():
         k, j = np.unravel_index(int(np.argmax(np.where(pos_changed, factor, 0.0))), q.shape)
         pd.max_rate_factor = float(factor[k, j])
+        pd.max_rate_ratio = float(q[k, j])
         pd.max_rate_change = float(abs(q[k, j] - 1.0))
         pd.max_rate_change_at = f"{labels[k]} at {temps[j]:g} K"
     rows = []
@@ -893,15 +905,13 @@ def _compare_partner(
         eup = a.level_energy[ca.up[ia] - 1] * HC_K
         pd.rates_interpolated = summarise_ratios(q, labels, eup, pd.interp_temperatures, limit)
 
-    # per level: critical density and total de-excitation rate (all rows of each set)
+    # per level: total de-excitation rate (all rows of each set)
     ka, kb = total_rates(a, ca, grid), total_rates(b, cb, grid)
-    na, nb = critical_density(a, ca, grid), critical_density(b, cb, grid)
     lev_a = np.array(list(levels.mapping.keys()), dtype=int) - 1
     lev_b = np.array(list(levels.mapping.values()), dtype=int) - 1
     level_labels = [f"level {_label(a, i)}" for i in lev_a]
     eup = a.level_energy[lev_a] * HC_K
     with np.errstate(divide="ignore", invalid="ignore"):
-        pd.critical_density = summarise_ratios(nb[lev_b] / na[lev_a], level_labels, eup, pd.interp_temperatures, limit)
         k_ratio = np.where((ka[lev_a] > 0) & (kb[lev_b] > 0), kb[lev_b] / ka[lev_a], np.nan)
     pd.total_rate = summarise_ratios(k_ratio, level_labels, eup, pd.interp_temperatures, limit)
     return pd
@@ -931,7 +941,7 @@ def compare(
         Energy tolerance [cm-1] for matching levels by energy. Default: 1e-3.
     limit : float, optional
         Relative change that counts in the summaries on the union temperature grid, per
-        level (critical densities, total rates) and per E_up range. Default: 0.1.
+        level (total rates) and per E_up range. Default: 0.1 (shown as 10%).
 
     Returns
     -------
@@ -989,8 +999,9 @@ def compare(
             d.n_a_changed += 1
             d.max_a_change = max(d.max_a_change, float(change))
             if a.line_a[ka] > 0 and b.line_a[kb] > 0:
-                q = b.line_a[kb] / a.line_a[ka]
-                d.max_a_factor = max(d.max_a_factor, float(max(q, 1 / q)))
+                q = float(b.line_a[kb] / a.line_a[ka])
+                if max(q, 1 / q) > d.max_a_factor:
+                    d.max_a_factor, d.max_a_ratio = max(q, 1 / q), q
         fa, fb = a.line_freq[ka], b.line_freq[kb]
         if math.isfinite(fa) and math.isfinite(fb) and abs(fb - fa) > rtol * abs(fa):
             d.n_freq_changed += 1

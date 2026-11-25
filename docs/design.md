@@ -395,9 +395,9 @@ Merge `compare_lamda` (astrolinedata) and `compare_rates` (TEST_LAMDA_FILES):
   - the union grid in the common range with log-log interpolation (TEST_LAMDA_FILES:
     shows trends even when the grids differ).
 - **Physically meaningful numbers**:
-  - **critical densities** n_crit(T) = A_ul / Σ_l k_ul(T) per upper level and partner:
-    one number per level that says whether a rate change matters for NLTE;
-  - total de-excitation rate per level;
+  - total de-excitation rate per level (the critical density n_crit(T) = A_ul / Σ_l k_ul(T)
+    is not compared since 2026-11-25: it is not in the file and changes only with the
+    rates or A values; `critical_density()` stays in the API);
   - changes summarised per E_up range, so a change at 5000 K levels does not hide
     behind 1000 unchanged low levels.
 - **Output**: `bool(diff)`, a text summary, JSON, and plots with the `plot` extra
@@ -412,8 +412,8 @@ Implementation notes (step 3):
   `compare_lamda` (1e-3 cm-1 + 1e-5 E).
 - `LamdaDiff`/`PartnerDiff` keep all fields of astrolinedata, so its code can switch.
   New: `a_ratio`, and per partner `interp_temperatures`, `rates_interpolated`,
-  `critical_density`, `total_rate` (each a `RatioSummary` with per-T and per-E_up
-  statistics).
+  `total_rate` (a `RatioSummary` with per-T and per-E_up statistics; `critical_density`
+  was removed on 2026-11-25).
 - Only the exact comparison decides `bool(diff)`. The union-grid and per-level summaries
   count a change above `limit` (default 0.1, TEST_LAMDA_FILES' `LIMIT`).
 - Partners are compared by ID; a repeated ID is `"<name> #2"`.

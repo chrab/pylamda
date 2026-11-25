@@ -116,8 +116,11 @@ def test_compare_partners_rates_and_grid():
     assert pd.max_rate_change_at == f"1 -> 0 at {p.temperatures[2]:g} K"
     text = "\n".join(diff.summary())
     assert "new collision partner H" in text and "collision partner o-H2 removed" in text
-    assert "1 rate differs by more than 1e-06 (relative), up to a factor 1.1 (1 -> 0 at" in text
-    assert f"in 1 transition: 1 -> 0 (b/a 1.1 at {p.temperatures[2]:g} K)" in text
+    t2 = f"{p.temperatures[2]:g}"
+    assert (
+        f"1 rate in 1 transition differs by more than 1e-06 (relative), max change B/A 1.1 (1 -> 0 at {t2} K)" in text
+    )
+    assert "in 1 transition:" not in text  # no list of transitions, only the largest change
     assert pd.changed_transitions == [
         {
             "transition": "1 -> 0",
@@ -141,7 +144,9 @@ def test_compare_lines_and_energy_matching():
     diff = compare(d, dataclasses.replace(d, line_a=a))
     assert diff.n_a_changed == 1 and diff.max_a_change == pytest.approx(1.0)
     assert diff.a_ratio.n_changed == 1 and diff.a_ratio.max_at == "4 -> 3"
-    assert any(line.startswith("  A changed by > 0.1 per E_up range: 0-100 K 1/") for line in diff.summary())
+    assert any(
+        line.startswith("  A by E_up of the upper level (changed by > 10%): 0-100 K 1 of ") for line in diff.summary()
+    )
     plain = dataclasses.replace(d, level_quanta=[""] * d.n_levels)
     shifted = dataclasses.replace(plain, level_energy=plain.level_energy * (1 + 5e-6))
     diff = compare(plain, shifted)  # within the matching tolerance, beyond rtol
@@ -162,6 +167,11 @@ def test_compare_statistics_and_decrease():
     assert second["median"] == 1.0
     assert pd.n_rates_changed == p.n_transitions + 1 and pd.max_rate_factor == pytest.approx(2.0)
     assert all(c["ratio"] == pytest.approx(0.5) for c in pd.changed_transitions if c["n_changed"] == 1)
+    # the summary shows only the temperature whose median is farthest from 1
+    lines = compare(d, _with(d, p, rates=rates), rtol=0.1).summary()
+    t0 = f"{p.temperatures[0]:g}"
+    assert f"  largest deviation by temperature at {t0} K: median 0.5, 90% within 0.5-0.5" in lines
+    assert not any("by temperature (median" in line for line in lines)
 
 
 def test_compare_zero_rates_summary():
@@ -171,10 +181,10 @@ def test_compare_zero_rates_summary():
     diff = compare(_with(d, p, rates=p.rates * 0.0), d)
     pd = diff.partners["p-H2"]
     assert pd.n_rates_changed == p.rates.size and pd.ratio == {} and pd.ratio_by_temperature == []
-    assert pd.rates_interpolated is None and pd.critical_density is None
+    assert pd.rates_interpolated is None and pd.total_rate is None
     text = "\n".join(diff.summary())
     assert "no pair with both rates > 0" in text and "all to or from a zero rate" in text
-    assert f"1 -> 0 (0 -> {p.rates[0, 0]:.3g} at {p.temperatures[0]:g} K)" in text
+    assert f"differ: all to or from a zero rate (1 -> 0: 0 -> {p.rates[0, 0]:.3g} at {p.temperatures[0]:g} K)" in text
 
 
 def test_compare_mixed_zero_and_ratio_changes():
@@ -189,9 +199,11 @@ def test_compare_mixed_zero_and_ratio_changes():
     pd = diff.partners["p-H2"]
     assert (pd.n_rates_changed, pd.n_rates_zero_changed) == (3, 1)
     assert pd.max_rate_factor == pytest.approx(4.0) and pd.max_rate_change == pytest.approx(0.75)
+    assert pd.max_rate_ratio == pytest.approx(0.25)  # the same rate, as B/A
     assert [c["ratio"] for c in pd.changed_transitions] == [None, pytest.approx(0.25), pytest.approx(3.0)]
     text = "\n".join(diff.summary())
-    assert "3 rates differ by more than 0.1 (relative), up to a factor 4" in text and "; 1 to or from a zero" in text
+    assert "3 rates in 3 transitions differ by more than 0.1 (relative), max change B/A 0.25" in text
+    assert "; 1 to or from a zero rate (" in text  # with one example
 
 
 def test_compare_reference_changed():
@@ -227,7 +239,7 @@ def test_union_grid_when_grids_differ():
     s = pd.rates_interpolated
     assert s.median == pytest.approx(2.0, rel=0.05) and s.n_changed == p.n_transitions
     text = compare(d, _with(d, p, temperatures=mid, rates=b_rates)).summary()
-    assert any("rates b/a on the union grid" in line for line in text)
+    assert any("rates B/A on the union grid" in line for line in text)
 
 
 def test_critical_density_and_total_rate():
@@ -244,8 +256,8 @@ def test_critical_density_and_total_rate():
     assert n100.shape == (d.n_levels, 1)
 
 
-def test_compare_added_transition_changes_critical_density():
-    """A new transition out of a level changes its critical density, though no common rate changed."""
+def test_compare_added_transition_changes_total_rate():
+    """A new transition out of a level changes its total rate, though no common rate changed."""
     d = _co().select_partners(["p-H2"])
     p = d.partner("p-H2")
     rows = np.flatnonzero(p.up == 3)
@@ -253,25 +265,31 @@ def test_compare_added_transition_changes_critical_density():
     a = _with(d, p, up=p.up[keep], low=p.low[keep], rates=p.rates[keep])
     pd = compare(a, d).partners["p-H2"]
     assert pd.transitions_added == ["2 -> 0"] and pd.n_rates_changed == 0
-    nc = pd.critical_density
-    assert nc.n_changed >= 1 and nc.max_at.startswith("level 2 at")
-    assert nc.by_eup[0]["eup_min"] == 0.0 and nc.by_eup[0]["n_changed"] >= 1
-    assert pd.total_rate.max_factor == pytest.approx(nc.max_factor)
-    assert any("critical density b/a" in line for line in compare(a, d).summary())
+    k = pd.total_rate
+    assert k.n_changed >= 1 and k.max_at.startswith("level 2 at") and k.max_ratio > 1
+    assert k.by_eup[0]["eup_min"] == 0.0 and k.by_eup[0]["n_changed"] >= 1
+    lines = compare(a, d).summary()
+    assert any("total de-excitation rate B/A" in line for line in lines)
+    assert not any("critical density" in line for line in lines)
+    assert not hasattr(pd, "critical_density")
 
 
 def test_summarise_ratios_by_eup():
     q = np.array([[1.0, 1.0], [1.5, 1.0], [np.nan, 0.5], [1.0, 1.0]])
     s = summarise_ratios(q, ["a", "b", "c", "d"], np.array([50.0, 150.0, 5000.0, 20000.0]), [10.0, 20.0], 0.1)
     assert (s.n, s.n_items, s.n_changed) == (7, 4, 2)
-    assert s.max_factor == pytest.approx(2.0) and s.max_at == "c at 20 K"
+    assert s.max_factor == pytest.approx(2.0) and s.max_ratio == 0.5 and s.max_at == "c at 20 K"
     assert [(x["eup_min"], x["n_items"], x["n_changed"]) for x in s.by_eup] == [
         (0.0, 1, 0),
         (100.0, 1, 1),
         (3000.0, 1, 1),
         (10000.0, 1, 0),
     ]
-    assert s.eup_text() == "0-100 K 0/1, 100-300 K 1/1 (max 1.5), 3000-10000 K 1/1 (max 2), 10000+ K 0/1"
+    assert (
+        s.eup_text()
+        == "0-100 K 0 of 1, 100-300 K 1 of 1 (max change B/A 1.5), 3000-10000 K 1 of 1 (max change B/A 0.5), "
+        "10000+ K 0 of 1"
+    )
     assert summarise_ratios(np.full((2, 1), np.nan), ["a", "b"], np.zeros(2), None, 0.1) is None
     assert EUP_BINS[0] == 0.0
 
@@ -301,7 +319,7 @@ def test_as_dict_is_json():
     out = compare(d, e).as_dict()
     text = json.dumps(out, allow_nan=False)  # no inf/nan
     assert '"eup_max": null' in text or '"eup_max"' in text
-    assert out["partners"]["H"]["critical_density"]["n_changed"] >= 1
+    assert out["partners"]["H"]["total_rate"]["n_changed"] >= 1 and "critical_density" not in out["partners"]["H"]
 
 
 # ------------------------------------------------------------------- command line
@@ -313,7 +331,9 @@ def test_compare_command(tmp_path, capsys):
     assert main(["compare", str(tmp_path / "a.dat"), str(tmp_path / "a.dat")]) == 0
     assert capsys.readouterr().out == "no differences\n"
     assert main(["compare", str(tmp_path / "a.dat"), str(tmp_path / "b.dat"), "--rtol", "0.5"]) == 1
-    assert "1 rate differs by more than 0.5 (relative), up to a factor 2" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "1 rate in 1 transition differs by more than 0.5 (relative), max change B/A 2" in out
+    assert "  by E_up of the upper level (transitions changed by > 10%): 0-100 K 1 of " in out
     assert main(["compare", str(tmp_path / "a.dat"), str(tmp_path / "b.dat"), "--format", "json"]) == 1
     data = json.loads(capsys.readouterr().out)
     assert data["partners"]["p-H2"]["n_rates_changed"] == 1 and data["rtol"] == 1e-6
