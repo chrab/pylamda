@@ -120,7 +120,10 @@ Writing
 
 :func:`pylamda.write` writes one normalised layout: the layout of LAMDA's format
 description, with the references in EMAA's ``-- Ref:`` style, and every number as the
-shortest text that reads back unchanged.
+shortest text that reads back unchanged. Einstein A values and rate coefficients are
+always in exponential notation (``8.542e-05``, ``1.5e-04``, ``0.0e+00``). All rates of
+one collision block have the same number of digits, those of the most precise rate
+(``2.30e-12`` next to ``2.01e-12``).
 
 .. code-block:: python
 

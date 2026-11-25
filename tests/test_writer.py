@@ -56,6 +56,21 @@ def test_written_layout(tmp_path):
     assert [r.split()[3] for r in rows] == ["1.94e+00", "2.0e+00"]
 
 
+def test_rates_in_exponential_notation(tmp_path):
+    """Rates always in exponential notation (also 0 and rates >= 1e-4), with the same digits; lossless."""
+    path = tmp_path / "x.dat"
+    path.write_text(make_lamda(rates="1 2 1 0.0 2e-11\n2 3 1 1.5e-4 4.25e-11\n3 3 2 0 6e-11"))
+    write(read(path), tmp_path / "y.dat")
+    lines = (tmp_path / "y.dat").read_text().splitlines()
+    first = next(i for i, line in enumerate(lines) if line.startswith("!TRANS + UP + LOW + COLLRATES")) + 1
+    assert [line.split()[3:] for line in lines[first : first + 3]] == [  # all with the digits of 4.25e-11
+        ["0.00e+00", "2.00e-11"],
+        ["1.50e-04", "4.25e-11"],
+        ["0.00e+00", "6.00e-11"],
+    ]
+    np.testing.assert_array_equal(read(tmp_path / "y.dat").collisions[0].rates, read(path).collisions[0].rates)
+
+
 def test_partner_lines(tmp_path):
     """The ID is written as it is; the name is the one in the text, else the standard name of the ID."""
     cat = read(LAMDA / "catom.dat")

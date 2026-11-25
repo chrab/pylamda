@@ -220,7 +220,7 @@ functions, not methods.
 
 | mode | use | how |
 |---|---|---|
-| `write(data, path)` | new or converted files | one normalised layout, as astrolinedata's `write_lamda`: `-- Ref:` style, shortest lossless numbers, A always in exponential notation |
+| `write(data, path)` | new or converted files | one normalised layout, as astrolinedata's `write_lamda`: `-- Ref:` style, shortest lossless numbers, A and rate coefficients always in exponential notation, all rates of a block with the same number of digits |
 | `patch(data, path)` (via `fix`) | existing, hand-maintained files (ProDiMo `data/`) | changes only the lines that changed; comments and layout stay; small git diffs |
 
 The second mode is new. It is what we did by hand in the ProDiMo files: fix an ID, keep

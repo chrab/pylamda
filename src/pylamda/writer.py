@@ -28,6 +28,27 @@ def _num_exp(x: float) -> str:
     return np.format_float_scientific(float(x), unique=True, trim="0", exp_digits=2)
 
 
+def _rate_texts(rates: np.ndarray) -> list[list[str]]:
+    """The rates of one block in exponential notation, all with the same number of digits.
+
+    Each value is written as the shortest text that reads back unchanged
+    (:func:`_num_exp`); then all are padded with zeros to the number of decimals of the
+    most precise one (``2.3e-12`` -> ``2.30e-12`` next to ``2.01e-12``). The padding does
+    not change the values.
+    """
+    texts = [[_num_exp(v) for v in row] for row in rates]
+    decimals = [len(t.split("e")[0].partition(".")[2]) for row in texts for t in row if "e" in t]
+    width = max(decimals, default=1)
+
+    def pad(t: str) -> str:
+        if "e" not in t:  # NaN, Inf
+            return t
+        mantissa, _, exponent = t.partition("e")
+        return f"{mantissa}{'0' * (width - len(mantissa.partition('.')[2]))}e{exponent}"
+
+    return [[pad(t) for t in row] for row in texts]
+
+
 def _check_level_numbers(nlev: int, up: np.ndarray, low: np.ndarray, what: str) -> None:
     """Raise ValueError if a transition refers to a level outside 1..NLEV."""
     bad = np.flatnonzero((up < 1) | (up > nlev) | (low < 1) | (low > nlev))
@@ -70,7 +91,9 @@ def write(data: LamdaData, path: str | os.PathLike) -> None:
     The source and the notes follow the data as comment lines (``!SOURCE: ...``,
     ``!NOTES``), which RADEX, ProDiMo and :func:`pylamda.read` do not read as data. All
     values are written as the shortest text that reads back unchanged; the Einstein A
-    values always in exponential notation (``1.94e+00``, ``8.542e-05``).
+    values and the rate coefficients always in exponential notation (``1.94e+00``,
+    ``8.542e-05``, also ``0.0e+00``). All rates of one collision block have the same
+    number of digits: those of the most precise rate (``2.30e-12`` next to ``2.01e-12``).
 
     Parameters
     ----------
@@ -128,8 +151,8 @@ def write(data: LamdaData, path: str | os.PathLike) -> None:
             " ".join(_num(t) for t in c.temperatures),
             "!TRANS + UP + LOW + COLLRATES(cm^3 s^-1)",
         ]
-        for k in range(c.n_transitions):
-            out.append(f"{k + 1:5d} {c.up[k]:5d} {c.low[k]:5d} " + " ".join(_num(v) for v in c.rates[k]))
+        for k, texts in enumerate(_rate_texts(c.rates)):
+            out.append(f"{k + 1:5d} {c.up[k]:5d} {c.low[k]:5d} " + " ".join(texts))
     if data.source:
         out.append(f"!SOURCE: {data.source}")
     if data.notes:
