@@ -59,7 +59,8 @@ _REFERENCE_LIKE = re.compile(
 # includes a factor right after "scaled": "scaled (*1.37)", "scaled by 1.4", "scaling x1.39"
 _FACTOR = r"(?:[*×x]\s*\d+(?:\.\d+)?|\d+\.\d+)"
 _SCALED = re.compile(
-    rf"\bscal(?:ed|ing)\b(?:\s*\(\s*{_FACTOR}\s*\)|\s+(?:by\s+)?{_FACTOR})?|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b",
+    rf"\bscal(?:ed|ing)\b(?:\s*\(\s*(?:by\s+)?{_FACTOR}\s*\)|\s+(?:by\s+)?{_FACTOR})?"
+    r"|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b",
     re.I,
 )
 # C12: "scaled"/"scaling", or a scaling factor such as "*1.39", "x 1.4", "×1.37"
@@ -499,9 +500,16 @@ def _check_collisions(data: LamdaData, add: _Collector) -> None:
         src = _block_source(data, b)
         line = src.partner if src else None
         _check_partner(data, b, c, add, line)
-        text = (c.partner_text or c.reference).strip()
-        if scaled := _SCALED.search(text):
-            add("C13", f'{_partner(data, b, c)}: comment says rates are scaled "{scaled.group()}"', line)
+        # the partner line, and the comment line just before it ("!COLLISIONS BETWEEN ! scaled from ...")
+        texts = [((c.partner_text or c.reference).strip(), line)]
+        if src is not None and src.partner and src.partner >= 2:
+            before = data.source_map.raw[src.partner - 2]
+            if before.lstrip().startswith("!"):
+                texts.append((before.strip(), src.partner - 1))
+        for text, at in texts:
+            if scaled := _SCALED.search(text):
+                add("C13", f'{_partner(data, b, c)}: comment says rates are scaled "{scaled.group()}"', at)
+                break
         if c.partner_id in first_block:
             add("C03", f"{_partner(data, b, c)}: the ID is also in block {first_block[c.partner_id] + 1}", line)
         else:

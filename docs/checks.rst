@@ -112,8 +112,9 @@ right and the name is wrong. C12 reports such a line instead of C02 if the name 
 the ID is 1, 2 or 3, and the text says "scaled", "scaling" or gives a factor such as
 ``*1.39`` or ``x1.4``.
 
-C13 is an info: the partner text says "scaled", "scaling" or "from H2" (also "from
-p-H2", ...). The message quotes the matched text, with a factor that follows it, e.g.
+C13 is an info: the partner text, or the comment line just before the partner line
+(``!COLLISIONS BETWEEN ! scaled from HF-He ...``), says "scaled", "scaling" or "from
+H2" (also "from p-H2", ...). The message quotes the matched text, with a factor that follows it, e.g.
 ``"scaled (*1.37)"``; check the reference for the details. :func:`pylamda.scale_partner`
 can scale rates of one partner to another one, or back (:doc:`combining`).
 C13 was the physics check P02 until 2026-11-23; it is a check of the partner text, so it

@@ -294,7 +294,7 @@ Issue(code="C02", severity="warning", line=312, message='partner "CO + p-H2" (ID
 | C10 | up or low outside 1..NLEV, or up = low | error |
 | C11 | the partner text names a partner outside the standard (EMAA: p-H2O, o-H2O, CO); not supported, the block is read by its ID | warning |
 | C12 | the partner text names He, the ID is H2/p-H2/o-H2, and the text says the rates are scaled (`1 SO2 + He ! ... scaled *1.39`): He rates scaled to H2 with the name not changed; reported instead of C02 | warning |
-| C13 | partner text says "scaled" / "scaling" / "from H2"; the message quotes the matched text, e.g. "scaled (*1.37)"; was P02 until 2026-11-23 (a text check, so on by default) | info |
+| C13 | partner text or the comment line just before the partner line says "scaled" / "scaling" / "from H2"; the message quotes the matched text, e.g. "scaled (*1.37)"; was P02 until 2026-11-23 (a text check, so on by default) | info |
 
 **P: physics heuristics**
 

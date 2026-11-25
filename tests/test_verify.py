@@ -289,6 +289,7 @@ def test_c13_scaled(tmp_path):
         ("1 X + H2 ! scaled (*1.37) X - He from Green (1991)", "scaled (*1.37)"),
         ("1 X + H2 ! scaled by 1.4 from He", "scaled by 1.4"),
         ("1 X + H2 ! He rates, scaling x1.39", "scaling x1.39"),
+        ("1 X + H2 ! scaled (by 1.38) SiO-He", "scaled (by 1.38)"),
         ("1 X + H2 ! scaled 1991 data", "scaled"),  # a year is not a factor
     ]:
         issue = _one(_check(tmp_path, "C", partner=f"{text} {DOI}"), "C13")
@@ -403,3 +404,18 @@ def test_partner_prefix(tmp_path):
     # an ID outside the standard
     issue = _one(_check(tmp_path, "C", partner=f"9 X + H2 ! {DOI}"), "C01")
     assert issue.message.startswith('partner "X + H2" (ID 9): the ID is not in 1..7')
+
+
+def test_c13_comment_line_before_the_partner_line(tmp_path):
+    """HF in ProDiMo: "!COLLISIONS BETWEEN ! scaled from HF-He ..." and the partner line "1 HF + H2"."""
+    path = tmp_path / "hf.dat"
+    text = make_lamda(partner=f"1 X + H2 ! {DOI}")
+    assert "!COLLISIONS BETWEEN\n" in text
+    path.write_text(text.replace("!COLLISIONS BETWEEN\n", "!COLLISIONS BETWEEN ! scaled from X-He by Smith 2005\n", 1))
+    issue = _one(verify(path, select=["C"]), "C13")
+    assert issue.message == 'partner "X + H2" (ID 1 = H2): comment says rates are scaled "scaled"'
+    comment = text.splitlines().index("!COLLISIONS BETWEEN") + 1
+    assert issue.line == comment  # the comment line, the line before the partner line
+    # without the comment: no C13
+    path.write_text(text)
+    assert "C13" not in [i.code for i in verify(path, select=["C"])]
