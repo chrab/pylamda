@@ -269,7 +269,8 @@ def test_compare_added_transition_changes_total_rate():
     assert k.n_changed >= 1 and k.max_at.startswith("level 2 at") and k.max_ratio > 1
     assert k.by_eup[0]["eup_min"] == 0.0 and k.by_eup[0]["n_changed"] >= 1
     lines = compare(a, d).summary()
-    assert any("total de-excitation rate B/A" in line for line in lines)
+    line = next(line for line in lines if line.startswith("  total de-excitation rate per level B/A: "))
+    assert "; by level energy: 0-100 K " in line
     assert not any("critical density" in line for line in lines)
     assert not hasattr(pd, "critical_density")
 

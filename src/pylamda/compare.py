@@ -726,8 +726,9 @@ def _partner_summary(name: str, d: PartnerDiff, rtol: float, limit: float, items
     s = d.total_rate
     if s is not None and s.n_changed:
         out.append(
-            f"  total de-excitation rate B/A: {s.n_changed} of {s.n_items} levels changed by > {_percent(limit)}, "
-            f"median {s.median:.3g}, max change {s.max_ratio:.3g} ({s.max_at}); by E_up of the level: {s.eup_text()}"
+            f"  total de-excitation rate per level B/A: {s.n_changed} of {s.n_items} levels changed by > "
+            f"{_percent(limit)}, median {s.median:.3g}, max change {s.max_ratio:.3g} ({s.max_at}); "
+            f"by level energy: {s.eup_text()}"
         )
     return out
 
