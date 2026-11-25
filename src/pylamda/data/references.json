@@ -1907,6 +1907,16 @@
   },
   {
    "database": "prodimo",
+   "molecule": "p-H2CO",
+   "file": "p-h2co.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "p h2co he from green 1991",
+   "key": "Green1991",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
    "molecule": "p-NH2D",
    "file": "p-nh2d_Lambda.dat",
    "role": "collisions",

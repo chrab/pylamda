@@ -9202,5 +9202,35 @@
   "proposal_reason": "",
   "decision": "1991ApJS...76..979G",
   "comment": ""
+ },
+ {
+  "key": "p-H2CO|p h2co he from green 1991",
+  "molecule": "p-H2CO",
+  "segment": "p-H2CO - He from Green (1991)",
+  "normalised": "p h2co he from green 1991",
+  "uses": [
+   {
+    "id": "prodimo/p-h2co.dat/collisions/He",
+    "database": "prodimo",
+    "file": "p-h2co.dat",
+    "role": "collisions",
+    "partner": "He",
+    "named": null,
+    "text": "p-H2CO - He from Green (1991)"
+   }
+  ],
+  "first_author": "Green",
+  "authors": [],
+  "year": 1991,
+  "bibstem": null,
+  "volume": null,
+  "page": null,
+  "hints": [],
+  "query": "author:\"^Green\" year:1991",
+  "candidates": [],
+  "proposal": null,
+  "proposal_reason": "",
+  "decision": "1991ApJS...76..979G",
+  "comment": "the same paper as for o-H2CO (Green 1991, ApJS 76, 979: H2CO-He rates, both symmetries)"
  }
 ]
