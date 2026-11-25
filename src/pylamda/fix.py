@@ -43,7 +43,7 @@ import numpy as np
 
 from .catalogue import load_catalogue, normalise, split_segments
 from .issues import LamdaReadError
-from .model import PARTNER_IDS, LamdaData, SourceMap, partner_name
+from .model import PARTNER_IDS, PYLAMDA_NOTE, LamdaData, SourceMap, partner_name, pylamda_note
 from .reader import read_string
 from .references import find_identifiers
 from .verify import HC_K, column_mismatches, line_columns
@@ -57,8 +57,10 @@ EXTRA_BLOCK_METHODS: tuple[str, ...] = ("include", "comment")
 TRUST_OPTIONS: tuple[str, ...] = ("id", "name")
 
 
-#: A note line written by :func:`fix` (``! pylamda 0.1.0 fix: ...``); not a reference text.
-FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")
+#: A note line written by pylamda (``! pylamda 0.1.0 fix: ...``); not a reference text.
+#: The same as :data:`pylamda.model.PYLAMDA_NOTE`, which also matches the notes of the
+#: combine commands.
+FIX_NOTE = PYLAMDA_NOTE
 
 
 class FixError(ValueError):
@@ -85,9 +87,7 @@ class FixRecord:
 
     def note(self) -> str:
         """The note line written to the file (``! pylamda 0.1.0 fix: C02 ...``)."""
-        from . import __version__
-
-        return f"! pylamda {__version__} fix: {self.code} {self.message}"
+        return pylamda_note("fix", f"{self.code} {self.message}")
 
 
 # ------------------------------------------------------------------- editing lines

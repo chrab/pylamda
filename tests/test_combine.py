@@ -12,6 +12,7 @@ from pylamda import (
     CollisionSet,
     CombineError,
     LamdaData,
+    __version__,
     add_partner,
     drop_partner,
     read,
@@ -21,7 +22,10 @@ from pylamda import (
 )
 from pylamda.cli import main
 from pylamda.combine import SCALE_DEFAULT_DIGITS, _significant_digits
+from pylamda.model import PYLAMDA_NOTE
 from pylamda.reader import read_string
+
+SCALE = f"! pylamda {__version__} scale-partner: "  # the prefix of a scale-partner note
 
 
 def _o_source() -> LamdaData:
@@ -70,8 +74,8 @@ def test_add_partner():
     assert added.source == "CHIANTI 11.0.2, ion o_1" and added.as_dict()["level_map"] == {"1": 1, "2": 2, "3": 3}
     assert added.warnings == []
     assert data.notes[-1] == (
-        "! Collision partner e added from CHIANTI 11.0.2, ion o_1: 3 of 6 transitions, "
-        "levels matched by energy (max |dE| 0.00825 cm-1)"
+        f"! pylamda {__version__} add-partner: Collision partner e added from CHIANTI 11.0.2, ion o_1: "
+        "3 of 6 transitions, levels matched by energy (max |dE| 0.00825 cm-1)"
     )
     assert data.source_map is None  # the data no longer fit the file
     # too strict a tolerance: the levels do not match
@@ -88,7 +92,9 @@ def test_add_partner_checks():
         add_partner(target, source, "H2")
     # replacing keeps the position
     data, _ = add_partner(target, read(LAMDA / "oatom@lique.dat"), "He", replace_existing=True, source_label="copy")
-    assert data.partners == target.partners and data.notes[-1].startswith("! Collision partner He added from copy")
+    assert data.partners == target.partners and data.notes[-1].startswith(
+        f"! pylamda {__version__} add-partner: Collision partner He added"
+    )
     # matched by index, but with other weights
     bad = dataclasses.replace(source, level_g=np.array([5.0, 1.0, 3.0, 5.0, 1.0]))
     with pytest.raises(CombineError, match="matched level 2 of the target"):
@@ -133,7 +139,9 @@ def test_drop_partner():
     out, dropped = drop_partner(d, "He")
     assert out.partners == ["H", "e", "H+", "p-H2", "o-H2"] and "He" in d.partners  # input unchanged
     assert (dropped.partner, dropped.partner_id, dropped.block, dropped.n_transitions) == ("He", 6, 4, 3)
-    assert out.notes[-1] == "! Collision partner He (block 4, 3 transitions) dropped"
+    assert (
+        out.notes[-1] == f"! pylamda {__version__} drop-partner: Collision partner He (block 4, 3 transitions) dropped"
+    )
     assert dropped.as_dict()["block"] == 4
     with pytest.raises(CombineError, match="no collision partner 'CO'"):
         drop_partner(d, "CO")
@@ -199,7 +207,7 @@ def test_scale_partner_in_place():
     assert c.partner_text == "1 X + H2 -- Ref: scaled (*1.37) X-He from Green (1991)"
     assert (scaled.block, scaled.new_block, scaled.n_transitions, scaled.digits) == (1, 1, 3, 4)
     assert (scaled.kept_source, scaled.replaced_block, scaled.text_factor) == (False, None, 1.37)
-    assert out.notes[-1] == "! Collision partner H2 (block 1, 3 transitions) scaled by 0.985612"
+    assert out.notes[-1] == f"{SCALE}Collision partner H2 (block 1, 3 transitions) scaled by 0.985612"
     assert out.source_map is None
     # the text gives 1.37, the factor is 0.9856; the reference still says "scaled (*1.37)"
     assert len(scaled.warnings) == 2
@@ -218,7 +226,7 @@ def test_scale_partner_change_partner():
     np.testing.assert_array_equal(c.rates, _round(d.collisions[0].rates / 1.37, 4))
     assert (scaled.partner, scaled.partner_id, scaled.new_partner, scaled.new_partner_id) == ("H2", 1, "He", 6)
     assert scaled.warnings == []  # 1/1.37 fits the text; a new reference text
-    assert out.notes[-1] == "! Collision partner H2 (block 1, 3 transitions) scaled by 0.729927 and relabelled He"
+    assert out.notes[-1] == f"{SCALE}Collision partner H2 (block 1, 3 transitions) scaled by 0.729927 and relabelled He"
     assert not {"C02", "C03", "C12"} & {i.code for i in verify(out)}
 
 
@@ -231,7 +239,10 @@ def test_scale_partner_derive():
     np.testing.assert_array_equal(out.collisions[1].rates, _round(d.collisions[0].rates * 1.37, 4))
     assert out.collisions[1].partner_text == "1 X + H2 -- Ref: Lique et al. (2006)"
     assert (scaled.kept_source, scaled.new_block, scaled.warnings) == (True, 2, [])
-    assert out.notes[-1] == "! Collision partner He (block 1, 3 transitions) scaled by 1.37 and added as H2 (block 2)"
+    assert (
+        out.notes[-1]
+        == f"{SCALE}Collision partner He (block 1, 3 transitions) scaled by 1.37 and added as H2 (block 2)"
+    )
 
 
 def test_scale_partner_replace_existing():
@@ -385,3 +396,17 @@ def test_scale_partner_command(tmp_path, capsys):
             main(["scale-partner", str(src), "He", bad, "-o", str(out)])
         assert exc.value.code == 2
     assert "not a number or a fraction a/b" in capsys.readouterr().err
+
+
+def test_notes_are_not_references():
+    """The note lines of the combine commands match PYLAMDA_NOTE, as those of fix do."""
+    d = read(LAMDA / "catom.dat")
+    out, _ = drop_partner(d, "He")
+    out, _ = scale_partner(out, "p-H2", 1.1)
+    out, _ = add_partner(out, read(LAMDA / "catom.dat"), "He")
+    notes = out.notes[-3:]
+    assert [n.split(":")[0] for n in notes] == [
+        f"! pylamda {__version__} {command}" for command in ("drop-partner", "scale-partner", "add-partner")
+    ]
+    assert all(PYLAMDA_NOTE.match(n) for n in notes)
+    assert not PYLAMDA_NOTE.match("! pylamda is a Python package: Smith 2001")

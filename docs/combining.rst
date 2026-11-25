@@ -34,8 +34,8 @@ Adding a partner
    numbers of the target. Temperatures and rate coefficients are copied unchanged.
    Transitions to levels the target does not have are left out.
 3. A note line records where the partner comes from:
-   ``! Collision partner e added from CHIANTI 11.0.2, ion o_1: 3 of 10 transitions,
-   levels matched by energy (max |dE| 0.00825 cm-1)``.
+   ``! pylamda 0.1.0 add-partner: Collision partner e added from CHIANTI 11.0.2, ion o_1:
+   3 of 10 transitions, levels matched by energy (max |dE| 0.00825 cm-1)``.
 
 ``add_partner`` refuses if a matched level has another weight g, or if the target orders
 two levels the other way round (a transition would go from the lower to the higher
@@ -88,7 +88,8 @@ scales twice. :func:`pylamda.scale_partner` handles three cases:
    ``<id> <molecule> + <partner> -- Ref: <reference>``. The reference text stays as it
    was, unless ``reference=`` (``--reference``) gives a new one.
 4. A note line records the operation:
-   ``! Collision partner H2 (block 1, 435 transitions) scaled by 0.729927 and relabelled He``.
+   ``! pylamda 0.1.0 scale-partner: Collision partner H2 (block 1, 435 transitions) scaled
+   by 0.729927 and relabelled He``.
 
 The scaled rates are rounded to as many significant digits as the rates of the source
 have in the file (at least 3; 6 if the data were not read from a file). ``digits=``

@@ -22,7 +22,7 @@ from .combine import CombineError, add_partner, drop_partner, scale_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError, NotLamdaError
-from .model import LamdaData
+from .model import PYLAMDA_NOTE, LamdaData
 from .reader import read, read_string
 from .verify import verify
 from .writer import write
@@ -289,7 +289,7 @@ def _combine(args: argparse.Namespace) -> int:
     for w in warnings:
         print(f"pylamda {args.command}: warning: {w}", file=sys.stderr)
     write(data, args.output)
-    print(data.notes[-1].lstrip("! "), file=sys.stderr)
+    print(PYLAMDA_NOTE.sub("", data.notes[-1]).strip(), file=sys.stderr)  # the note without its prefix
     if args.command == "scale-partner":
         for issue in verify(args.output, select=["C"]):
             print(_issue_line(args.output, issue), file=sys.stderr)

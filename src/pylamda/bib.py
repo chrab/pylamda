@@ -32,7 +32,7 @@ from importlib.resources import files
 from pathlib import Path
 
 from .catalogue import load_catalogue
-from .model import LamdaData
+from .model import PYLAMDA_NOTE, LamdaData
 from .reader import read
 from .references import find_identifiers
 
@@ -150,8 +150,7 @@ def _comment_texts(data: LamdaData) -> list[str]:
     if smap is not None:
         notes_from = smap.notes or len(smap.raw) + 1
         texts += [line for i, line in enumerate(smap.raw, 1) if i < notes_from and line.lstrip().startswith("!")]
-    fix_note = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # pylamda's own fix notes are not references
-    return [t for t in texts if t and t.strip() and not fix_note.match(t)]
+    return [t for t in texts if t and t.strip() and not PYLAMDA_NOTE.match(t)]  # not pylamda's own notes
 
 
 def is_emaa(data: LamdaData) -> bool:

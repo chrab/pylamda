@@ -27,7 +27,7 @@ import numpy as np
 from .catalogue import Catalogue, load_catalogue
 from .formula import formula_mass
 from .issues import CODES, Issue, make_issue, match_codes
-from .model import PARTNERS, BlockSource, CollisionSet, LamdaData, SourceMap, partner_name
+from .model import PARTNERS, PYLAMDA_NOTE, BlockSource, CollisionSet, LamdaData, SourceMap, partner_name
 from .reader import read
 from .references import find_dois
 
@@ -55,7 +55,6 @@ _IDENTIFIER = re.compile(
 _REFERENCE_LIKE = re.compile(
     r"\bet\s+al\b|\b(?:19|20)\d\d\b|\b(?:CDMS|JPL|NIST|HITRAN|ExoMol|CHIANTI|BASECOL|LAMDA|EMAA)\b", re.I
 )
-_FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # a note line of pylamda fix (see pylamda.fix.FIX_NOTE)
 # C13: the partner text says the rates are scaled. The match goes into the message, so it
 # includes a factor right after "scaled": "scaled (*1.37)", "scaled by 1.4", "scaling x1.39"
 _FACTOR = r"(?:[*×x]\s*\d+(?:\.\d+)?|\d+\.\d+)"
@@ -556,7 +555,7 @@ def _check_references(data: LamdaData, add: _Collector, cat: Catalogue | None = 
         texts += [
             line for i, line in enumerate(smap.raw, 1) if line.lstrip().startswith("!") and i not in partner_lines
         ]
-    texts = [t for t in texts if t and t.strip() and not _FIX_NOTE.match(t)]  # not pylamda's own fix notes
+    texts = [t for t in texts if t and t.strip() and not PYLAMDA_NOTE.match(t)]  # not pylamda's own notes
     if not any(_has_identifier(t) or _REFERENCE_LIKE.search(t) for t in texts):
         add(
             "F01",

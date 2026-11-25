@@ -63,6 +63,30 @@ _PARTNER_ALIASES = {
 _COMMENT_MARK = re.compile(r"\s!(?=\s|$)")
 _REF = re.compile(r"\s*-*\s*Ref:\s*", re.I)
 
+#: A note line that pylamda writes (``! pylamda 0.1.0 fix: ...``, ``! pylamda 0.1.0
+#: scale-partner: ...``, see :func:`pylamda_note`). Such lines are not reference texts.
+PYLAMDA_NOTE = re.compile(r"^\s*!\s*pylamda \S+ (?:fix|add-partner|drop-partner|scale-partner):")
+
+
+def pylamda_note(command: str, text: str) -> str:
+    """A note line that records what a pylamda command did to the data.
+
+    Parameters
+    ----------
+    command : str
+        The command: ``"fix"``, ``"add-partner"``, ``"drop-partner"`` or ``"scale-partner"``.
+    text : str
+        What was done.
+
+    Returns
+    -------
+    str
+        ``! pylamda <version> <command>: <text>`` (matches :data:`PYLAMDA_NOTE`).
+    """
+    from . import __version__
+
+    return f"! pylamda {__version__} {command}: {text}"
+
 
 def partner_name(text: str) -> str | None:
     """Canonical partner name of a spelling (``"para-H2"`` -> ``"p-H2"``).

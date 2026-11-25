@@ -131,5 +131,6 @@ identifier) at once:
   written; a match by the text alone is not.
 - From a review file (``pylamda bib --search``), only groups with a decision.
 - Each paper is appended as SciX link; ``&`` in a bibcode is written as ``%26``.
-- The note lines of a fix (``! pylamda ... fix: ...``) are not counted as references by
-  ``check`` and ``bib``.
+- The note lines of pylamda (``! pylamda ... fix: ...``, and the same for
+  ``add-partner``, ``drop-partner`` and ``scale-partner``) are not counted as references
+  by ``check`` and ``bib``.

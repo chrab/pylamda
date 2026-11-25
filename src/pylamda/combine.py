@@ -16,7 +16,7 @@ from dataclasses import asdict, dataclass, field, replace
 import numpy as np
 
 from .compare import match_levels
-from .model import PARTNER_IDS, CollisionSet, LamdaData, partner_name
+from .model import PARTNER_IDS, CollisionSet, LamdaData, partner_name, pylamda_note
 from .verify import _SCALED
 
 #: Default tolerances for matching levels in :func:`add_partner`: energy within
@@ -356,9 +356,10 @@ def add_partner(
         collisions = [new if b == existing[0] else c for b, c in enumerate(target.collisions)]
     else:
         collisions = [*target.collisions, new]
-    note = (
-        f"! Collision partner {key} added from {label}: {added.n_transitions} of {cs.n_transitions} transitions, "
-        f"levels matched by {levels.method} (max |dE| {max_de:.3g} cm-1)"
+    note = pylamda_note(
+        "add-partner",
+        f"Collision partner {key} added from {label}: {added.n_transitions} of {cs.n_transitions} transitions, "
+        f"levels matched by {levels.method} (max |dE| {max_de:.3g} cm-1)",
     )
     return replace(target, collisions=collisions, notes=[*target.notes, note], source_map=None), added
 
@@ -398,7 +399,9 @@ def drop_partner(data: LamdaData, partner: str, *, block: int | None = None) -> 
         b = _one_block(data, partner, block, "the data")
     c = data.collisions[b]
     dropped = DroppedPartner(c.label, c.partner_id, b + 1, c.n_transitions, c.reference)
-    note = f"! Collision partner {c.label} (block {b + 1}, {c.n_transitions} transitions) dropped"
+    note = pylamda_note(
+        "drop-partner", f"Collision partner {c.label} (block {b + 1}, {c.n_transitions} transitions) dropped"
+    )
     collisions = [x for k, x in enumerate(data.collisions) if k != b]
     return replace(data, collisions=collisions, notes=[*data.notes, note], source_map=None), dropped
 
@@ -617,11 +620,12 @@ def scale_partner(
         digits=digits,
         warnings=warnings,
     )
-    note = f"! Collision partner {key} (block {b + 1}, {cs.n_transitions} transitions) scaled by {factor:.6g}"
+    note = f"Collision partner {key} (block {b + 1}, {cs.n_transitions} transitions) scaled by {factor:.6g}"
     if keep:
         note += f" and added as {new_key} (block {new_index + 1})"
     elif new_key != key:
         note += f" and relabelled {new_key}"
     if replaced is not None:
         note += f"; the former {new_key} block (block {replaced + 1}) replaced"
+    note = pylamda_note("scale-partner", note)
     return replace(data, collisions=collisions, notes=[*data.notes, note], source_map=None), scaled
