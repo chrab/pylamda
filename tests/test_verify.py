@@ -274,8 +274,19 @@ def test_p01_excitation_rates(tmp_path):
 
 def test_c13_scaled(tmp_path):
     issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 ! scaled from He rates, Smith 2001 {DOI}"), "C13")
-    assert (issue.line, issue.severity) == (19, "info") and "may scale twice" in issue.message
-    assert _one(_check(tmp_path, "C", partner=f"1 X + H2 ! derived from p-H2 rates {DOI}"), "C13")
+    assert (issue.line, issue.severity) == (19, "info")
+    assert issue.message == 'collision block 1 (H2): comment says rates are scaled "scaled"'
+    issue = _one(_check(tmp_path, "C", partner=f"1 X + H2 ! derived from p-H2 rates {DOI}"), "C13")
+    assert issue.message.endswith('scaled "from p-H2"')
+    # the factor right after "scaled" is part of the quoted text
+    for text, part in [
+        ("1 X + H2 ! scaled (*1.37) X - He from Green (1991)", "scaled (*1.37)"),
+        ("1 X + H2 ! scaled by 1.4 from He", "scaled by 1.4"),
+        ("1 X + H2 ! He rates, scaling x1.39", "scaling x1.39"),
+        ("1 X + H2 ! scaled 1991 data", "scaled"),  # a year is not a factor
+    ]:
+        issue = _one(_check(tmp_path, "C", partner=f"{text} {DOI}"), "C13")
+        assert issue.message.endswith(f'scaled "{part}"'), issue.message
     # on by default (not a physics check)
     assert [i.code for i in _check(tmp_path, partner=f"1 X + H2 ! scaling of He rates {DOI}")] == ["C13"]
     assert _check(tmp_path, "C", partner=f"1 X + H2 ! Smith 2001 {DOI}") == []

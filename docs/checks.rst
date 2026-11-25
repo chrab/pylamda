@@ -97,7 +97,7 @@ code       severity  issue
 ``C10``    error     upper or lower level outside 1..NLEV, or upper = lower
 ``C11``    warning   the partner text names a partner outside the standard (read by its ID)
 ``C12``    warning   the partner text names He, the ID is H2, and the text says "scaled"
-``C13``    info      the partner text says the rates are scaled (codes that scale may scale twice)
+``C13``    info      the partner text says the rates are scaled
 =========  ========  =========================================================================
 
 pylamda reads every block by its partner ID, as RADEX does. ProDiMo reads the name in
@@ -112,9 +112,10 @@ right and the name is wrong. C12 reports such a line instead of C02 if the name 
 the ID is 1, 2 or 3, and the text says "scaled", "scaling" or gives a factor such as
 ``*1.39`` or ``x1.4``.
 
-C13 is a hint: the partner text says "scaled", "scaling" or "from H2" (also "from
-p-H2", ...). ProDiMo scales He rates to H2 itself; rates that are already scaled are then
-scaled twice. :func:`pylamda.scale_partner` can turn such rates back (:doc:`combining`).
+C13 is an info: the partner text says "scaled", "scaling" or "from H2" (also "from
+p-H2", ...). The message quotes the matched text, with a factor that follows it, e.g.
+``"scaled (*1.37)"``; check the reference for the details. :func:`pylamda.scale_partner`
+can scale rates of one partner to another one, or back (:doc:`combining`).
 C13 was the physics check P02 until 2026-11-23; it is a check of the partner text, so it
 runs by default.
 

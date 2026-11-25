@@ -56,8 +56,13 @@ _REFERENCE_LIKE = re.compile(
     r"\bet\s+al\b|\b(?:19|20)\d\d\b|\b(?:CDMS|JPL|NIST|HITRAN|ExoMol|CHIANTI|BASECOL|LAMDA|EMAA)\b", re.I
 )
 _FIX_NOTE = re.compile(r"^\s*!\s*pylamda \S+ fix:")  # a note line of pylamda fix (see pylamda.fix.FIX_NOTE)
-# C13: the partner text says the rates are scaled
-_SCALED = re.compile(r"\bscal(?:ed|ing)\b|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b", re.I)
+# C13: the partner text says the rates are scaled. The match goes into the message, so it
+# includes a factor right after "scaled": "scaled (*1.37)", "scaled by 1.4", "scaling x1.39"
+_FACTOR = r"(?:[*×x]\s*\d+(?:\.\d+)?|\d+\.\d+)"
+_SCALED = re.compile(
+    rf"\bscal(?:ed|ing)\b(?:\s*\(\s*{_FACTOR}\s*\)|\s+(?:by\s+)?{_FACTOR})?|\bfrom\s+(?:[op]-|ortho-|para-)?H2\b",
+    re.I,
+)
 # C12: "scaled"/"scaling", or a scaling factor such as "*1.39", "x 1.4", "×1.37"
 _HE_SCALED = re.compile(r"\bscal(?:ed|ing)\b|(?:\*|×|\bx)\s*1\.\d+", re.I)
 
@@ -481,13 +486,8 @@ def _check_collisions(data: LamdaData, add: _Collector) -> None:
         line = src.partner if src else None
         _check_partner(data, b, c, add, line)
         text = (c.partner_text or c.reference).strip()
-        if _SCALED.search(text):
-            add(
-                "C13",
-                f"{_block_name(b, c)}: the partner text says the rates are scaled ({text!r}); codes that scale "
-                "rates themselves (e.g. ProDiMo for He) may scale twice",
-                line,
-            )
+        if scaled := _SCALED.search(text):
+            add("C13", f'{_block_name(b, c)}: comment says rates are scaled "{scaled.group()}"', line)
         if c.partner_id in first_block:
             add(
                 "C03",
