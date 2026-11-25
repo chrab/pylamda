@@ -1,7 +1,7 @@
 {
  "description": "Reviewed free-text references of LAMDA files (pylamda design document, section 10.1). entries: key -> bibcode, DOI. lookup: one row per place a reference text occurs (text normalised: lower case, punctuation as blanks); key null = reviewed, not in SciX. Built by tools/catalogue.py.",
  "version": 1,
- "updated": "2026-11-23",
+ "updated": "2026-11-25",
  "entries": {
   "Abrahamsson2007": {
    "bibcode": "2007ApJ...654.1171A",
@@ -146,6 +146,11 @@
   "Green1989": {
    "bibcode": "1989ApJS...70..813G",
    "doi": "10.1086/191358",
+   "reviewed": true
+  },
+  "Green1991": {
+   "bibcode": "1991ApJS...76..979G",
+   "doi": "10.1086/191585",
    "reviewed": true
   },
   "Green1994": {
@@ -1818,6 +1823,16 @@
    "partner": "p-H2",
    "text": "from daniel et al 2011 assuming thermal o p for h2 scaled to oh2s",
    "key": "Daniel2011",
+   "status": "found"
+  },
+  {
+   "database": "prodimo",
+   "molecule": "o-H2CO",
+   "file": "o-h2co.dat",
+   "role": "collisions",
+   "partner": "He",
+   "text": "o h2co he from green 1991",
+   "key": "Green1991",
    "status": "found"
   },
   {

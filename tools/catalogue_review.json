@@ -9126,5 +9126,81 @@
   "proposal_reason": "best candidate: species in the title, clear lead (check it)",
   "decision": "2007A&A...472.1029F",
   "comment": ""
+ },
+ {
+  "key": "o-H2CO|o h2co he from green 1991",
+  "molecule": "o-H2CO",
+  "segment": "o-H2CO - He from Green (1991)",
+  "normalised": "o h2co he from green 1991",
+  "uses": [
+   {
+    "id": "prodimo/o-h2co.dat/collisions/He",
+    "database": "prodimo",
+    "file": "o-h2co.dat",
+    "role": "collisions",
+    "partner": "He",
+    "named": null,
+    "text": "o-H2CO - He from Green (1991)"
+   }
+  ],
+  "first_author": "Green",
+  "authors": [],
+  "year": 1991,
+  "bibstem": null,
+  "volume": null,
+  "page": null,
+  "hints": [],
+  "query": "author:\"^Green\" year:1991",
+  "candidates": [
+   {
+    "bibcode": "1991JChPh..94.1346G",
+    "score": 0.25,
+    "why": "first author, partner in title, journal article",
+    "title": "Calculations of H<SUB>2</SUB>O microwave line broadening in collisions with He atoms: Sensitivity to potential energy su",
+    "authors": "Green, Sheldon; Defrees, D. J.; McLean, A. D.",
+    "pub": "Journal of Chemical Physics 94, 1346",
+    "doi": "10.1063/1.459992"
+   },
+   {
+    "bibcode": "1991RSPSA.432..171G",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "A re-examination of the basic postulates of thermomechanics",
+    "authors": "Green, Albert Edward; Naghdi, P. M.",
+    "pub": "Proceedings of the Royal Society of London Series A 432, 171",
+    "doi": "10.1098/rspa.1991.0012"
+   },
+   {
+    "bibcode": "1991PASP..103..209G",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Limitations Imposed on Statistical Studies of Galactic Supernova Remnants by Observational Selection Effects",
+    "authors": "Green, D. A.",
+    "pub": "Publications of the Astronomical Society of the Pacific 103, 209",
+    "doi": "10.1086/132810"
+   },
+   {
+    "bibcode": "1991ApJS...76..979G",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "Collisional Excitation of Formaldehyde in ``Hot'' Interstellar Molecular Regions",
+    "authors": "Green, Sheldon",
+    "pub": "The Astrophysical Journal Supplement Series 76, 979",
+    "doi": "10.1086/191585"
+   },
+   {
+    "bibcode": "1991Natur.354..199G",
+    "score": 0.15,
+    "why": "first author, journal article",
+    "title": "A three-dimensional seismic image of the crust and upper mantle beneath the Kenya rift",
+    "authors": "Green, W. V.; Meyer, Robert P.; Achauer, Ulrich",
+    "pub": "Nature 354, 199",
+    "doi": "10.1038/354199a0"
+   }
+  ],
+  "proposal": null,
+  "proposal_reason": "",
+  "decision": "1991ApJS...76..979G",
+  "comment": ""
  }
 ]
