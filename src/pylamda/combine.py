@@ -10,13 +10,17 @@ note line.
 from __future__ import annotations
 
 import math
+import os
 import re
 from dataclasses import asdict, dataclass, field, replace
+from pathlib import Path
 
 import numpy as np
 
 from .compare import match_levels
+from .fix import _Doc, format_like
 from .model import PARTNER_IDS, CollisionSet, LamdaData, partner_name, pylamda_note
+from .reader import read_string
 from .verify import _SCALED
 
 #: Default tolerances for matching levels in :func:`add_partner`: energy within
@@ -629,3 +633,73 @@ def scale_partner(
         note += f"; the former {new_key} block (block {replaced + 1}) replaced"
     note = pylamda_note("scale-partner", note)
     return replace(data, collisions=collisions, notes=[*data.notes, note], source_map=None), scaled
+
+
+def patch_scale_partner(
+    source: LamdaData | str | os.PathLike,
+    partner: str,
+    factor: float,
+    *,
+    to: str | None = None,
+    block: int | None = None,
+    reference: str | None = None,
+    digits: int | None = None,
+) -> tuple[str, ScaledPartner]:
+    """:func:`scale_partner` on the text of a file: only the scaled block changes.
+
+    The layout of the file stays, as in :func:`pylamda.patch`. Three things change:
+
+    * the partner line, written as ``<id> <molecule> + <partner> -- Ref: <reference>``;
+    * the rate values of the block, each in the style of the number it replaces
+      (exponent letter and digits, column), with the significant digits of
+      :func:`scale_partner`; values that do not change (0) stay as written;
+    * one note line at the end of the file.
+
+    Adding a block (``keep``) or replacing one changes the structure of the file; use
+    :func:`scale_partner` and :func:`pylamda.write` for these.
+
+    Parameters
+    ----------
+    source : LamdaData, str or os.PathLike
+        The file, or data read from a file.
+    partner, factor, to, block, reference, digits
+        As in :func:`scale_partner`.
+
+    Returns
+    -------
+    text : str
+        The patched file.
+    scaled : ScaledPartner
+        What was done, with warnings.
+
+    Raises
+    ------
+    CombineError
+        As :func:`scale_partner`; also if ``source`` is data not read from a file, or
+        ``to`` is a partner that the data have already.
+    """
+    if isinstance(source, LamdaData):
+        if source.source_map is None:
+            raise CombineError("the layout can only be kept for data read from a file")
+        data = source
+        text = "\n".join(data.source_map.raw) + "\n"
+    else:
+        text = Path(source).read_bytes().decode("utf-8", errors="replace")  # keeps "\r\n"
+        data = read_string(text, str(source))
+    new, scaled = scale_partner(data, partner, factor, to=to, block=block, reference=reference, digits=digits)
+    # scale_partner checked that "to" is new unless replace_existing, which is not offered here
+    b = scaled.block - 1
+    old_c, new_c = data.collisions[b], new.collisions[b]
+    doc = _Doc(text, data)
+    src = data.source_map.blocks[b]
+    doc.lines[src.partner - 1] = new_c.partner_text
+    ntemp = len(old_c.temperatures)
+    for k, first in enumerate(src.rows):
+        positions = doc.group(int(first), 3 + ntemp)[3:]
+        for j, (line, t) in enumerate(positions):
+            before, after = float(old_c.rates[k, j]), float(new_c.rates[k, j])
+            if before == after or (math.isnan(before) and math.isnan(after)):
+                continue
+            doc.replace(line, {t: format_like(doc.tokens(line)[t], after, digits=scaled.digits)})
+    doc.append(new.notes[-1])
+    return doc.text(), scaled

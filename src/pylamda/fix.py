@@ -132,7 +132,7 @@ def replace_tokens(line: str, replacements: dict[int, str]) -> str:
     return "".join(out)
 
 
-def format_like(token: str, value: float) -> str:
+def format_like(token: str, value: float, digits: int | None = None) -> str:
     """``value`` written in the style of ``token`` (decimals, exponent letter and digits).
 
     At least three significant digits are kept in exponential notation.
@@ -143,6 +143,10 @@ def format_like(token: str, value: float) -> str:
         A number as written in the file (``"1.2e-11"``, ``"3.0D-10"``, ``"115.27"``).
     value : float
         The new value.
+    digits : int or None, optional
+        Significant digits of the new text, instead of the decimals of ``token``: in
+        exponential notation ``digits - 1`` decimals, in fixed notation at least as many
+        decimals as ``digits`` significant digits need.
 
     Returns
     -------
@@ -153,8 +157,10 @@ def format_like(token: str, value: float) -> str:
     if not math.isfinite(value) or not m or not (m.group(2) or m.group(3)):
         return repr(float(value)) if math.isfinite(value) else "NaN"
     decimals = len(m.group(3) or "")
+    if digits is not None and not m.group(4) and value != 0:
+        decimals = max(decimals, digits - 1 - math.floor(math.log10(abs(value))))
     if m.group(4):
-        text = f"{value:.{max(decimals, 2)}e}"
+        text = f"{value:.{max(decimals, 2) if digits is None else max(digits - 1, 0)}e}"
         mant, exp = text.split("e")
         sign = "-" if int(exp) < 0 else ("+" if m.group(5) else "")
         digits = str(abs(int(exp))).rjust(len(m.group(6)), "0")

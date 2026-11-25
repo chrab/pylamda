@@ -15,10 +15,11 @@ import json
 import sys
 from collections import Counter
 from collections.abc import Sequence
+from pathlib import Path
 
 from . import __version__
 from .bib import BibError, bibtex
-from .combine import SCALE_MIN_DIGITS, CombineError, add_partner, drop_partner, scale_partner
+from .combine import SCALE_MIN_DIGITS, CombineError, add_partner, drop_partner, patch_scale_partner, scale_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError, NotLamdaError
@@ -224,13 +225,17 @@ def _parser() -> argparse.ArgumentParser:
         "scale-partner",
         help="multiply the collision rates of one partner by a factor",
         description="Multiply the collision rates of one partner by FACTOR: in place, as another partner (--to), "
-        "or as an added partner (--to with --keep). Writes the normalised layout and shows the C checks of the "
-        "result.",
+        "or as an added partner (--to with --keep). Keeps the layout of FILE: only the partner line and the rates "
+        "of the block change, and a note line is added (--normalise, --keep and --replace write the normalised "
+        "layout). Shows the C checks of the result.",
     )
     scale.add_argument("file", metavar="FILE")
     scale.add_argument("partner", metavar="PARTNER", help="the partner to scale (by ID)")
     scale.add_argument("factor", metavar="FACTOR", type=_factor, help="a number or a fraction a/b, e.g. 1/1.37")
-    scale.add_argument("-o", "--output", required=True, metavar="OUT", help="the new file (not FILE)")
+    where = scale.add_mutually_exclusive_group(required=True)
+    where.add_argument("-o", "--output", metavar="OUT", help="the new file (not FILE)")
+    where.add_argument("--in-place", action="store_true", help="change FILE itself")
+    scale.add_argument("--normalise", action="store_true", help="write the normalised layout (as pylamda fix)")
     scale.add_argument("--to", metavar="NAME", help="the partner of the scaled block (default: PARTNER)")
     scale.add_argument("--keep", action="store_true", help="keep the PARTNER block and add the scaled block")
     scale.add_argument("--block", type=int, help="the block, if the file has several with the partner's ID")
@@ -245,17 +250,20 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _same_file(a: str, b: str) -> bool:
-    from pathlib import Path
-
     return Path(a).resolve() == Path(b).resolve()
 
 
 def _combine(args: argparse.Namespace) -> int:
     inputs = [args.target, args.source] if args.command == "add-partner" else [args.file]
     warnings: list[str] = []
-    if any(_same_file(args.output, f) for f in inputs):
+    if getattr(args, "in_place", False):
+        args.output = args.file
+    elif any(_same_file(args.output, f) for f in inputs):
         print(f"pylamda {args.command}: the output must be a new file, not {args.output}", file=sys.stderr)
         return 2
+    # scale-partner keeps the layout, unless a block is added or replaced
+    keep_layout = args.command == "scale-partner" and not (args.normalise or args.keep or args.replace)
+    text = None
     try:
         if args.command == "add-partner":
             data, record = add_partner(
@@ -268,6 +276,17 @@ def _combine(args: argparse.Namespace) -> int:
                 replace_existing=args.replace,
                 source_label=args.source_label,
                 block=args.block,
+            )
+            warnings = record.warnings
+        elif keep_layout:
+            text, record = patch_scale_partner(
+                args.file,
+                args.partner,
+                args.factor,
+                to=args.to,
+                block=args.block,
+                reference=args.reference,
+                digits=args.digits,
             )
             warnings = record.warnings
         elif args.command == "scale-partner":
@@ -293,8 +312,13 @@ def _combine(args: argparse.Namespace) -> int:
         return 2
     for w in warnings:
         print(f"pylamda {args.command}: warning: {w}", file=sys.stderr)
-    write(data, args.output)
-    print(PYLAMDA_NOTE.sub("", data.notes[-1]).strip(), file=sys.stderr)  # the note without its prefix
+    if text is not None:
+        Path(args.output).write_bytes(text.encode("utf-8"))
+        note = text.rstrip("\r\n").splitlines()[-1]
+    else:
+        write(data, args.output)
+        note = data.notes[-1]
+    print(PYLAMDA_NOTE.sub("", note).strip(), file=sys.stderr)  # the note without its prefix
     if args.command == "scale-partner":
         for issue in verify(args.output, select=["C"]):
             print(_issue_line(args.output, issue), file=sys.stderr)
@@ -427,7 +451,6 @@ def _compare(args: argparse.Namespace) -> int:
 def _bib_search(args: argparse.Namespace, datas: list, token: str | None) -> int:
     """``pylamda bib --search``: SciX candidates into the review file; returns an exit status."""
     import os
-    from pathlib import Path
 
     from .bib import HttpClient, scix_token
     from .catalogue import load_catalogue
@@ -484,15 +507,11 @@ def _bib(args: argparse.Namespace) -> int:
             status = 2
     token = None
     if args.scix_token_file:
-        from pathlib import Path
-
         lines = Path(args.scix_token_file).read_text(encoding="utf-8").splitlines()
         token = lines[0].strip() if lines else None
     keys_path = None
     keys = None
     if args.keys:
-        from pathlib import Path
-
         keys_path = Path(args.keys)
         keys = json.loads(keys_path.read_text(encoding="utf-8")) if keys_path.is_file() else {}
     try:
@@ -536,8 +555,6 @@ def _bib(args: argparse.Namespace) -> int:
 
 
 def _fix(args: argparse.Namespace) -> int:
-    from pathlib import Path
-
     options = {
         "trust": args.trust,
         "sort_levels": not args.no_sort,
@@ -595,7 +612,6 @@ def _fix(args: argparse.Namespace) -> int:
 def _normalised_text(data: LamdaData) -> str:
     """The text :func:`write` gives for ``data``."""
     import tempfile
-    from pathlib import Path
 
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "fixed.dat"

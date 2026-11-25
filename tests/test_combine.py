@@ -21,7 +21,7 @@ from pylamda import (
     write,
 )
 from pylamda.cli import main
-from pylamda.combine import SCALE_DEFAULT_DIGITS, _significant_digits
+from pylamda.combine import SCALE_DEFAULT_DIGITS, _significant_digits, patch_scale_partner
 from pylamda.model import PYLAMDA_NOTE
 from pylamda.reader import read_string
 
@@ -410,3 +410,75 @@ def test_notes_are_not_references():
     ]
     assert all(PYLAMDA_NOTE.match(n) for n in notes)
     assert not PYLAMDA_NOTE.match("! pylamda is a Python package: Smith 2001")
+
+
+# ------------------------------------------------------------------- scale_partner, keeping the layout
+SCALED_RATES = (
+    "   1    2    1  5.500E-11  0.000E+00\n   2    3    1  1.500E-11  2.0E-11\n   3    3    2  1.000E-10  4.250E-11"
+)
+
+
+def _he_as_h2_file(tmp_path, newline: str = "\n"):
+    """A ProDiMo-style file: H2 rates that are He rates times 1.37, columns, E notation."""
+    text = make_lamda(partner="1 X + H2 ! scaled (*1.37) X-He from Smith (2001)", rates=SCALED_RATES)
+    path = tmp_path / "x.dat"
+    path.write_bytes(text.replace("\n", newline).encode())
+    return path, text.splitlines()
+
+
+def test_patch_scale_partner(tmp_path):
+    """Only the partner line, the changed rate values and one note line change."""
+    path, before = _he_as_h2_file(tmp_path)
+    text, scaled = patch_scale_partner(path, "H2", 1 / 1.37, to="He", reference="X-He from Smith (2001)")
+    after = text.splitlines()
+    assert len(after) == len(before) + 1 and after[-1].startswith(f"! pylamda {__version__} scale-partner: ")
+    changed = [k for k, (x, y) in enumerate(zip(before, after, strict=False)) if x != y]
+    partner = before.index("1 X + H2 ! scaled (*1.37) X-He from Smith (2001)")
+    first = before.index("!TRANS + UP + LOW + COLLRATES(cm^3 s^-1)") + 1
+    assert changed == [partner, first, first + 1, first + 2]
+    assert after[partner] == "6 X + He -- Ref: X-He from Smith (2001)"
+    # each number in its style and column: 4 significant digits as written; 0 stays as written
+    assert after[first : first + 3] == [
+        "   1    2    1  4.015E-11  0.000E+00",
+        "   2    3    1  1.095E-11 1.460E-11",  # the right end stays; one blank is left
+        "   3    3    2  7.299E-11  3.102E-11",
+    ]
+    assert scaled.digits == 4 and scaled.new_partner == "He" and scaled.warnings == []
+    back = read_string(text)
+    assert back.partners == ["He"] and back.issues == []
+    np.testing.assert_allclose(back.collisions[0].rates[0], [4.015e-11, 0.0])
+    assert "C13" not in [i.code for i in verify(back)]
+
+
+def test_patch_scale_partner_keeps_crlf_and_refuses(tmp_path):
+    path, _ = _he_as_h2_file(tmp_path, newline="\r\n")
+    text, _ = patch_scale_partner(path, "H2", 1 / 1.37, to="He")
+    assert text.count("\r\n") == text.count("\n") and text.endswith("\r\n")
+    # data without a file, or a partner the data have already
+    with pytest.raises(CombineError, match="only be kept for data read from a file"):
+        patch_scale_partner(dataclasses.replace(read(path), source_map=None), "H2", 0.5)
+    with pytest.raises(CombineError, match="already has collision partner"):
+        patch_scale_partner(LAMDA / "catom.dat", "He", 1.37, to="p-H2")
+
+
+def test_scale_partner_command_keeps_the_layout(tmp_path, capsys):
+    path, before = _he_as_h2_file(tmp_path)
+    ref = ["--reference", "X-He from Smith (2001)"]
+    assert main(["scale-partner", str(path), "H2", "1/1.37", "--to", "He", *ref, "--in-place"]) == 0
+    after = path.read_text().splitlines()
+    partner = before.index("1 X + H2 ! scaled (*1.37) X-He from Smith (2001)")
+    assert after[:partner] == before[:partner]  # the header, levels and lines as they were
+    assert "   1    2    1  4.015E-11  0.000E+00" in after
+    assert (
+        "Collision partner H2 (block 1, 3 transitions) scaled by 0.729927 and relabelled He" in capsys.readouterr().err
+    )
+    # --normalise: the layout of pylamda.write
+    path, _ = _he_as_h2_file(tmp_path)
+    out = tmp_path / "n.dat"
+    assert main(["scale-partner", str(path), "H2", "1/1.37", "--to", "He", "--normalise", "-o", str(out)]) == 0
+    assert "    1     2     1 4.015e-11 0.000e+00" in out.read_text().splitlines()
+    # --keep adds a block: always the normalised layout
+    assert main(["scale-partner", str(path), "H2", "1/1.37", "--to", "He", "--keep", "-o", str(out)]) == 0
+    assert read(out).partners == ["H2", "He"]
+    with pytest.raises(SystemExit):  # -o or --in-place, not both
+        main(["scale-partner", str(path), "H2", "2", "--in-place", "-o", str(out)])

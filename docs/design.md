@@ -451,9 +451,16 @@ text names another partner than the ID (C02/C11/C12), a factor in the text that 
 neither the factor nor its inverse, an unusual direction (He -> H2 with < 1, H2 -> He
 with > 1), a pair other than He and H2/p-H2/o-H2, H2 next to p-H2/o-H2 (C04), a kept
 reference text that mentions scaling. The rates are rounded to the significant digits
-of the source as written (at least 3; 6 without a source map). Normalised layout only.
-CLI `pylamda scale-partner FILE PARTNER FACTOR` (FACTOR also as `a/b`); it prints the C
-issues of the result.
+of the source as written (at least 3; 6 without a source map). CLI `pylamda
+scale-partner FILE PARTNER FACTOR` (FACTOR also as `a/b`); it prints the C issues of the
+result.
+
+Added on 2026-11-25: `patch_scale_partner(source, partner, factor, to=, ...)` keeps the
+layout of the file (as `patch` for the fixes): only the partner line (normalised), the
+changed rate values (in the style of the old number, with the digits of
+`scale_partner`) and a note line change. Not for `keep` or `replace_existing`, which
+add or remove a block. The CLI keeps the layout by default (`-o OUT` or `--in-place`);
+`--normalise`, `--keep` and `--replace` write the normalised layout.
 
 ## 10. References and BibTeX
 

@@ -77,8 +77,8 @@ scales twice. :func:`pylamda.scale_partner` handles three cases:
 
 .. code-block:: bash
 
-   pylamda scale-partner hcn.dat H2 1/1.37 --to He --reference "Green & Thaddeus (1974)" -o hcn_he.dat
-   pylamda scale-partner hcn_he.dat He 1.37 --to H2 --keep -o hcn_he_h2.dat
+   pylamda scale-partner hcn.dat H2 1/1.37 --to He --reference "Green & Thaddeus (1974)" --in-place
+   pylamda scale-partner hcn.dat He 1.37 --to H2 --keep -o hcn_he_h2.dat
 
 1. The partner is found by its ID, as everywhere in pylamda. ``block=`` (``--block``)
    chooses among several blocks with one ID.
@@ -94,6 +94,20 @@ scales twice. :func:`pylamda.scale_partner` handles three cases:
 The scaled rates are rounded to as many significant digits as the rates of the source
 have in the file (at least 3; 6 if the data were not read from a file). ``digits=``
 (``--digits``) sets another number.
+
+**Keeping the layout.** :func:`pylamda.patch_scale_partner` does the same on the text
+of the file, as :func:`pylamda.patch` does for the fixes. Only the partner line, the
+rate values of the block (each in the style and column of the number it replaces; a 0
+stays as written) and the note line at the end change; the rest of the file stays as
+it is. The command ``scale-partner`` does this by default (``-o OUT`` or
+``--in-place``). Adding a block (``--keep``) or replacing one (``--replace``) changes
+the structure of the file: these, and ``--normalise``, write the normalised layout
+(:func:`pylamda.write`).
+
+.. code-block:: python
+
+   text, scaled = pylamda.patch_scale_partner("hcn.dat", "H2", 1 / 1.37, to="He")
+   Path("hcn.dat").write_text(text)
 
 ``scale_partner`` refuses a factor that is not finite and > 0, a partner outside the
 standard, ``keep=True`` with the same partner (two blocks with one ID, check C03), and a

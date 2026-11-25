@@ -228,12 +228,14 @@ pylamda scale-partner
 
 .. code-block:: text
 
-   pylamda scale-partner FILE PARTNER FACTOR -o OUT [--to NAME] [--keep] [--block N]
-                         [--replace] [--reference TEXT] [--digits N]
+   pylamda scale-partner FILE PARTNER FACTOR (-o OUT | --in-place) [--to NAME] [--keep]
+                         [--block N] [--replace] [--reference TEXT] [--digits N] [--normalise]
 
 Multiply the collision rates of one partner by ``FACTOR`` (a number or a fraction
-``a/b``, e.g. ``1/1.37``). See :doc:`combining`. Writes the normalised layout to a new
-file (``OUT`` must not be ``FILE``), prints the warnings and the note line, and then the
-C issues of the new file (``pylamda check --select C``). Exit codes: 0 done, 2 an error
+``a/b``, e.g. ``1/1.37``). See :doc:`combining`. Keeps the layout of ``FILE``: only the
+partner line and the rates of the block change, and a note line is added at the end.
+``--normalise``, ``--keep`` and ``--replace`` write the normalised layout. Writes a new
+file (``-o OUT``, not ``FILE``) or changes ``FILE`` (``--in-place``), prints the warnings
+and the note line, and then the C issues of the result (``pylamda check --select C``). Exit codes: 0 done, 2 an error
 (file not readable, partner missing or ambiguous, factor not > 0, partner exists
 already).
