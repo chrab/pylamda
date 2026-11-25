@@ -18,7 +18,7 @@ from collections.abc import Sequence
 
 from . import __version__
 from .bib import BibError, bibtex
-from .combine import CombineError, add_partner, drop_partner, scale_partner
+from .combine import SCALE_MIN_DIGITS, CombineError, add_partner, drop_partner, scale_partner
 from .compare import compare
 from .fix import OPTION_HINTS, FixError, fix, patch
 from .issues import CODES, SEVERITIES, Issue, LamdaReadError, NotLamdaError
@@ -237,7 +237,9 @@ def _parser() -> argparse.ArgumentParser:
     scale.add_argument("--replace", action="store_true", help="replace the block of --to if the file has it")
     scale.add_argument("--reference", metavar="TEXT", help="new reference text of the scaled block")
     scale.add_argument(
-        "--digits", type=int, help="significant digits of the scaled rates (default: as written in FILE)"
+        "--digits",
+        type=int,
+        help=f"significant digits of the scaled rates (default: as written in FILE, at least {SCALE_MIN_DIGITS})",
     )
     return parser
 
