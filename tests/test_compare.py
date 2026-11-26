@@ -264,7 +264,7 @@ def test_compare_added_transition_changes_total_rate():
     keep = np.setdiff1d(np.arange(p.n_transitions), rows[:1])  # a lacks one row out of level 3
     a = _with(d, p, up=p.up[keep], low=p.low[keep], rates=p.rates[keep])
     pd = compare(a, d).partners["p-H2"]
-    assert pd.transitions_added == ["2 -> 0"] and pd.n_rates_changed == 0
+    assert pd.transitions_added == ["2 -> 0 (transition 2)"] and pd.n_rates_changed == 0  # no file: no line
     k = pd.total_rate
     assert k.n_changed >= 1 and k.max_at.startswith("level 2 at") and k.max_ratio > 1
     assert k.by_eup[0]["eup_min"] == 0.0 and k.by_eup[0]["n_changed"] >= 1
@@ -311,6 +311,33 @@ def test_files_and_level_errors(tmp_path):
     d.line_up[0] = 99
     with pytest.raises(ValueError, match="b: radiative transitions: 1 transition"):
         compare(_co(), d)
+
+
+def test_added_and_removed_with_transition_and_line(tmp_path):
+    """A transition with another lower level: added in B, removed in A, each with its number and line."""
+    d = _co()
+    write(d, tmp_path / "a.dat")
+    k = 5
+    low = int(d.line_low[k])
+    assert low > 1
+    d.line_low[k] = low - 1  # another lower level, same upper level
+    p = d.partner("p-H2")
+    p.low[3] = int(p.low[3]) + 1  # (4, 1) -> (4, 2): a pair that row 5 has already
+    write(d, tmp_path / "b.dat")
+    diff = compare(tmp_path / "a.dat", tmp_path / "b.dat")
+    lines = (tmp_path / "b.dat").read_text().splitlines()
+    first = lines.index("!TRANS + UP + LOW + EINSTEINA(s^-1) + FREQ(GHz) + E_u(K)") + 1
+    assert diff.lines_removed[0].endswith(f"(transition {k + 1}, line {first + k + 1})")
+    assert diff.lines_added[0].endswith(f"(transition {k + 1}, line {first + k + 1})")
+    assert lines[first + k].split()[0] == str(k + 1)  # that line is the transition
+    pd = diff.partners["p-H2"]
+    rows = [line.split() for line in lines]
+    assert len(pd.transitions_removed) == 1 and "(transition 4, line " in pd.transitions_removed[0]
+    assert len(pd.transitions_added) == 1 and "(transition 5, line " in pd.transitions_added[0]  # the 2nd (4, 2)
+    n = int(pd.transitions_added[0].rsplit("line ", 1)[1].rstrip(")"))
+    assert rows[n - 1][:3] == ["5", "4", "2"]
+    text = "\n".join(diff.summary())
+    assert f"  added: {diff.lines_added[0]}" in text and f"  removed: {diff.lines_removed[0]}" in text
 
 
 def test_as_dict_is_json():

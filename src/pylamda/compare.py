@@ -423,7 +423,9 @@ class PartnerDiff:
     temperatures_added, temperatures_removed : list of float
         Grid temperatures only in ``b`` / only in ``a``.
     transitions_added, transitions_removed : list of str
-        Transitions only in ``b`` / only in ``a`` (``"upper -> lower"`` level labels).
+        Transitions only in ``b`` / only in ``a``: ``"upper -> lower"`` level labels, the
+        running number in the block and the line in that file
+        (``"6 -> 4 (transition 12, line 140)"``; no line for data not read from a file).
     n_rates_compared : int
         Number of (transition, temperature) rates compared: common transitions on the
         common temperatures.
@@ -521,7 +523,8 @@ class LamdaDiff:
     max_energy_change : float
         Largest energy change of a matched level [cm-1].
     lines_added, lines_removed : list of str
-        Radiative transitions only in ``b`` / only in ``a``.
+        Radiative transitions only in ``b`` / only in ``a``, with the running number and the
+        line in that file (``"6_5_2 -> 4_4_1 (transition 76, line 131)"``).
     n_a_changed : int
         Matched transitions whose A differs by more than ``rtol``.
     max_a_change : float
@@ -764,6 +767,28 @@ def _keys(data: LamdaData) -> dict[str, CollisionSet]:
     return out
 
 
+def _where(k: int, rows: np.ndarray | None) -> str:
+    """`` (transition 76, line 131)``: the running number (1-based) and the line in the file, if known."""
+    line = f", line {int(rows[k])}" if rows is not None and k < len(rows) else ""
+    return f" (transition {k + 1}{line})"
+
+
+def _line_rows(data: LamdaData) -> np.ndarray | None:
+    """The file lines of the radiative transitions, if the source map fits the data."""
+    smap = data.source_map
+    return smap.lines if smap is not None and len(smap.lines) == data.n_lines else None
+
+
+def _block_rows(data: LamdaData, c: CollisionSet) -> np.ndarray | None:
+    """The file lines of the rate rows of block ``c`` of ``data``, if the source map fits."""
+    smap = data.source_map
+    b = next((i for i, x in enumerate(data.collisions) if x is c), None)
+    if smap is None or b is None or len(smap.blocks) != len(data.collisions):
+        return None
+    rows = smap.blocks[b].rows
+    return rows if len(rows) == c.n_transitions else None
+
+
 def _key_map(ups: np.ndarray, lows: np.ndarray, mapping: dict[int, int] | None = None) -> dict[tuple, int]:
     """{(u, l, n) in b numbering: row} for transitions; ``n`` counts repeated (u, l) pairs."""
     out = {}
@@ -877,10 +902,11 @@ def _compare_partner(
     xa = _key_map(ca.up, ca.low, levels.mapping)
     xb = _key_map(cb.up, cb.low)
     kept = {v for key, v in xa.items() if key in xb}
+    rows_a, rows_b = _block_rows(a, ca), _block_rows(b, cb)
     pd.transitions_removed = [
-        tlabel(a, int(ca.up[k]), int(ca.low[k])) for k in range(ca.n_transitions) if k not in kept
+        tlabel(a, int(ca.up[k]), int(ca.low[k])) + _where(k, rows_a) for k in range(ca.n_transitions) if k not in kept
     ]
-    pd.transitions_added = [tlabel(b, *key[:2]) for key in xb if key not in xa]
+    pd.transitions_added = [tlabel(b, *key[:2]) + _where(k, rows_b) for key, k in xb.items() if key not in xa]
     pairs = [(xa[key], xb[key], key) for key in xa if key in xb]
     labels = [tlabel(b, *p[2][:2]) for p in pairs]
     ia = np.array([p[0] for p in pairs], dtype=int)
@@ -991,8 +1017,11 @@ def compare(
     la = _key_map(a.line_up, a.line_low, levels.mapping)
     lb = _key_map(b.line_up, b.line_low)
     kept = {v for key, v in la.items() if key in lb}
-    d.lines_removed = [tlabel(a, int(a.line_up[k]), int(a.line_low[k])) for k in range(a.n_lines) if k not in kept]
-    d.lines_added = [tlabel(b, *key[:2]) for key in lb if key not in la]
+    rows_a, rows_b = _line_rows(a), _line_rows(b)
+    d.lines_removed = [
+        tlabel(a, int(a.line_up[k]), int(a.line_low[k])) + _where(k, rows_a) for k in range(a.n_lines) if k not in kept
+    ]
+    d.lines_added = [tlabel(b, *key[:2]) + _where(k, rows_b) for key, k in lb.items() if key not in la]
     pairs = [(ka, lb[key], key) for key, ka in la.items() if key in lb]
     for ka, kb, _ in pairs:
         change = abs(b.line_a[kb] - a.line_a[ka]) / max(abs(a.line_a[ka]), 1e-300)
